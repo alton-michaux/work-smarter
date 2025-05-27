@@ -1,3 +1,33 @@
 **/.env.local
 
-frontend/node_modules
+# Backend
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.coverage
+backend/coverage.xml
+backend/htmlcov/
+backend/.venv/
+backend/venv/
+backend/env/
+backend/.DS_Store
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/.env.development.local
+frontend/.env.test.local
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+dbdata/
+db/data/
