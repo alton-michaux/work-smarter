@@ -4,3 +4,4 @@ psycopg2-binary==2.9.6
 django-cors-headers==3.14.0
 python-dotenv==1.0.0
 openai==0.27.0
+gunicorn

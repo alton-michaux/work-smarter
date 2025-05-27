@@ -1,7 +1,7 @@
-from django.urls import path
-from .views import UploadResumeView, AnalyzeResumeView
+from rest_framework.routers import DefaultRouter
+from .views import ResumeViewSet
 
-urlpatterns = [
-    path('upload/', UploadResumeView.as_view(), name='upload_resume'),
-    path('analyze/', AnalyzeResumeView.as_view(), name='analyze_resume'),
-]
+router = DefaultRouter()
+router.register(r'resume', ResumeViewSet, basename='resume')
+
+urlpatterns = router.urls
