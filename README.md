@@ -60,6 +60,131 @@ fullstack-app
 
 The backend exposes RESTful endpoints for uploading resumes and retrieving suggestions. Refer to the backend README for detailed API documentation.
 
+## 🛠️ Useful Commands (Docker, Django, etc.)
+
+### 🐳 Docker & Docker Compose
+
+**Start all services**
+
+```bash
+docker-compose up --build
+```
+
+**Start services in the background**
+
+```bash
+docker-compose up -d
+```
+
+**Stop all services**
+
+```bash
+docker-compose down
+```
+
+**Rebuild containers without cache**
+
+```bash
+docker-compose build --no-cache
+```
+
+**Run a one-off command inside a running container**
+
+```bash
+docker-compose exec backend bash        # Open shell in backend  
+docker-compose exec frontend sh         # Open shell in frontend
+```
+
+**View container logs**
+
+```bash
+docker-compose logs -f backend
+```
+
+---
+
+### 🐍 Django (Backend)
+
+**Run development server (non-Docker)**
+
+```bash
+python manage.py runserver
+```
+
+**Run migrations**
+
+```bash
+docker-compose exec backend python manage.py migrate
+```
+
+**Create superuser**
+
+```bash
+docker-compose exec backend python manage.py createsuperuser
+```
+
+**Open Django shell**
+
+```bash
+docker-compose exec backend python manage.py shell
+```
+
+**Run tests**
+
+```bash
+docker-compose exec backend python manage.py test
+```
+
+---
+
+### 🐘 PostgreSQL (via Docker)
+
+**Access PostgreSQL shell**
+
+```bash
+docker-compose exec db psql -U postgres -d your_db_name
+```
+
+---
+
+### 🧪 Debugging / Python
+
+**Use `pdb` in code**
+
+```python
+import pdb; pdb.set_trace()
+```
+
+**Validate model manually**
+
+```python
+obj.full_clean()  # raises ValidationError if invalid  
+obj.__dict__      # inspect model fields
+```
+
+---
+
+### ⚙️ Docker Tips
+
+**Check Docker socket permissions (WSL)**
+
+```bash
+ls -l /var/run/docker.sock
+```
+
+**Add user to docker group (in WSL/Linux)**
+
+```bash
+sudo usermod -aG docker $USER  
+newgrp docker
+```
+
+**Check for memory issues**
+
+```bash
+dmesg | grep -i oom
+```
+
 ### Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.

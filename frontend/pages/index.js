@@ -1,39 +1,27 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
-  const [suggestions, setSuggestions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+    const { loggedIn } = useAuth();
 
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/suggestions/`);
-        setSuggestions(response.data);
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSuggestions();
-  }, []);
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error fetching suggestions: {error.message}</div>;
-
-  return (
-    <div>
-      <h1>Resume Suggestions</h1>
-      <ul>
-        {suggestions.map((suggestion, index) => (
-          <li key={index}>{suggestion}</li>
-        ))}
-      </ul>
-    </div>
-  );
+    return(
+        <div>
+            <h1>Work Smarter</h1>
+            {loggedIn ? (
+                <p>Welcome back! You are logged in.</p>
+            ) : (
+                <>
+                    <p>Welcome to the Work Smarter app, where you can evaluate your skillsets efficiently.</p>
+                    <p>To get started, please log in or sign up.</p>
+                    <p>Use the links below:</p>
+                    <ul>
+                        <li><a href="/login">Login</a></li>
+                        <li><a href="/signup">Signup</a></li>
+                    </ul>
+                    <p>Once logged in, you can access your dashboard to evaluate your skills.</p>
+                </>
+            )}
+        </div>
+    )
 };
 
 export default Home;
