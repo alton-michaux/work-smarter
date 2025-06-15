@@ -7,14 +7,6 @@ class Resume(models.Model):
 
     def __str__(self):
         return f"{self.user}'s Resume"
-
-class Task(models.Model):
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
     
 class Project(models.Model):
     name = models.CharField(max_length=100)
@@ -29,6 +21,7 @@ class Task(models.Model):
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
     title = models.CharField(max_length=255)
+    description = models.TextField()
     is_done = models.BooleanField(default=False)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     notes = models.TextField(blank=True)
