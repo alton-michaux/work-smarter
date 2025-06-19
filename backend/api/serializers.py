@@ -12,6 +12,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'name', 'tasks']
+        
 class ResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
