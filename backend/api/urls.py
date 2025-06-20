@@ -1,9 +1,12 @@
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ResumeViewSet, TaskViewSet, ProjectViewSet
+from .views import ProjectViewSet, TaskViewSet, ImportTasks
 
 router = DefaultRouter()
-router.register(r'tasks', TaskViewSet)
 router.register(r'projects', ProjectViewSet)
-router.register(r'resume', ResumeViewSet, basename='resume')
+router.register(r'tasks', TaskViewSet)
 
-urlpatterns = router.urls
+urlpatterns = [
+    path('', include(router.urls)),
+    path('import/', ImportTasks.as_view(), name='import-tasks'),
+]

@@ -19,7 +19,7 @@ class Task(models.Model):
         ('low', 'Low'),
     ]
 
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     title = models.CharField(max_length=255)
     description = models.TextField()
     is_done = models.BooleanField(default=False)
