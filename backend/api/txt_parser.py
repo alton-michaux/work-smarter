@@ -31,25 +31,20 @@ class DevParser(TxtParser):
                 continue
 
             indent_level = len(raw_line) - len(raw_line.lstrip())
-            print(f"\n📄 Line {line_num}: {repr(raw_line)}")
-            print(f"Indent level: {indent_level}")
 
             # Skip divider lines like ---PRE QA---
             if '---' in line:
-                print("↪ Skipping divider line")
                 continue
 
             # ✅ First: Priority check (before checking section header)
             stripped = line.strip(':').upper()
             if stripped in self.PRIORITY_MAP:
                 current_priority = self.PRIORITY_MAP[stripped]
-                print(f"🔥 Detected priority: {current_priority}")
                 continue
 
             # ✅ Then: Section/project check
             if re.match(r'^[A-Za-z0-9 _\-]+:$', line) and not line.startswith("-"):
                 current_project = line.replace(":", "").strip()
-                print(f"📁 Detected project/section: {current_project}")
                 continue
 
             # Task line
@@ -58,23 +53,19 @@ class DevParser(TxtParser):
                 title = match.group(1).strip()
                 done = bool(re.match(r'^-+\[x\]', line.strip(), re.IGNORECASE))
                 carry_over = not done
-                print(f"📝 Task: '{title}' | done: {done}")
 
                 # Clean up the parent stack based on indentation
                 while parent_stack and parent_stack[-1][0] >= indent_level:
                     popped = parent_stack.pop()
-                    print(f"↩️ Popped parent: {popped}")
 
                 notes = ""
                 if parent_stack:
                     notes = f"Subtask of: {parent_stack[-1][1]}"
-                    print(f"📌 Assigned parent: {parent_stack[-1][1]}")
                 else:
-                    print("🔹 Top-level task")
+                    continue
 
                 # Push current task to stack
                 parent_stack.append((indent_level, title))
-                print(f"➕ Pushed to stack: {(indent_level, title)}")
 
                 task = {
                     "title": title,
@@ -85,6 +76,5 @@ class DevParser(TxtParser):
                     "notes": notes,
                 }
                 self.tasks.append(task)
-                print(f"✅ Final task: {task}")
 
         return self.tasks
