@@ -21,10 +21,10 @@ class Task(models.Model):
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     title = models.CharField(max_length=255)
-    description = models.TextField()
+    description = models.TextField(null=True)
     is_done = models.BooleanField(default=False)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     notes = models.TextField(blank=True)
     created_at = models.DateField(auto_now_add=True)
-    scheduled_for = models.DateField()  # e.g. 2025-06-02
+    is_subtask = models.BooleanField(default=False)
     carry_over = models.BooleanField(default=True)

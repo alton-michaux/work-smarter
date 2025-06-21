@@ -10,7 +10,12 @@ import csv
 import io
 
 class ImportTasks(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+
     def post(self, request, format=None):
+        print("Content-Type:", request.content_type)
+        print("Raw request body:", request.body)
+
         file = request.FILES.get('file')
         if not file or not file.name.endswith('.txt'):
             return Response({'error': 'Only .txt files are supported.'}, status=400)
@@ -27,9 +32,10 @@ class ImportTasks(APIView):
                 project=project,
                 title=task_data["title"],
                 priority=task_data["priority"],
+                carry_over=task_data["carry_over"],
                 description=f'Section: {task_data["section"]}',
-                scheduled_for=None,
-                notes='',
+                is_subtask=bool(task_data["notes"]),
+                notes=task_data["notes"],
             )
 
         return Response({'status': 'Import successful.', 'imported': len(tasks)}, status=201)
