@@ -19,8 +19,11 @@ class ImportTasks(APIView):
 
         content = file.read().decode('utf-8')
         parser = DevParser(content)
-        tasks = parser.parse()
-
+        
+        parser.parse()
+        
+        tasks = parser.tasks
+        print(f"tasks: {tasks}")
         project_id = request.data.get('project_id')
         project = Project.objects.filter(id=project_id).first() if project_id else None
 
@@ -35,7 +38,7 @@ class ImportTasks(APIView):
                 is_subtask=bool(task_data["notes"]),
                 notes=task_data["notes"],
             )
-
+        print(f"tasks: {tasks}")
         return Response({'status': 'Import successful.', 'imported': len(tasks)}, status=201)
 
 class TaskViewSet(viewsets.ModelViewSet):
