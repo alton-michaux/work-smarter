@@ -12,7 +12,7 @@ backend/coverage.xml
 backend/htmlcov/
 backend/.venv/
 backend/venv/
-backend/env/
+backend/.env
 backend/.DS_Store
 __pycache__/
 backend/.env
