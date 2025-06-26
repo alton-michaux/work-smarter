@@ -71,22 +71,23 @@ class DevParser(TxtParser):
 
                     notes = ""
                     if parent_stack:
-                        notes = f"Subtask of: {parent_stack[-1][1]}"
+                        is_subtask = True
                         #print(f"    Notes set: {notes}")
                     else:
-                        print("    No parent in stack")
+                        is_subtask = False
 
                     # Push current task to stack
                     parent_stack.append((indent_level, title))
                     #print(f"    Pushed to parent_stack: {(indent_level, title)}")
 
                     task = {
+                        "category": current_project,
                         "title": title,
                         "done": done,
-                        "carry_over": carry_over,
                         "priority": current_priority,
-                        "section": current_project,
-                        "notes": notes,
+                        "carry_over": carry_over,
+                        "description": notes,
+                        "sub_task": is_subtask,
                     }
                     
                     #print(f"    Appending task: {task}")

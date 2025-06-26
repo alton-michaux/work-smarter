@@ -29,14 +29,14 @@ class ImportTasks(APIView):
 
         for task_data in tasks:
             Task.objects.create(
-                project=project,
+                project=(project),
+                # category=task_data["category"],
                 title=task_data["title"],
                 is_done=task_data["done"],
                 priority=task_data["priority"],
                 carry_over=task_data["carry_over"],
-                description=f'Section: {task_data["section"]}',
-                is_subtask=bool(task_data["notes"]),
-                notes=task_data["notes"],
+                description=task_data["description"],
+                is_subtask=task_data["sub_task"],
             )
         print(f"tasks: {tasks}")
         return Response({'status': 'Import successful.', 'imported': len(tasks)}, status=201)
