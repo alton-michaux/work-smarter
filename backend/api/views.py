@@ -30,7 +30,7 @@ class ImportTasks(APIView):
         for task_data in tasks:
             Task.objects.create(
                 project=(project),
-                # category=task_data["category"],
+                category=task_data["category"],
                 title=task_data["title"],
                 is_done=task_data["done"],
                 priority=task_data["priority"],

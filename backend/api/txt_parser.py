@@ -80,15 +80,17 @@ class DevParser(TxtParser):
                     parent_stack.append((indent_level, title))
                     #print(f"    Pushed to parent_stack: {(indent_level, title)}")
 
+                    is_subtask = bool(parent_stack)
                     task = {
                         "category": current_project,
                         "title": title,
                         "done": done,
                         "priority": current_priority,
-                        "carry_over": carry_over,
+                        "carry_over": carry_over,      # was 'project'
                         "description": notes,
                         "sub_task": is_subtask,
                     }
+                    self.tasks.append(task)
                     
                     #print(f"    Appending task: {task}")
                     self.tasks.append(task)
