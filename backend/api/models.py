@@ -20,7 +20,7 @@ class Task(models.Model):
     ]
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
-    title = models.CharField(max_length=255)
+    title = models.TextField()
     category = models.TextField(null=True)
     is_done = models.BooleanField(default=False)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
