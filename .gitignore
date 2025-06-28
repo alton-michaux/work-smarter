@@ -12,8 +12,10 @@ backend/coverage.xml
 backend/htmlcov/
 backend/.venv/
 backend/venv/
-backend/env/
+backend/.env
 backend/.DS_Store
+__pycache__/
+backend/.env
 
 # Frontend
 frontend/node_modules/
@@ -30,4 +32,4 @@ Thumbs.db
 
 # Docker
 dbdata/
-db/data/
+db/data/__pycache__/

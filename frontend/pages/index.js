@@ -6,8 +6,13 @@ const Home = () => {
     return(
         <div>
             <h1>Work Smarter</h1>
-            {loggedIn ? (
-                <p>Welcome back! You are logged in.</p>
+            {loggedIn ? (                <>
+                    <p>Welcome back! You are logged in. What would you like to do?</p>
+                    <ul>
+                        <li><a href="/dashboard">Go to Dashboard</a></li>
+                        <li><a href="/logout">Logout</a></li>
+                    </ul>
+                </>
             ) : (
                 <>
                     <p>Welcome to the Work Smarter app, where you can evaluate your skillsets efficiently.</p>
