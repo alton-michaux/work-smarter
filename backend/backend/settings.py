@@ -27,8 +27,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'corsheaders',
-    'api',  # Your API app
+    'rest_framework.authtoken',  # needed for token-based login
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',    
+    'backend.apps.BackendConfig',
+    'api', 
 ]
 
 MIDDLEWARE = [
@@ -39,8 +43,15 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ]
+}
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -90,6 +101,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_AUTH_REGISTER_SERIALIZERS = {
+    'REGISTER_SERIALIZER': 'dj_rest_auth.registration.serializers.RegisterSerializer',
+}
+
+AUTHENTICATION_BACKENDS = [
+    'allauth.account.auth_backends.AuthenticationBackend',  # this enables email-based login
+    'django.contrib.auth.backends.ModelBackend',            # optional: allows admin login
+]
+
 # Internationalization
 LANGUAGE_CODE = 'en-us'
 
@@ -109,3 +129,17 @@ CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SITE_ID = 1
+
+# To allow simple email/password logins
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_EMAIL_VERIFICATION = 'optional' # change to optional once setup
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+
+# modify these settings before pushing to prod (test purposes only)
+# ✅ Force email to be marked verified
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
