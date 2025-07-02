@@ -1,7 +1,10 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class Resume(models.Model):
-    user = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="resume", null=False, blank=False)
     file = models.FileField(upload_to='resumes/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
@@ -9,9 +12,11 @@ class Resume(models.Model):
         return f"{self.user}'s Resume"
     
 class Project(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="projects", null=False, blank=False)
     name = models.CharField(max_length=100)
 
 class Task(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tasks", null=False, blank=False)
     PRIORITY_CHOICES = [
         ('urgent', 'Urgent'),
         ('high', 'High'),
