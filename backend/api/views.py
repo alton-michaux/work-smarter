@@ -6,8 +6,6 @@ from .models import Resume, Project, Task
 from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer
 from .txt_parser import DevParser
 import openai
-import csv
-import io
 
 class ImportTasks(APIView):
     parser_classes = [MultiPartParser, FormParser]

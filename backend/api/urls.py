@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ProjectViewSet, TaskViewSet, ImportTasks
+from .views import ProjectViewSet, TaskViewSet, ImportTasks, ProtectedTestView
 
 router = DefaultRouter()
 router.register(r'projects', ProjectViewSet)
@@ -9,4 +9,5 @@ router.register(r'tasks', TaskViewSet, basename='task')
 urlpatterns = [
     path('', include(router.urls)),
     path('import/', ImportTasks.as_view(), name='import-tasks'),
+    path('protected/', ProtectedTestView.as_view(), name='protected-test'),
 ]
