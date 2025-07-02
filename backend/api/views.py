@@ -6,8 +6,6 @@ from .models import Resume, Project, Task
 from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer
 from .txt_parser import DevParser
 import openai
-import csv
-import io
 
 class ImportTasks(APIView):
     parser_classes = [MultiPartParser, FormParser]
@@ -19,17 +17,16 @@ class ImportTasks(APIView):
 
         content = file.read().decode('utf-8')
         parser = DevParser(content)
-        
         parser.parse()
-        
         tasks = parser.tasks
-        print(f"tasks: {tasks}")
+
         project_id = request.data.get('project_id')
-        project = Project.objects.filter(id=project_id).first() if project_id else None
+        project = Project.objects.filter(id=project_id, user=request.user).first() if project_id else None
 
         for task_data in tasks:
             Task.objects.create(
-                project=(project),
+                user=request.user,  # ✅ associate with user
+                project=project,
                 category=task_data["category"],
                 title=task_data["title"],
                 is_done=task_data["done"],
@@ -38,26 +35,26 @@ class ImportTasks(APIView):
                 description=task_data["description"],
                 is_subtask=task_data["sub_task"],
             )
-        print(f"tasks: {tasks}")
+
         return Response({'status': 'Import successful.', 'imported': len(tasks)}, status=201)
 
 class TaskViewSet(viewsets.ModelViewSet):
-    queryset = Task.objects.all()
     serializer_class = TaskSerializer
-    
-    def list(self, request):
-        tasks = Task.objects.all()
-        serializer = TaskSerializer(tasks, many=True)
-        return Response(serializer.data)
+
+    def get_queryset(self):
+        return Task.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
         
 class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    
-    def list(self, request):
-        projects = Project.objects.all()
-        serializer = ProjectSerializer(projects, many=True)
-        return Response(serializer.data)
+
+    def get_queryset(self):
+        return Project.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
     
 class ResumeViewSet(viewsets.ViewSet):
     parser_classes = (MultiPartParser, FormParser)
@@ -67,22 +64,19 @@ class ResumeViewSet(viewsets.ViewSet):
         if not file:
             return Response({"error": "No file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Save the uploaded file
-        resume = Resume(file=file)
+        resume = Resume(file=file, user=request.user)  # ✅ attach user
         resume.save()
 
-        # Analyze the resume with OpenAI API
-        openai.api_key = request.data.get('api_key')  # Assuming API key is sent in the request
+        openai.api_key = request.data.get('api_key')
         response = openai.Completion.create(
             engine="text-davinci-003",
             prompt=f"Pretend that you are a recruiter. Please analyze this resume: {file.name}",
             max_tokens=150
         )
 
-        # Return the suggestions
         return Response({"suggestions": response.choices[0].text.strip()}, status=status.HTTP_201_CREATED)
 
     def list(self, request):
-        resumes = Resume.objects.all()
+        resumes = Resume.objects.filter(user=request.user)
         serializer = ResumeSerializer(resumes, many=True)
         return Response(serializer.data)
