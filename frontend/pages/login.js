@@ -9,7 +9,7 @@ export default function Login() {
         e.preventDefault();
         // TODO: Add authentication logic here
         setLoggedIn(true);
-        router.push('/');
+        router.push('/dashboard');
     };
 
     return (
