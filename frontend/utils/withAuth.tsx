@@ -8,7 +8,7 @@ const withAuth = (WrappedComponent: React.FC) => {
 
     useEffect(() => {
       const token = localStorage.getItem('accessToken');
-      if (!token) router.push('/login');
+      if (!token) router.push('/');
     }, []);
 
     return <WrappedComponent {...props} />;
