@@ -132,4 +132,4 @@ wadllib==1.3.3
 wheel==0.45.1
 xxhash==3.4.1
 yarl==1.20.1
-zipp==1.0.0
+zipp==3.19.1
