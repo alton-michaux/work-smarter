@@ -7,7 +7,8 @@ const Home = () => {
     return(
         <div>
             <h1>Work Smarter</h1>
-            {loggedIn ? (                <>
+            {loggedIn ? (                
+                <>
                     <p>Welcome back! You are logged in. What would you like to do?</p>
                     <ul>
                         <li><a href="/dashboard">Go to Dashboard</a></li>
