@@ -120,7 +120,7 @@ sqlparse==0.4.4
 ssh-import-id==5.10
 tdigest==0.5.2.2
 testresources==2.0.1
-tqdm==4.66.2
+tqdm==4.66.3
 traitlets==5.14.2
 typing_extensions==4.10.0
 tzdata==2025.2
