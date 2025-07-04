@@ -11,6 +11,8 @@ WORKDIR /app
 # Install system-level dependencies (especially libpq-dev for psycopg2)
 RUN apt-get update && apt-get install -y \
     build-essential \
+    python3-dev \
+    libyaml-dev \
     libpq-dev \
     gcc \
     curl \
