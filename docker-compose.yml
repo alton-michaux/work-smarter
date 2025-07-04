@@ -5,10 +5,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./backend:/app
-      - ./backend/.env:/app/.env
-    environment:
-      - DATABASE_URL=postgres://user:password@db:5432/dbname
-      - SECRET_KEY=your_secret_key
+    env_file:
+      - ./backend/.env
     ports:
       - "8000:8000"
     depends_on:
@@ -20,7 +18,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./frontend:/app
-      - ./frontend/.env.local:/app/.env.local
+    env_file:
+      - ./frontend/.env.local
     ports:
       - "3000:3000"
     depends_on:
@@ -31,9 +30,9 @@ services:
     volumes:
       - dbdata:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=dbname
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
 
 networks:
   default:

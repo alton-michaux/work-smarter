@@ -1,4 +1,5 @@
 import { useAuth } from '../context/AuthContext';
+import withAuth from '../utils/withAuth';
 
 const Home = () => {
     const { loggedIn } = useAuth();
@@ -6,7 +7,8 @@ const Home = () => {
     return(
         <div>
             <h1>Work Smarter</h1>
-            {loggedIn ? (                <>
+            {loggedIn ? (                
+                <>
                     <p>Welcome back! You are logged in. What would you like to do?</p>
                     <ul>
                         <li><a href="/dashboard">Go to Dashboard</a></li>
@@ -20,7 +22,7 @@ const Home = () => {
                     <p>Use the links below:</p>
                     <ul>
                         <li><a href="/login">Login</a></li>
-                        <li><a href="/signup">Signup</a></li>
+                        <li><a href="/register">Signup</a></li>
                     </ul>
                     <p>Once logged in, you can access your dashboard to evaluate your skills.</p>
                 </>
@@ -29,4 +31,4 @@ const Home = () => {
     )
 };
 
-export default Home;
+export default withAuth(Home);
