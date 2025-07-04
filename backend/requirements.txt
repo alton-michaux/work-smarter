@@ -103,7 +103,7 @@ python-debian==0.1.36
 python-dotenv==1.0.0
 pytz==2025.2
 pyudorandom==1.0.0
-PyYAML==5.3.1
+PyYAML==5.4
 pyzmq==25.1.2
 referencing==0.34.0
 requests==2.32.4
