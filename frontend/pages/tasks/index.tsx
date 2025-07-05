@@ -5,6 +5,10 @@ const TasksPage = () => {
   const { tasks } = useTasks();
   const router = useRouter();
 
+  const handleTaskClick = (id: number) => {
+    router.push(`/tasks/view/${id}`);
+  };
+
   return (
     <div>
       <h1>Tasks</h1>
@@ -14,11 +18,20 @@ const TasksPage = () => {
         <ul>
           {tasks.map((task) => (
             <li key={task.id}>
-              <strong>Title:</strong> {task.title} <br />
+              <strong>
+                <a
+                  href="#"
+                  style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+                  onClick={e => {
+                    e.preventDefault();
+                    handleTaskClick(task.id);
+                  }}
+                >
+                  {task.title}
+                </a>
+              </strong>
+              <br />
               <strong>Category:</strong> {task.category} <br />
-              <strong>Done:</strong> {task.is_done ? 'Yes' : 'No'} <br />
-              <strong>Priority:</strong> {task.priority} <br />
-              <strong>Project:</strong> {task.project}
             </li>
           ))}
         </ul>
