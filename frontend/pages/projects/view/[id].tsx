@@ -21,10 +21,9 @@ const ProjectShowPage = () => {
 
   return (
     <div>
-      <h1>Project Details</h1>
+      <h1><strong>Name:</strong> {project.name}</h1>
       <ul>
-        <li><strong>Name:</strong> {project.name}</li>
-        <li>Tasks: {project.tasks.map((task) => (
+        <li>{project.tasks.map((task) => (
           <li> {task.title} </li>
         ))}
         </li>

@@ -4,8 +4,6 @@ import withAuth from '../utils/withAuth';
 const Home = () => {
     const { loggedIn } = useAuth();
 
-    console.log('loggedIn:', loggedIn);
-
     return(
         <div>
             <h1>Work Smarter</h1>
