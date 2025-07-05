@@ -1,4 +1,3 @@
-// utils/withAuth.tsx
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
