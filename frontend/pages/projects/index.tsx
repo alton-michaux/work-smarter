@@ -5,6 +5,10 @@ const ProjectsPage = () => {
   const { projects } = useProjects();
   const router = useRouter();
 
+  const handleProjectClick = (id: number) => {
+    router.push(`/projects/view/${id}`);
+  };
+
   return (
     <div>
       <h1>Projects</h1>
@@ -13,7 +17,18 @@ const ProjectsPage = () => {
       ) : (
         <ul>
           {projects.map((project) => (
-            <li key={project.id}>{project.name}</li>
+            <li key={project.id}>
+              <a
+                href="#"
+                style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+                onClick={e => {
+                  e.preventDefault();
+                  handleProjectClick(project.id);
+                }}
+              >
+                {project.name}
+              </a>
+            </li>
           ))}
         </ul>
       )}

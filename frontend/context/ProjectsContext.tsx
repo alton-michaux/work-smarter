@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, ReactNode } from 'react';
 type Project = {
   id: number;
   name: string;
+  tasks: any[];
   // Add other fields as needed
 };
 
