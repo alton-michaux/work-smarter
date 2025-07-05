@@ -3,7 +3,14 @@ import React, { createContext, useState, useContext, ReactNode } from 'react';
 type Task = {
   id: number;
   title: string;
-  // Add other fields as needed
+  category: string;
+  is_done: boolean;
+  priority: string;
+  description: string;
+  is_subtask: boolean;
+  carry_over: boolean;
+  user: number;
+  project: number;
 };
 
 type TasksContextType = {

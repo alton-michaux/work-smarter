@@ -1,4 +1,4 @@
-import { useProjects } from '../context/ProjectsContext';
+import { useProjects } from '../../context/ProjectsContext';
 import { useRouter } from 'next/router';
 
 const ProjectsPage = () => {

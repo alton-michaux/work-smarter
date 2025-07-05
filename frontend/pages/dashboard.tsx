@@ -99,6 +99,8 @@ function Dashboard() {
                     <button onClick={handleLogout}>Logout</button>
                 </li>
             </ul>
+            <button onClick={() => router.back()}>Back</button>
+            <button onClick={() => router.push('/')}>Home</button>
         </div>
     );
 }

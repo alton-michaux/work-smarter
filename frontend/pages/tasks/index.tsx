@@ -13,7 +13,13 @@ const TasksPage = () => {
       ) : (
         <ul>
           {tasks.map((task) => (
-            <li key={task.id}>{task.title}</li>
+            <li key={task.id}>
+              <strong>Title:</strong> {task.title} <br />
+              <strong>Category:</strong> {task.category} <br />
+              <strong>Done:</strong> {task.is_done ? 'Yes' : 'No'} <br />
+              <strong>Priority:</strong> {task.priority} <br />
+              <strong>Project:</strong> {task.project}
+            </li>
           ))}
         </ul>
       )}
