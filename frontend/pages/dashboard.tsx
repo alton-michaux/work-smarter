@@ -3,11 +3,13 @@ import withAuth from '../utils/withAuth';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import { useTasks } from '../context/TasksContext';
+import { useProjects } from '../context/ProjectsContext'
 
 function Dashboard() {
     const router = useRouter();
     const { setLoggedIn } = useAuth();
     const { setTasks } = useTasks();
+    const { setProjects } = useProjects();
     const [error, setError] = useState<string | null>(null);
 
     const handleLogout = async () => {
@@ -54,11 +56,42 @@ function Dashboard() {
         }
     }
 
+    const handleProjects = async (e) => {
+        e.preventDefault();
+        setError(null);
+
+        try {
+            const token = localStorage.getItem('authToken');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token && { 'Authorization': `Token ${token}` }),
+                },
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(JSON.stringify(data));
+            }
+
+            const data = await res.json();
+            setProjects(data);
+            router.push('/projects');
+        } catch (err: any) {
+            const msg = err.message.includes('{') ? JSON.parse(err.message) : { error: err.message };
+            setError(msg?.detail || msg?.error || 'Failed to fetch projects');
+        }
+    }
+
     return (
         <div>
             <h1>Dashboard</h1>
             <p>Welcome to your dashboard! Here you can evaluate your skillsets efficiently.</p>
             <ul>
+                <li>
+                    <button onClick={handleProjects}>Projects</button>
+                </li>
                 <li>
                     <button onClick={handleTasks}>Tasks</button>
                 </li>
