@@ -41,7 +41,7 @@ work-smarter
 1. Clone the repository:
    ```
    git clone <repository-url>
-   cd fullstack-app
+   cd work-smarter
    ```
 
 2. Create a `.env` file in the `backend` directory and a `.env.local` file in the `frontend` directory with the necessary environment variables.
