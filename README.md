@@ -5,28 +5,28 @@ This project is a fullstack application designed to ingest user-uploaded resume/
 ## Project Structure
 
 ```
-fullstack-app
+work-smarter
 ├── backend                # Django backend service
-│   ├── manage.py         # Command-line utility for managing the Django project
-│   ├── requirements.txt   # Python packages required for the backend
-│   ├── Dockerfile         # Dockerfile for building the backend image
-│   ├── .env               # Environment variables for the backend
-│   ├── backend            # Django application code
+│   ├── manage.py
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   ├── .env
+│   ├── backend            # Django project code
 │   ├── api                # Django REST API code
-│   └── README.md          # Documentation for the backend service
+│   └── README.md
 ├── frontend               # Next.js frontend service
-│   ├── package.json       # npm configuration file for the frontend
-│   ├── next.config.js     # Configuration settings for the Next.js application
-│   ├── Dockerfile         # Dockerfile for building the frontend image
-│   ├── .env.local         # Environment variables for the frontend
-│   ├── public             # Static assets for the frontend
-│   ├── pages              # Next.js pages
-│   ├── components         # Reusable React components
-│   └── README.md          # Documentation for the frontend service
+│   ├── package.json
+│   ├── next.config.js
+│   ├── Dockerfile
+│   ├── .env.local
+│   ├── public
+│   ├── pages
+│   ├── components
+│   └── README.md
 ├── db                     # Database directory
-│   └── data               # Persistent PostgreSQL database data
-├── docker-compose.yml     # Docker Compose configuration for the application
-└── README.md              # Overall project documentation
+│   └── data               # Persistent PostgreSQL data
+├── docker-compose.yml     # Docker Compose configuration
+└── README.md              # Project documentation
 ```
 
 ## Getting Started
