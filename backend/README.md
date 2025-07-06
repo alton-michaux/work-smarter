@@ -24,7 +24,7 @@ This is the backend service of the fullstack application, built using Django and
 1. **Clone the Repository**
    ```
    git clone <repository-url>
-   cd fullstack-app/backend
+   cd work-smarter/backend
    ```
 
 2. **Build the Docker Image**
