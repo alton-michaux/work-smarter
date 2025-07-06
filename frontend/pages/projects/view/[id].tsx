@@ -6,7 +6,6 @@ const ProjectShowPage = () => {
   const { id } = router.query;
   const { projects } = useProjects();
 
-  // Find the project by id (id from router.query is a string)
   const project = projects.find(p => p.id === Number(id));
 
   if (!project) {
@@ -23,10 +22,9 @@ const ProjectShowPage = () => {
     <div>
       <h1><strong>Name:</strong> {project.name}</h1>
       <ul>
-        <li>{project.tasks.map((task) => (
-          <li> {task.title} </li>
+        {project.tasks.map((task) => (
+          <li key={task.id}>{task.title}</li>
         ))}
-        </li>
       </ul>
       <button onClick={() => router.back()}>Back</button>
       <button onClick={() => router.push('/projects')}>All Projects</button>
