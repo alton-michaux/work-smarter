@@ -4,7 +4,7 @@ import { useTasks } from '../../../context/TasksContext';
 const TaskShowPage = () => {
   const router = useRouter();
   const { id } = router.query;
-  const { tasks } = useTasks();
+  const { tasks, setTasks } = useTasks();
 
   // Find the task by id (id from router.query is a string)
   const task = tasks.find(t => t.id === Number(id));
@@ -18,6 +18,17 @@ const TaskShowPage = () => {
       </div>
     );
   }
+
+  const handleEdit = () => {
+    router.push(`/tasks/edit/${id}`);
+  };
+
+  const handleDelete = () => {
+    if (confirm('Are you sure you want to delete this task?')) {
+      setTasks(tasks.filter(t => t.id !== Number(id)));
+      router.push('/tasks');
+    }
+  };
 
   return (
     <div>

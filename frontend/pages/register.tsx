@@ -51,6 +51,7 @@ const Register = () => {
         <button type="submit">Register</button>
       </form>
       {error && <p style={{ color: 'red' }}>{error}</p>}
+      <button onClick={() => router.back()}>Back</button>
     </div>
   );
 }
