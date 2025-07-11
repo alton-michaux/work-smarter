@@ -26,7 +26,6 @@ const ProjectShowPage = () => {
           <li key={task.id}>{task.title}</li>
         ))}
       </ul>
-      <button onClick={() => router.back()}>Back</button>
       <button onClick={() => router.push('/projects')}>All Projects</button>
       <button onClick={() => router.push('/')}>Home</button>
     </div>
