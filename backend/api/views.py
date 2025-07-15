@@ -46,14 +46,15 @@ class TaskViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = Task.objects.filter(user=user)
 
-        start_date_str = self.request.query_params.get('start_date')
+        begin_date_str = self.request.query_params.get('begin_date')
         end_date_str = self.request.query_params.get('end_date')
-
-        if start_date_str and end_date_str:
+        # print(f"begin_date_str: {begin_date_str}")
+        # print(f"end_date_str: {end_date_str}")
+        if begin_date_str and end_date_str:
             try:
-                start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+                begin_date = datetime.strptime(begin_date_str, "%Y-%m-%d").date()
                 end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-                queryset = queryset.filter(created_at__date__range=(start_date, end_date))
+                queryset = queryset.filter(begin_date__range=(begin_date, end_date))
             except ValueError:
                 pass  # Optionally log or raise a validation error here
 
