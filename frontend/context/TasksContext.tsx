@@ -21,7 +21,8 @@ type TasksContextType = {
   addTask: (task: Omit<Task, 'id'>) => Promise<void>;
   updateTask: (task: Task) => Promise<void>;
   deleteTask: (id: number) => Promise<void>;
-  fetchTasks: () => Promise<void>;
+  fetchTasks: () => Promise<void>;  
+  getAuthHeaders: () => Record<string, string>;
 };
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
@@ -87,7 +88,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <TasksContext.Provider value={{ tasks, setTasks, addTask, updateTask, deleteTask, fetchTasks }}>
+    <TasksContext.Provider value={{ tasks, setTasks, addTask, updateTask, deleteTask, fetchTasks, getAuthHeaders }}>
       {children}
     </TasksContext.Provider>
   );

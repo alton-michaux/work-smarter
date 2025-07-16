@@ -51,6 +51,7 @@ const TasksPage = () => {
             ))}
         </ul>
       )}
+      <button onClick={() => router.push('/tasks/tracker')}>View Weekly Tracker</button>
       <button onClick={() => router.back()}>Back</button>
       <button onClick={() => router.push('/')}>Home</button>
     </div>
