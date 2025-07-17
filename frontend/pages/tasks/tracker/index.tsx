@@ -18,7 +18,7 @@ export default function TaskTrackerPage() {
       const end = getEndOfWeek(selectedWeek);
       const headers = getAuthHeaders();
 
-      const res = await fetch(`${API_URL}/tasks?start_date=${selectedWeek}&end_date=${end}`, {
+      const res = await fetch(`${API_URL}/tasks?begin_date=${selectedWeek}&end_date=${end}`, {
         headers,
       });
       if (!res.ok) {
