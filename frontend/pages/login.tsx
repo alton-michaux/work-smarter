@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
     const router = useRouter();
-    const { setLoggedIn } = useAuth();
+    const { loggedIn, setLoggedIn } = useAuth();
     const [form, setForm] = useState({ email: '', password: '' });
     const [error, setError] = useState<string | null>(null);
 
