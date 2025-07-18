@@ -48,8 +48,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         begin_date_str = self.request.query_params.get('begin_date')
         end_date_str = self.request.query_params.get('end_date')
-        print("Begin Date:", begin_date_str)
-        print("End Date:", end_date_str)
+
         if begin_date_str and end_date_str:
             try:
                 begin_date = datetime.strptime(begin_date_str, "%Y-%m-%d").date()
