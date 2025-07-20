@@ -40,4 +40,6 @@ class Task(models.Model):
     def save(self, *args, **kwargs):
         if self.is_done and not self.end_date:
             self.end_date = timezone.now().date()
+        elif not self.is_done and self.end_date:
+            self.end_date = None
         super().save(*args, **kwargs)

@@ -50,7 +50,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const fetchTasksByDateRange = useCallback(async (begin: string, end: string) => {
     if (!loggedIn) return;
     try {
-      const res = await fetch(`${API_URL}/tasks?begin_date=${begin}&end_date=${end}`, {
+      const res = await fetch(`${API_URL}/api/tasks?begin_date=${begin}&end_date=${end}`, {
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Failed to fetch tasks by date range');
@@ -64,7 +64,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const toggleTaskDone = async (taskId: number, isDone: boolean) => {
     if (!loggedIn) return;
     try {
-      const res = await fetch(`${API_URL}/tasks/${taskId}/`, {
+      const res = await fetch(`${API_URL}/api/tasks/${taskId}/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
