@@ -1,4 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
+import { useAPI } from './APIContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -25,53 +27,67 @@ export const useProjects = () => {
 };
 
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
+  const { getAuthHeaders } = useAPI();
+  const { loggedIn } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
 
-  const getAuthHeaders = () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-    return token
-      ? { 'Content-Type': 'application/json', Authorization: `Token ${token}` }
-      : { 'Content-Type': 'application/json' };
-  };
-
   const fetchProjects = async () => {
-    const res = await fetch(`${API_URL}/projects/`, {
-      headers: getAuthHeaders(),
-    });
-    const data = await res.json();
-    setProjects(data);
+    if (!loggedIn) return; // Don't fetch if not logged in
+    try {
+      const res = await fetch(`${API_URL}/projects/`, { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error('Failed to fetch projects');
+      const data = await res.json();
+      setProjects(data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
-    fetchProjects();
-  }, []);
+    if (loggedIn) fetchProjects();
+  }, [loggedIn]);
 
   const addProject = async (project: Omit<Project, 'id'>) => {
-    const res = await fetch(`${API_URL}/projects/`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(project),
-    });
-    const newProject = await res.json();
-    setProjects(prev => [...prev, newProject]);
+    if (!loggedIn) return;
+    try {
+      const res = await fetch(`${API_URL}/projects/`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(project),
+      });
+      const newProject = await res.json();
+      setProjects(prev => [...prev, newProject]);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const updateProject = async (updatedProject: Project) => {
-    const res = await fetch(`${API_URL}/projects/${updatedProject.id}/`, {
-      method: 'PATCH',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(updatedProject),
-    });
-    const data = await res.json();
-    setProjects(prev => prev.map(p => (p.id === data.id ? data : p)));
+    if (!loggedIn) return;
+    try {
+      const res = await fetch(`${API_URL}/projects/${updatedProject.id}/`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(updatedProject),
+      });
+      const data = await res.json();
+      setProjects(prev => prev.map(p => (p.id === data.id ? data : p)));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const deleteProject = async (id: number) => {
-    await fetch(`${API_URL}/projects/${id}/`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-    setProjects(prev => prev.filter(p => p.id !== id));
+    if (!loggedIn) return;
+    try {
+      await fetch(`${API_URL}/projects/${id}/`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      setProjects(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (

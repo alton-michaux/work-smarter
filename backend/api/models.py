@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -24,6 +25,8 @@ class Task(models.Model):
         ('low', 'Low'),
     ]
 
+    begin_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     title = models.TextField()
     category = models.TextField(null=True)
@@ -33,3 +36,10 @@ class Task(models.Model):
     created_at = models.DateField(auto_now_add=True)
     is_subtask = models.BooleanField(default=False)
     carry_over = models.BooleanField(default=True)
+    
+    def save(self, *args, **kwargs):
+        if self.is_done and not self.end_date:
+            self.end_date = timezone.now().date()
+        elif not self.is_done and self.end_date:
+            self.end_date = None
+        super().save(*args, **kwargs)
