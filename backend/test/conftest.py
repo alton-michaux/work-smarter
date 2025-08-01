@@ -1,6 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 
 @pytest.fixture
@@ -21,3 +22,28 @@ def create_user(db):
     def make_user(username="testuser", email="testemail@email.com", password="testpass"):
         return User.objects.create_user(username=username, email=email, password=password)
     return make_user
+
+@pytest.fixture
+def get_user():
+    """
+    fetch default user
+    """
+    queryset = get_user_model().objects.filter(email="alice@wonderland.com")
+    user = queryset.first()
+    return user
+
+@pytest.fixture()
+def get_token(api_client, create_user):
+    """
+    function that instantiates a user, logs them in and returns the token
+    Usage:
+        token = get_token
+    """
+    user = create_user(username="alice", email="alice@wonderland.com", password="madhatter")
+    login_response = api_client.post(
+        "/api/auth/login/",
+        {"email": user.email, "password": "madhatter"},
+        format="json"
+    )
+    token = login_response.data["key"]
+    return token
