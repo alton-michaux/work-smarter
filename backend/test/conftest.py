@@ -1,7 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 from django.contrib.auth.models import User
-from api.models import Task
+from api.models import Task, Project
 from django.contrib.auth import get_user_model
 
 # --- API Client Fixtures ---
@@ -53,7 +53,7 @@ def get_token(api_client, create_user):
     token = login_response.data["key"]
     return token
 
-# --- Task Fixtures ---
+# --- API Endpoint Fixtures ---
 
 @pytest.fixture
 def create_task(db):
@@ -65,3 +65,14 @@ def create_task(db):
     def make_task(title="work", description="coding", begin_date="0000-00-00", is_done=True, user=None):
         return Task.objects.create(title=title, description=description, begin_date=begin_date, is_done=is_done, user=user)
     return make_task
+
+@pytest.fixture
+def create_project(db):
+    """
+    Factory to create projects easily in tests.
+    Usage:
+        project = create_project(name="work", user=1)
+    """
+    def make_project(name="work", user=None):
+        return Project.objects.create(name=name, user=user)
+    return make_project
