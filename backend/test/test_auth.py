@@ -1,6 +1,36 @@
 import pytest
 
 @pytest.mark.django_db
+def test_registration_success(api_client):
+    response = api_client.post(
+        "/api/auth/registration/",
+        {
+            "username": "newuser",
+            "email": "newuser@example.com",
+            "password1": "strongpassword123",
+            "password2": "strongpassword123"
+        },
+        format="json"
+    )
+    assert response.status_code == 201
+    assert "key" in response.data or "access" in response.data
+
+@pytest.mark.django_db
+def test_registration_password_mismatch(api_client):
+    response = api_client.post(
+        "/api/auth/registration/",
+        {
+            "username": "failuser",
+            "email": "failuser@example.com",
+            "password1": "password123",
+            "password2": "differentpassword"
+        },
+        format="json"
+    )
+    assert response.status_code == 400
+    assert "password" in str(response.data).lower()
+
+@pytest.mark.django_db
 def test_login_success(api_client, create_user):
     user = create_user(username= "alice", email="alice@wonderland.com", password="madhatter")
     response = api_client.post("/api/auth/login/", {"email": user.email, "password": "madhatter"}, format="json")
