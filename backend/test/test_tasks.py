@@ -11,6 +11,23 @@ def task_payload(user, **overrides):
     }
     payload.update(overrides)
     return payload
+  
+def create_file():    
+    # Simulate a .txt file with task content expected by DevParser
+    file_content = """
+    [Task]
+    category: Work
+    title: Test Import Task
+    done: False
+    priority: 1
+    carry_over: False
+    description: Imported task for testing
+    sub_task: False
+    """
+    file = io.BytesIO(file_content.encode("utf-8"))
+    file.name = "tasks.txt"
+    
+    return file
 
 @pytest.mark.django_db
 def test_task_index(auth_client):
@@ -35,25 +52,12 @@ def test_task_delete(auth_client, get_user, create_task):
     assert response.status_code == 204
 
 @pytest.mark.django_db
-def test_import_tasks(auth_client, get_user):
-    # Simulate a .txt file with task content expected by DevParser
-    file_content = """
-    [Task]
-    category: Work
-    title: Test Import Task
-    done: False
-    priority: 1
-    carry_over: False
-    description: Imported task for testing
-    sub_task: False
-    """
-    file = io.BytesIO(file_content.encode("utf-8"))
-    file.name = "tasks.txt"
-
+def test_import_tasks(auth_client):
     response = auth_client.post(
         "/api/import/",
-        {"file": file},
+        {"file": create_file()},
         format="multipart"
     )
+    print(f"response data: {response.data}")
     assert response.status_code == 201
     assert "imported" in response.data
