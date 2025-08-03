@@ -1,6 +1,6 @@
 import pytest
 
-# --- NON-CRITICAL tests added to achieve 100% test coverage
+# --- NON-CRITICAL tests added to achieve 100% test coverage (currently 92%)
 
 @pytest.mark.django_db
 def test_import_asgi():
