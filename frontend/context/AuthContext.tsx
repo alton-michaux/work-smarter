@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
 
       try {
-          const res = await fetch(`${API_URL}/api/auth/login/`, {
+          const res = await fetch(`${API_URL}/auth/login/`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(form),
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
       const token = localStorage.getItem('authToken');
       if (token) {
-          await fetch(`${API_URL}/api/auth/logout/`, {
+          await fetch(`${API_URL}/auth/logout/`, {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
