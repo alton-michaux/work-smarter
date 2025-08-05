@@ -1,0 +1,6 @@
+# fly.toml
+app = "backend"
+primary_region = "iad"
+
+[env]
+DJANGO_SETTINGS_MODULE = "backend.settings"
