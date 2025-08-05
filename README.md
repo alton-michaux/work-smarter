@@ -132,7 +132,7 @@ docker-compose exec backend python manage.py shell
 **Run tests**
 
 ```bash
-docker-compose exec backend python manage.py test
+docker-compose exec backend pytest --cov=backend
 ```
 
 ---

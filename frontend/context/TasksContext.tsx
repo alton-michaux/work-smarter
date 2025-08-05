@@ -38,7 +38,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const fetchTasks = async () => {
     if (!loggedIn) return;
     try {
-      const res = await fetch(`${API_URL}/api/tasks/`, { headers: getAuthHeaders() });
+      const res = await fetch(`${API_URL}/tasks/`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to fetch tasks');
       const data = await res.json();
       setTasks(data);
@@ -50,7 +50,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const fetchTasksByDateRange = useCallback(async (begin: string, end: string) => {
     if (!loggedIn) return;
     try {
-      const res = await fetch(`${API_URL}/api/tasks?begin_date=${begin}&end_date=${end}`, {
+      const res = await fetch(`${API_URL}/tasks?begin_date=${begin}&end_date=${end}`, {
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Failed to fetch tasks by date range');
@@ -64,7 +64,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const toggleTaskDone = async (taskId: number, isDone: boolean) => {
     if (!loggedIn) return;
     try {
-      const res = await fetch(`${API_URL}/api/tasks/${taskId}/`, {
+      const res = await fetch(`${API_URL}/tasks/${taskId}/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const addTask = async (task: Omit<Task, 'id'>) => {
     if (!loggedIn) return;
-    await fetch(`${API_URL}/api/tasks/`, {
+    await fetch(`${API_URL}/tasks/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const updateTask = async (task: Task) => {
     if (!loggedIn) return;
-    await fetch(`${API_URL}/api/tasks/${task.id}/`, {
+    await fetch(`${API_URL}/tasks/${task.id}/`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteTask = async (id: number) => {
     if (!loggedIn) return;
-    await fetch(`${API_URL}/api/tasks/${id}/`, {
+    await fetch(`${API_URL}/tasks/${id}/`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
