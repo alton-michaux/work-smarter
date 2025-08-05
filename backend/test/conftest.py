@@ -51,7 +51,6 @@ def get_token(api_client, create_user):
         {"username": user.username, "password": "madhatter"},
         format="json"
     )
-    print(f"token_print: {login_response.data["access"]}")
     token = login_response.data["access"]
     return token
 
