@@ -153,5 +153,8 @@ STATIC_URL = '/static/'
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
 CORS_ALLOW_CREDENTIALS = True
 
+# --- DEBUG ---
+REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = ['rest_framework.renderers.JSONRenderer']
+
 # --- Misc ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
