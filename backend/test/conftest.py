@@ -48,9 +48,10 @@ def get_token(api_client, create_user):
     user = create_user(username="alice", email="alice@wonderland.com", password="madhatter")
     login_response = api_client.post(
         "/api/auth/login/",
-        {"email": user.email, "password": "madhatter"},
+        {"username": user.name, "email": user.email, "password": "madhatter"},
         format="json"
     )
+    print(f"token_print: {login_response.data}")
     token = login_response.data["key"]
     return token
 
