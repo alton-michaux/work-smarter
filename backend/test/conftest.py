@@ -15,7 +15,7 @@ def api_client():
 @pytest.fixture
 def auth_client(api_client, get_token):
     """Returns an APIClient with authentication credentials set."""
-    api_client.credentials(HTTP_AUTHORIZATION=f"Token {get_token}")
+    api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {get_token}")
     return api_client
 
 # --- User Fixtures ---
@@ -48,11 +48,11 @@ def get_token(api_client, create_user):
     user = create_user(username="alice", email="alice@wonderland.com", password="madhatter")
     login_response = api_client.post(
         "/api/auth/login/",
-        {"username": user.name, "email": user.email, "password": "madhatter"},
+        {"username": user.username, "password": "madhatter"},
         format="json"
     )
-    print(f"token_print: {login_response.data}")
-    token = login_response.data["key"]
+    print(f"token_print: {login_response.data["access"]}")
+    token = login_response.data["access"]
     return token
 
 # --- API Endpoint Fixtures ---
