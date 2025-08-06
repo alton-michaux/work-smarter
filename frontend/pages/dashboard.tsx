@@ -39,7 +39,7 @@ function Dashboard() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/import/`, {
             method: 'POST',
             headers: {
-                'Authorization': `Token ${token}`,
+                'Authorization': `Bearer ${token}`,
             },
             body: formData,
         });
