@@ -1,11 +1,9 @@
 import { useAuth } from '../context/AuthContext';
 import withAuth from '../utils/withAuth';
-import Navbar from '../components/shared/Navbar';
 import Hero from '../components/shared/Hero';
 import ActionItems from 'components/shared/ActionItems';
 import FeatureList from '../components/shared/FeatureList';
 import PrivacyBlurb from '../components/shared/PrivacyBlurb';
-import Footer from '../components/shared/footer';
 
 const Home = () => {
   const { loggedIn } = useAuth();
