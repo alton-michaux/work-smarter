@@ -71,36 +71,69 @@ function Dashboard() {
     }
 
     return (
-        <div>
-            <h1>Dashboard</h1>
-            <p>Welcome to your dashboard! Here you can evaluate your skillsets efficiently.</p>
-            <ul>
-                <li>
-                    <button onClick={handleProjects}>Projects</button>
-                </li>
-                <li>
-                    <button onClick={handleTasks}>Tasks</button>
-                </li>
-                <li>
-                    <button onClick={handleLogout}>Logout</button>
-                </li>
-            </ul>
-            <div className="p-4">
-                <input
-                    type="file"
-                    accept=".txt" // later: ".txt,.csv"
-                    onChange={handleFileChange}
-                    className="mb-2"
-                />
+        <div className="min-h-screen bg-gray-50 px-4 py-10 flex justify-center">
+        <div className="w-full max-w-2xl bg-white rounded-lg shadow p-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-4 text-center">Dashboard</h1>
+            <p className="text-gray-600 text-center mb-8">
+            Welcome to your dashboard! Here you can evaluate your skillsets efficiently.
+            </p>
+
+            {/* Action Buttons */}
+            <ul className="grid gap-4 mb-8">
+            <li>
                 <button
-                    onClick={handleUpload}
-                    disabled={!selectedFile}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={handleProjects}
+                className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
                 >
-                    Upload File
+                Projects
                 </button>
-                {uploadStatus && <p className="mt-2 text-sm">{uploadStatus}</p>}
+            </li>
+            <li>
+                <button
+                onClick={handleTasks}
+                className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+                >
+                Tasks
+                </button>
+            </li>
+            <li>
+                <button
+                onClick={handleLogout}
+                className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition"
+                >
+                Logout
+                </button>
+            </li>
+            </ul>
+
+            {/* File Upload */}
+            <div className="border-t pt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Upload a .txt file</label>
+            <input
+                type="file"
+                accept=".txt"
+                onChange={handleFileChange}
+                className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4
+                        file:rounded file:border-0 file:text-sm file:font-semibold
+                        file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+            />
+            <button
+                onClick={handleUpload}
+                disabled={!selectedFile}
+                className={`mt-4 w-full py-2 rounded text-white transition ${
+                selectedFile
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-blue-300 cursor-not-allowed'
+                }`}
+            >
+                Upload File
+            </button>
+
+            {uploadStatus && (
+                <p className="mt-2 text-sm text-gray-600 text-center">{uploadStatus}</p>
+            )}
             </div>
+        </div>
         </div>
     );
 }
