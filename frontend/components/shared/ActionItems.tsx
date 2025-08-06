@@ -4,10 +4,10 @@ export default function ActionItems () {
   return(    
       <section className="flex space-x-8 justify-center">
         <Link href="/register" legacyBehavior>
-          <a className="inline-block text-gray-700 hover:text-blue-600">Sign Up</a>
+          <a className="bg-green-600 text-white px-6 py-3 rounded shadow hover:bg-green-700 transition">Sign Up</a>
         </Link>
         <Link href="/about" legacyBehavior>
-          <a className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Learn More</a>
+          <a className="text-green-600 hover:underline px-6 py-3">Learn More</a>
         </Link>
       </section>
   )
