@@ -46,7 +46,7 @@ const Login = () => {
             </form>
             {error && <p style={{ color: 'red' }}>{error}</p>}
             <p>Don't have an account? <a href="/register">Sign up here</a>.</p>
-            <a href="/">Back to Home</a>
+            <a href="/">Home</a>
         </div>
     );
 };

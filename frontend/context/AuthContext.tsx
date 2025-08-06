@@ -11,6 +11,26 @@ export const AuthProvider = ({ children }) => {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
 
+  const register = async (form) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/registration/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(JSON.stringify(data));
+      }
+
+      router.push('/login');
+    } catch (err: any) {
+      const msg = err.message.includes('{') ? JSON.parse(err.message) : { error: err.message };
+      setError(msg?.non_field_errors?.[0] || msg?.password1?.[0] || msg?.error || 'Registration failed');
+    }
+  }
+
   const login = async (form) => {
       setError(null);
 
@@ -62,7 +82,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ loggedIn, setLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{ loggedIn, setLoggedIn, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

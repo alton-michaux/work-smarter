@@ -101,8 +101,6 @@ function Dashboard() {
                 </button>
                 {uploadStatus && <p className="mt-2 text-sm">{uploadStatus}</p>}
             </div>
-            <button onClick={() => router.back()}>Back</button>
-            <button onClick={() => router.push('/')}>Home</button>
         </div>
     );
 }
