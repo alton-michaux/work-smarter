@@ -11,8 +11,7 @@ const Home = () => {
   const { loggedIn } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
+    <div>
 
       {loggedIn ? (
         <main className="flex-grow text-center px-6 py-20 bg-gray-50">
@@ -33,8 +32,6 @@ const Home = () => {
           <PrivacyBlurb />
         </>
       )}
-
-      <Footer />
     </div>
   );
 };
