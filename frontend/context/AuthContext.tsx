@@ -28,8 +28,8 @@ export const AuthProvider = ({ children }) => {
 
           const data = await res.json();
           // Save token to localStorage (or sessionStorage)
-          if (data.key) {
-              localStorage.setItem('authToken', data.key);
+          if (data.access) {
+              localStorage.setItem('authToken', data.access);
           }
 
           setLoggedIn(true);
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
-                  'Authorization': `Token ${token}`,
+                  'Authorization': `Bearer ${token}`,
               },
           });
       }

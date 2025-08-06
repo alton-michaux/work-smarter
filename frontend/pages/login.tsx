@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
     const { login } = useAuth();
-    const [form, setForm] = useState({ email: '', password: '' });
+    const [form, setForm] = useState({ username: '', password: '' });
     const [error, setError] = useState<string | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -21,12 +21,12 @@ const Login = () => {
             <h2>Login</h2>
             <form onSubmit={handleLogin}>
                 <div>
-                    <label htmlFor="email">email:</label>
+                    <label htmlFor="username">username:</label>
                     <input
                         type="text"
-                        id="email"
-                        name="email"
-                        value={form.email}
+                        id="username"
+                        name="username"
+                        value={form.username}
                         onChange={handleChange}
                         required
                     />

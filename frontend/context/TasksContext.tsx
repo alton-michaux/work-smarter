@@ -1,21 +1,9 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
+import { Task } from 'types/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-type Task = {
-  id: number;
-  title: string;
-  category: string;
-  is_done: boolean;
-  priority: string;
-  description: string;
-  is_subtask: boolean;
-  carry_over: boolean;
-  user: number;
-  project: number;
-};
 
 type TasksContextType = {
   tasks: Task[];

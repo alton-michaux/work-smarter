@@ -1,13 +1,9 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
+import { Project } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-type Project = {
-  id: number;
-  name: string;
-};
 
 type ProjectsContextType = {
   projects: Project[];
