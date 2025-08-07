@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.db.models import Q
 from datetime import datetime
 from .models import Resume, Project, Task
 from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer
@@ -51,10 +52,23 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         if begin_date_str and end_date_str:
             try:
-                begin_date = datetime.strptime(begin_date_str, "%Y-%m-%d").date()
-                end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-                
-                queryset = queryset.filter(begin_date__range=(begin_date, end_date))
+                start_of_week = datetime.strptime(begin_date_str, "%Y-%m-%d").date()
+                end_of_week = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+
+                queryset = queryset.filter(
+                    Q(  # Case 1: begin_date exists
+                        Q(begin_date__lte=end_of_week) &
+                        (
+                            Q(end_date__isnull=True) |
+                            Q(end_date__gte=start_of_week)
+                        )
+                    )
+                    |
+                    Q(  # Case 2: begin_date is null but end_date is within the week
+                        Q(begin_date__isnull=True) &
+                        Q(end_date__range=(start_of_week, end_of_week))
+                    )
+                )
             except ValueError:
                 print("[DEBUG] Invalid date format")
                 pass
