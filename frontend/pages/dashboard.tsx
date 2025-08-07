@@ -96,14 +96,6 @@ function Dashboard() {
                 Tasks
                 </button>
             </li>
-            <li>
-                <button
-                onClick={handleLogout}
-                className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition"
-                >
-                Logout
-                </button>
-            </li>
             </ul>
 
             {/* File Upload */}
@@ -133,7 +125,16 @@ function Dashboard() {
                 <p className="mt-2 text-sm text-gray-600 text-center">{uploadStatus}</p>
             )}
             </div>
-        </div>
+            
+            <div className="mt-8 border-t pt-6 text-center">
+                <button
+                    onClick={handleLogout}
+                    className="text-red-600 hover:text-red-800 text-sm font-medium transition"
+                >
+                    Log out
+                </button>
+                </div>
+            </div>
         </div>
     );
 }

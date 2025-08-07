@@ -14,7 +14,7 @@ export default function Navbar() {
             <Link href="/login" legacyBehavior>
               <a className="text-gray-700 hover:text-green-600">Login</a>
             </Link>
-          )};
+          )}
       </div>
     </header>
   );
