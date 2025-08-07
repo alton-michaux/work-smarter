@@ -6,14 +6,25 @@ import WeekSelector from '../../../components/tasks/WeekSelector';
 import TaskTable from '../../../components/tasks/TaskTable';
 
 export default function TaskTrackerPage() {
-  const [selectedWeek, setSelectedWeek] = useState(getCurrentMonday());
+  const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
   const { tasks, fetchTasksByDateRange, toggleTaskDone } = useTasks();
   const router = useRouter();
 
+  // Set current Monday only on the client
   useEffect(() => {
-    const end = getEndOfWeek(selectedWeek);
-    fetchTasksByDateRange(selectedWeek, end);
+    setSelectedWeek(getCurrentMonday());
+  }, []);
+
+  // Fetch tasks once selectedWeek is ready
+  useEffect(() => {
+    if (selectedWeek) {
+      const end = getEndOfWeek(selectedWeek);
+      fetchTasksByDateRange(selectedWeek, end);
+    }
   }, [selectedWeek, fetchTasksByDateRange]);
+
+  // Don't render until selectedWeek is set (avoids hydration mismatch)
+  if (!selectedWeek) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">

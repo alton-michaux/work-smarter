@@ -1,12 +1,4 @@
-type Task = {
-  id: number;
-  title: string;
-  begin_date: string;
-  end_date: string | null;
-  is_done: boolean;
-  category: string | null;
-  priority: string;
-};
+import { Task } from "types/types";
 
 type Props = {
   tasks: Task[];
