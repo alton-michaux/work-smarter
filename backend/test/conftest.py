@@ -63,8 +63,8 @@ def create_task(db):
     Usage:
         task = create_task(title="work", description="coding", begin_date="0000-00-00", is_done=True, user=1)
     """
-    def make_task(title="work", description="coding", begin_date="0000-00-00", is_done=True, user=None):
-        return Task.objects.create(title=title, description=description, begin_date=begin_date, is_done=is_done, user=user)
+    def make_task(title="work", description="coding", begin_date="0000-00-00", end_date="0000-00-00", is_done=True, user=None):
+        return Task.objects.create(title=title, description=description, begin_date=begin_date, end_date=end_date, is_done=is_done, user=user)
     return make_task
 
 @pytest.fixture
