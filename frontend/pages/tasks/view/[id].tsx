@@ -31,9 +31,9 @@ const TaskShowPage = () => {
   };
 
   return (
-    <div>
-      <h1>Task Details</h1>
-      <ul>
+    <div className="max-w-2xl mx-auto p-6 bg-white shadow-md rounded">
+      <h1 className="text-2xl font-semibold mb-4 text-gray-800">Task Details</h1>
+      <ul className="space-y-2 text-gray-700">
         <li><strong>ID:</strong> {task.id}</li>
         <li><strong>Title:</strong> {task.title}</li>
         <li><strong>Category:</strong> {task.category}</li>
@@ -45,9 +45,27 @@ const TaskShowPage = () => {
         <li><strong>User:</strong> {task.user}</li>
         <li><strong>Project:</strong> {task.project}</li>
       </ul>
-      <button onClick={() => router.back()}>Back</button>
-      <button onClick={() => router.push('/tasks')}>All Tasks</button>
-      <button onClick={() => router.push('/')}>Home</button>
+
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={() => router.back()}
+          className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+        >
+          Back
+        </button>
+        <button
+          onClick={() => router.push('/tasks')}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          All Tasks
+        </button>
+        <button
+          onClick={() => router.push('/')}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Home
+        </button>
+      </div>
     </div>
   );
 };

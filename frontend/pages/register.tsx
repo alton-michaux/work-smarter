@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
+  const { register } = useAuth();
   const [form, setForm] = useState({
     username: '',
     email: '',
@@ -19,39 +21,66 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/registration/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(JSON.stringify(data));
-      }
-
-      // ✅ Registered! Redirect to login or dashboard
-      router.push('/login');
-    } catch (err: any) {
-      const msg = err.message.includes('{') ? JSON.parse(err.message) : { error: err.message };
-      setError(msg?.non_field_errors?.[0] || msg?.password1?.[0] || msg?.error || 'Registration failed');
-    }
+    register(form);
   };
 
   return (
-    <div>
-      <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
-        <input name="username" placeholder="Username" onChange={handleChange} required />
-        <input name="email" placeholder="Email" type="email" onChange={handleChange} required />
-        <input name="password1" placeholder="Password" type="password" onChange={handleChange} required />
-        <input name="password2" placeholder="Confirm Password" type="password" onChange={handleChange} required />
-        <button type="submit">Register</button>
-      </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <button onClick={() => router.back()}>Back</button>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md bg-white rounded-lg shadow p-8">
+        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">Create an Account</h1>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            name="username"
+            placeholder="Username"
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          <input
+            name="password1"
+            type="password"
+            placeholder="Password"
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          <input
+            name="password2"
+            type="password"
+            placeholder="Confirm Password"
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+
+          {error && (
+            <p className="text-red-600 text-sm font-medium">{error}</p>
+          )}
+
+          <button
+            type="submit"
+            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+          >
+            Register
+          </button>
+        </form>
+
+        <button
+          onClick={() => router.back()}
+          className="mt-4 text-sm text-gray-500 hover:underline"
+        >
+          ← Back
+        </button>
+      </div>
     </div>
   );
 }

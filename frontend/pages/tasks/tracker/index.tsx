@@ -6,23 +6,53 @@ import WeekSelector from '../../../components/tasks/WeekSelector';
 import TaskTable from '../../../components/tasks/TaskTable';
 
 export default function TaskTrackerPage() {
-  const [selectedWeek, setSelectedWeek] = useState(getCurrentMonday());
+  const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
   const { tasks, fetchTasksByDateRange, toggleTaskDone } = useTasks();
   const router = useRouter();
 
+  // Set current Monday only on the client
   useEffect(() => {
-    const end = getEndOfWeek(selectedWeek);
-    fetchTasksByDateRange(selectedWeek, end);
+    setSelectedWeek(getCurrentMonday());
+  }, []);
+
+  // Fetch tasks once selectedWeek is ready
+  useEffect(() => {
+    if (selectedWeek) {
+      const end = getEndOfWeek(selectedWeek);
+      fetchTasksByDateRange(selectedWeek, end);
+    }
   }, [selectedWeek, fetchTasksByDateRange]);
 
+  // Don't render until selectedWeek is set (avoids hydration mismatch)
+  if (!selectedWeek) return null;
+
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Weekly Task Tracker</h1>
-      <WeekSelector selectedWeek={selectedWeek} onWeekChange={setSelectedWeek} />
-      <TaskTable tasks={tasks} toggleTaskDone={(task) => toggleTaskDone(task.id, task.is_done)} />
-      <div className="mt-4 flex gap-2">
-        <button onClick={() => router.push('/tasks')}>Back to Task List</button>
-        <button onClick={() => router.push('/')}>Home</button>
+    <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">
+      <div className="w-full max-w-4xl bg-white rounded-lg shadow p-8">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+          Weekly Task Tracker
+        </h1>
+
+        <WeekSelector
+          selectedWeek={selectedWeek}
+          onWeekChange={setSelectedWeek}
+        />
+
+        <div className="mt-6">
+          <TaskTable
+            tasks={tasks}
+            toggleTaskDone={(task) => toggleTaskDone(task.id, task.is_done)}
+          />
+        </div>
+
+        <div className="mt-8 flex justify-end">
+          <button
+            onClick={() => router.push('/tasks')}
+            className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition"
+          >
+            ← Back to Tasks
+          </button>
+        </div>
       </div>
     </div>
   );

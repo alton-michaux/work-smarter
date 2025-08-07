@@ -27,7 +27,14 @@ export default function TaskCreatePage() {
     <div>
       <h1>Create Task</h1>
       <TaskForm initialTask={emptyTask} onSubmit={handleCreate} submitLabel="Create" />
-      <button onClick={() => router.back()} style={{ marginTop: 12 }}>Back</button>
+      <div className="flex space-x-4">
+        <button
+          onClick={() => router.back()}
+          className="text-sm text-gray-600 hover:underline"
+        >
+          ← Back
+        </button>
+      </div>
     </div>
   );
 }

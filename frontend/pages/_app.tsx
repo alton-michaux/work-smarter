@@ -2,17 +2,23 @@ import { AuthProvider } from '../context/AuthContext';
 import { ProjectsProvider } from '../context/ProjectsContext';
 import { TasksProvider } from '../context/TasksContext';
 import { APIProvider } from '../context/APIContext';
-// import '../styles/globals.css';
+import Navbar from '../components/shared/Navbar';
+import Footer from '../components/shared/footer';
+import '../styles/globals.css';
 
 function MyApp({ Component, pageProps }) {
   return (
     <AuthProvider>
       <APIProvider>
-        <ProjectsProvider>
-          <TasksProvider>
-            <Component {...pageProps} />
-          </TasksProvider>
-        </ProjectsProvider>
+        <div className="min-h-screen flex flex-col">
+          <Navbar />
+            <ProjectsProvider>
+              <TasksProvider>
+                <Component {...pageProps} />
+              </TasksProvider>
+            </ProjectsProvider>
+          <Footer />
+        </div>
       </APIProvider>
     </AuthProvider>
   );
