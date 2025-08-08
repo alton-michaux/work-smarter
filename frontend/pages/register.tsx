@@ -4,15 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import Spinner from 'components/shared/Spinner';
 
 const Register = () => {
-  const { register, isLoading } = useAuth(); // <-- get isLoading from context
+  const { register, isLoading, error } = useAuth(); // <-- get error from context
   const [form, setForm] = useState({
     username: '',
     email: '',
     password1: '',
     password2: '',
   });
-  
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
