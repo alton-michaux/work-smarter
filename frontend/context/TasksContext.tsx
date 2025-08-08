@@ -14,6 +14,7 @@ type TasksContextType = {
   fetchTasks: () => Promise<void>;
   fetchTasksByDateRange: (begin: string, end: string) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
+  isLoading: boolean;
 };
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
@@ -22,22 +23,27 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const { getAuthHeaders } = useAPI();
   const { loggedIn } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchTasks = async () => {
     if (!loggedIn) return;
     try {
+      setIsLoading(true);
       const res = await fetch(`${API_URL}/tasks/`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to fetch tasks');
       const data = await res.json();
       setTasks(data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchTasksByDateRange = useCallback(async (begin: string, end: string) => {
     if (!loggedIn) return;
     try {
+      setIsLoading(true);
       const res = await fetch(`${API_URL}/tasks?begin_date=${begin}&end_date=${end}`, {
         headers: getAuthHeaders(),
       });
@@ -46,6 +52,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       setTasks(data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   }, [loggedIn, getAuthHeaders]);
 
@@ -119,6 +127,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         fetchTasks,
         fetchTasksByDateRange,
         toggleTaskDone,
+        isLoading,
       }}
     >
       {children}

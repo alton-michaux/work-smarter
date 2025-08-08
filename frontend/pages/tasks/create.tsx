@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useTasks } from '../../context/TasksContext';
 import TaskForm from '../../components/tasks/TaskForm';
+import Spinner from 'components/shared/Spinner';
 
 const emptyTask = {
   title: '',
@@ -16,17 +17,23 @@ const emptyTask = {
 
 export default function TaskCreatePage() {
   const router = useRouter();
-  const { addTask } = useTasks();
+  const { addTask, isLoading } = useTasks(); // Add isLoading
 
-  const handleCreate = (task) => {
-    addTask(task);
+  const handleCreate = async (task) => {
+    await addTask(task);
     router.push('/tasks');
   };
 
   return (
     <div>
       <h1>Create Task</h1>
-      <TaskForm initialTask={emptyTask} onSubmit={handleCreate} submitLabel="Create" />
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Spinner />
+        </div>
+      ) : (
+        <TaskForm initialTask={emptyTask} onSubmit={handleCreate} submitLabel="Create" />
+      )}
       <div className="flex space-x-4">
         <button
           onClick={() => router.back()}

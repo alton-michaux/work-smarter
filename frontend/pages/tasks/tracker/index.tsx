@@ -4,10 +4,11 @@ import { useTasks } from '../../../context/TasksContext';
 import { getCurrentMonday, getEndOfWeek } from '../../../utils/dateUtils';
 import WeekSelector from '../../../components/tasks/WeekSelector';
 import TaskTable from '../../../components/tasks/TaskTable';
+import Spinner from 'components/shared/Spinner';
 
 export default function TaskTrackerPage() {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
-  const { tasks, fetchTasksByDateRange, toggleTaskDone } = useTasks();
+  const { tasks, fetchTasksByDateRange, toggleTaskDone, isLoading } = useTasks(); // Add isLoading
   const router = useRouter();
 
   // Set current Monday only on the client
@@ -39,10 +40,16 @@ export default function TaskTrackerPage() {
         />
 
         <div className="mt-6">
-          <TaskTable
-            tasks={tasks}
-            toggleTaskDone={(task) => toggleTaskDone(task.id, task.is_done)}
-          />
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
+          ) : (
+            <TaskTable
+              tasks={tasks}
+              toggleTaskDone={(task) => toggleTaskDone(task.id, task.is_done)}
+            />
+          )}
         </div>
 
         <div className="mt-8 flex justify-end">

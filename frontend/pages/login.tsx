@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import Spinner from 'components/shared/Spinner';
 
 const Login = () => {
-    const { login } = useAuth();
+    const { login, isLoading } = useAuth();
     const [form, setForm] = useState({ username: '', password: '' });
     const [error, setError] = useState<string | null>(null);
 
@@ -21,46 +22,52 @@ const Login = () => {
         <div className="w-full max-w-md bg-white rounded-lg shadow p-8">
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Login</h2>
 
+            {isLoading ? (
+            <div className="flex justify-center my-8">
+                <Spinner />
+            </div>
+            ) : (
             <form onSubmit={handleLogin} className="space-y-4">
-            <div>
+                <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                Username
+                    Username
                 </label>
                 <input
-                type="text"
-                id="username"
-                name="username"
-                value={form.username}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={form.username}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
-            </div>
+                </div>
 
-            <div>
+                <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+                    Password
                 </label>
                 <input
-                type="password"
-                id="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
-            </div>
+                </div>
 
-            {error && <p className="text-red-600 text-sm font-medium">{error}</p>}
+                {error && <p className="text-red-600 text-sm font-medium">{error}</p>}
 
-            <button
+                <button
                 type="submit"
                 className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-            >
+                >
                 Login
-            </button>
+                </button>
             </form>
+            )}
 
             <p className="text-sm text-gray-600 mt-4 text-center">
             Don&apos;t have an account?{' '}
