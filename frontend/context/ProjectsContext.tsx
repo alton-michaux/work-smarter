@@ -12,6 +12,7 @@ type ProjectsContextType = {
   updateProject: (project: Project) => Promise<void>;
   deleteProject: (id: number) => Promise<void>;
   fetchProjects: () => Promise<void>;
+  isLoading: boolean;
 };
 
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined);
@@ -26,9 +27,11 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const { getAuthHeaders } = useAPI();
   const { loggedIn } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchProjects = async () => {
-    if (!loggedIn) return; // Don't fetch if not logged in
+    if (!loggedIn) return;
+    setIsLoading(true);
     try {
       const res = await fetch(`${API_URL}/projects/`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to fetch projects');
@@ -36,6 +39,8 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       setProjects(data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -45,6 +50,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
 
   const addProject = async (project: Omit<Project, 'id'>) => {
     if (!loggedIn) return;
+    setIsLoading(true);
     try {
       const res = await fetch(`${API_URL}/projects/`, {
         method: 'POST',
@@ -55,11 +61,14 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       setProjects(prev => [...prev, newProject]);
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const updateProject = async (updatedProject: Project) => {
     if (!loggedIn) return;
+    setIsLoading(true);
     try {
       const res = await fetch(`${API_URL}/projects/${updatedProject.id}/`, {
         method: 'PATCH',
@@ -70,11 +79,14 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       setProjects(prev => prev.map(p => (p.id === data.id ? data : p)));
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const deleteProject = async (id: number) => {
     if (!loggedIn) return;
+    setIsLoading(true);
     try {
       await fetch(`${API_URL}/projects/${id}/`, {
         method: 'DELETE',
@@ -83,12 +95,14 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       setProjects(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <ProjectsContext.Provider
-      value={{ projects, setProjects, addProject, updateProject, deleteProject, fetchProjects }}
+      value={{ projects, setProjects, addProject, updateProject, deleteProject, fetchProjects, isLoading }}
     >
       {children}
     </ProjectsContext.Provider>

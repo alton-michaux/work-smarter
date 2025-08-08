@@ -1,8 +1,9 @@
 import { useProjects } from '../../context/ProjectsContext';
 import { useRouter } from 'next/router';
+import Spinner from 'components/shared/Spinner';
 
 const ProjectsPage = () => {
-  const { projects, deleteProject } = useProjects();
+  const { projects, deleteProject, isLoading } = useProjects(); // Add isLoading
   const router = useRouter();
 
   const handleProjectClick = (id: number) => {
@@ -33,7 +34,11 @@ const ProjectsPage = () => {
           </button>
         </div>
 
-        {projects.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        ) : projects.length === 0 ? (
           <p className="text-gray-600 text-center">No projects found.</p>
         ) : (
           <ul className="space-y-4">

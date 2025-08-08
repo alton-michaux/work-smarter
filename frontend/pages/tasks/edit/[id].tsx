@@ -17,9 +17,9 @@ export default function TaskEditPage() {
 
   return (
     <div>
-      <h1>Edit Task</h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Edit Task</h1>
       <TaskForm initialTask={task} onSubmit={handleUpdate} submitLabel="Update" />
-      <button onClick={() => router.push(`/tasks/view/${id}`)} style={{ marginTop: 12 }}>Cancel</button>
+      <button className="text-gray-500 text-sm hover:underline" onClick={() => router.push(`/tasks/view/${id}`)} style={{ marginTop: 12 }}>Cancel</button>
     </div>
   );
 }
