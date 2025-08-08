@@ -10,8 +10,10 @@ export const AuthProvider = ({ children }) => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const register = async (form) => {
+    setIsLoading(true)
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/registration/`, {
         method: 'POST',
@@ -28,12 +30,14 @@ export const AuthProvider = ({ children }) => {
     } catch (err: any) {
       const msg = err.message.includes('{') ? JSON.parse(err.message) : { error: err.message };
       setError(msg?.non_field_errors?.[0] || msg?.password1?.[0] || msg?.error || 'Registration failed');
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const login = async (form) => {
       setError(null);
-
+      setIsLoading(true)
       try {
           const res = await fetch(`${API_URL}/auth/login/`, {
               method: 'POST',
@@ -57,10 +61,13 @@ export const AuthProvider = ({ children }) => {
       } catch (err: any) {
           const msg = err.message.includes('{') ? JSON.parse(err.message) : { error: err.message };
           setError(msg?.non_field_errors?.[0] || msg?.error || 'Login failed');
+      } finally {
+        setIsLoading(false)
       }
   };
 
   const logout = async () => {
+      setIsLoading(true)
       const token = localStorage.getItem('authToken');
       if (token) {
           await fetch(`${API_URL}/auth/logout/`, {
@@ -74,6 +81,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('authToken');
       setLoggedIn(false);
       router.push('/login');
+      setIsLoading(false);
   };
 
   useEffect(() => {
@@ -82,7 +90,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ loggedIn, setLoggedIn, login, logout, register }}>
+    <AuthContext.Provider value={{ loggedIn, setLoggedIn, login, logout, register, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

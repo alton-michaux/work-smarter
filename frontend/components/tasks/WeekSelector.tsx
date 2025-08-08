@@ -1,5 +1,3 @@
-import { getCurrentMonday } from '../../utils/dateUtils';
-
 type Props = {
   selectedWeek: string;
   onWeekChange: (newWeek: string) => void;
