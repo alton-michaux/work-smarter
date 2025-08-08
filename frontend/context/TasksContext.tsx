@@ -15,6 +15,7 @@ type TasksContextType = {
   fetchTasksByDateRange: (begin: string, end: string) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
   isLoading: boolean;
+  error: string | null;
 };
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
@@ -24,16 +25,19 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const { loggedIn } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchTasks = async () => {
     if (!loggedIn) return;
-    try {
       setIsLoading(true);
+      setError(null);
+    try {
       const res = await fetch(`${API_URL}/tasks/`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to fetch tasks');
       const data = await res.json();
       setTasks(data);
     } catch (err) {
+      setError(err.message || 'unknown error')
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -42,8 +46,9 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchTasksByDateRange = useCallback(async (begin: string, end: string) => {
     if (!loggedIn) return;
-    try {
       setIsLoading(true);
+      setError(null);
+    try {
       const res = await fetch(`${API_URL}/tasks?begin_date=${begin}&end_date=${end}`, {
         headers: getAuthHeaders(),
       });
@@ -51,6 +56,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       const data = await res.json();
       setTasks(data);
     } catch (err) {
+      setError(err.message || 'unknown error');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -59,6 +65,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const toggleTaskDone = async (taskId: number, isDone: boolean) => {
     if (!loggedIn) return;
+    setError(null)
     try {
       const res = await fetch(`${API_URL}/tasks/${taskId}/`, {
         method: 'PATCH',
@@ -73,6 +80,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...updated } : t)));
       }
     } catch (err) {
+      setError(err.message || 'unknown error')
       console.error(err);
     }
   };
@@ -128,6 +136,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         fetchTasksByDateRange,
         toggleTaskDone,
         isLoading,
+        error
       }}
     >
       {children}

@@ -13,7 +13,8 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const register = async (form) => {
-    setIsLoading(true)
+    setIsLoading(true);
+    setError(null); // Reset error
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/registration/`, {
         method: 'POST',
@@ -31,57 +32,64 @@ export const AuthProvider = ({ children }) => {
       const msg = err.message.includes('{') ? JSON.parse(err.message) : { error: err.message };
       setError(msg?.non_field_errors?.[0] || msg?.password1?.[0] || msg?.error || 'Registration failed');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const login = async (form) => {
-      setError(null);
-      setIsLoading(true)
-      try {
-          const res = await fetch(`${API_URL}/auth/login/`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(form),
-          });
+    setError(null); // Reset error
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/auth/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
 
-          if (!res.ok) {
-              const data = await res.json();
-              throw new Error(JSON.stringify(data));
-          }
-
-          const data = await res.json();
-          // Save token to localStorage (or sessionStorage)
-          if (data.access) {
-              localStorage.setItem('authToken', data.access);
-          }
-
-          setLoggedIn(true);
-          router.push('/dashboard');
-      } catch (err: any) {
-          const msg = err.message.includes('{') ? JSON.parse(err.message) : { error: err.message };
-          setError(msg?.non_field_errors?.[0] || msg?.error || 'Login failed');
-      } finally {
-        setIsLoading(false)
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(JSON.stringify(data));
       }
+
+      const data = await res.json();
+      // Save token to localStorage (or sessionStorage)
+      if (data.access) {
+        localStorage.setItem('authToken', data.access);
+      }
+
+      setLoggedIn(true);
+      router.push('/dashboard');
+    } catch (err: any) {
+      const msg = err.message.includes('{') ? JSON.parse(err.message) : { error: err.message };
+      setError(msg?.non_field_errors?.[0] || msg?.error || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = async () => {
-      setIsLoading(true)
-      const token = localStorage.getItem('authToken');
+    setIsLoading(true);
+    setError(null); // Reset error
+    const token = localStorage.getItem('authToken');
+    try {
       if (token) {
-          await fetch(`${API_URL}/auth/logout/`, {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`,
-              },
-          });
+        await fetch(`${API_URL}/auth/logout/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
       }
       localStorage.removeItem('authToken');
       setLoggedIn(false);
       router.push('/login');
+    } catch (err: any) {
+      setError('Logout failed');
+      console.error(err);
+    } finally {
       setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -90,7 +98,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ loggedIn, setLoggedIn, login, logout, register, isLoading }}>
+    <AuthContext.Provider value={{ loggedIn, setLoggedIn, login, logout, register, isLoading, error }}>
       {children}
     </AuthContext.Provider>
   );
