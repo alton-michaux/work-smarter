@@ -4,28 +4,23 @@ import { useAuth } from '../context/AuthContext';
 
 function Logout() {
     const router = useRouter();
-    const { setLoggedIn } = useAuth();
+    const { setLoggedIn, logout, error } = useAuth();
 
     useEffect(() => {
-        const logout = async () => {
-            const token = localStorage.getItem('authToken');
-            if (token) {
-                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
-            }
-            localStorage.removeItem('authToken');
-            setLoggedIn(false);
-            router.push('/');
+        const logout_user = async () => {
+            logout()
         };
-        logout();
+        logout_user();
     }, [setLoggedIn, router]);
 
-    return <p>Logging out...</p>;
+    return (
+        <div>
+            <p>Logging out...</p>
+            {error && (
+                <p className="text-red-600 text-sm font-medium">{error}</p>
+            )}
+        </div>
+    );
 }
 
 export default Logout;

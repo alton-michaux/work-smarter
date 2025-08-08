@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useTasks } from '../../context/TasksContext';
 import TaskForm from '../../components/tasks/TaskForm';
+import Spinner from 'components/shared/Spinner';
 
 const emptyTask = {
   title: '',
@@ -16,24 +17,34 @@ const emptyTask = {
 
 export default function TaskCreatePage() {
   const router = useRouter();
-  const { addTask } = useTasks();
+  const { addTask, isLoading } = useTasks(); // Add isLoading
 
-  const handleCreate = (task) => {
-    addTask(task);
+  const handleCreate = async (task) => {
+    await addTask(task);
     router.push('/tasks');
   };
 
   return (
-    <div>
-      <h1>Create Task</h1>
-      <TaskForm initialTask={emptyTask} onSubmit={handleCreate} submitLabel="Create" />
-      <div className="flex space-x-4">
-        <button
-          onClick={() => router.back()}
-          className="text-sm text-gray-600 hover:underline"
-        >
-          ← Back
-        </button>
+    <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">
+      <div className="w-full max-w-2xl bg-white rounded-lg shadow p-8">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Create Task</h1>
+
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        ) : (
+          <TaskForm initialTask={emptyTask} onSubmit={handleCreate} submitLabel="Create" />
+        )}
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => router.back()}
+            className="text-sm text-gray-600 hover:underline"
+          >
+            ← Back
+          </button>
+        </div>
       </div>
     </div>
   );

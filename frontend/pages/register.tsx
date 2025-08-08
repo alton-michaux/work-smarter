@@ -1,17 +1,16 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
+import Spinner from 'components/shared/Spinner';
 
 const Register = () => {
-  const { register } = useAuth();
+  const { register, isLoading, error } = useAuth(); // <-- get error from context
   const [form, setForm] = useState({
     username: '',
     email: '',
     password1: '',
     password2: '',
   });
-  
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,50 +28,56 @@ const Register = () => {
       <div className="w-full max-w-md bg-white rounded-lg shadow p-8">
         <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">Create an Account</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            name="username"
-            placeholder="Username"
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-          <input
-            name="password1"
-            type="password"
-            placeholder="Password"
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-          <input
-            name="password2"
-            type="password"
-            placeholder="Confirm Password"
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              name="username"
+              placeholder="Username"
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <input
+              name="email"
+              type="email"
+              placeholder="Email"
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <input
+              name="password1"
+              type="password"
+              placeholder="Password"
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <input
+              name="password2"
+              type="password"
+              placeholder="Confirm Password"
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
 
-          {error && (
-            <p className="text-red-600 text-sm font-medium">{error}</p>
-          )}
+            {error && (
+              <p className="text-red-600 text-sm font-medium">{error}</p>
+            )}
 
-          <button
-            type="submit"
-            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-          >
-            Register
-          </button>
-        </form>
+            <button
+              type="submit"
+              className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+            >
+              Register
+            </button>
+          </form>
+        )}
 
         <button
           onClick={() => router.back()}

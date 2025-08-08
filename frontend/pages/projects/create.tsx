@@ -1,12 +1,13 @@
 import { useRouter } from 'next/router';
 import { useProjects } from '../../context/ProjectsContext';
 import ProjectForm from '../../components/projects/ProjectForm';
+import Spinner from 'components/shared/Spinner';
 
 const emptyProject = { name: '' };
 
 export default function ProjectCreatePage() {
   const router = useRouter();
-  const { addProject } = useProjects();
+  const { addProject, isLoading } = useProjects();
 
   const handleCreate = async (project) => {
     await addProject(project);
@@ -15,16 +16,22 @@ export default function ProjectCreatePage() {
 
   return (
     <div>
-      <h1>Create Project</h1>
-      <ProjectForm initialProject={emptyProject} onSubmit={handleCreate} submitLabel="Create" />
-      <div className="mt-8 flex justify-between">
-          <button
-            onClick={() => router.back()}
-            className="text-sm text-gray-600 hover:underline"
-          >
-            ← Back
-          </button>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Create Project</h1>
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Spinner />
         </div>
+      ) : (
+        <ProjectForm initialProject={emptyProject} onSubmit={handleCreate} submitLabel="Create" />
+      )}
+      <div className="mt-8 flex justify-between">
+        <button
+          onClick={() => router.back()}
+          className="text-sm text-gray-600 hover:underline"
+        >
+          ← Back
+        </button>
+      </div>
     </div>
   );
 }

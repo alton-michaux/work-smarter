@@ -1,8 +1,9 @@
 import { useTasks } from '../../context/TasksContext';
 import { useRouter } from 'next/router';
+import Spinner from 'components/shared/Spinner';
 
 const TasksPage = () => {
-  const { tasks, deleteTask } = useTasks(); // Use deleteTask from context
+  const { tasks, deleteTask, isLoading } = useTasks();
   const router = useRouter();
 
   const handleTaskClick = (id: number) => {
@@ -15,7 +16,7 @@ const TasksPage = () => {
 
   const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this task?')) {
-      await deleteTask(id); // Call backend via context
+      await deleteTask(id);
     }
   };
 
@@ -34,50 +35,57 @@ const TasksPage = () => {
           </button>
         </div>
 
-        {/* Task List */}
-        {tasks.length === 0 ? (
-          <p className="text-gray-600 text-center">No tasks found.</p>
+        {/* Loading Spinner */}
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
         ) : (
-          <ul className="space-y-6">
-            {[...tasks]
-              .sort((a, b) => a.id - b.id)
-              .map((task: any) => (
-                <li
-                  key={task.id}
-                  className="border-b pb-4 flex justify-between items-start"
-                >
-                  <div>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleTaskClick(task.id);
-                      }}
-                      className="text-lg font-semibold text-blue-600 hover:underline text-left"
-                    >
-                      {task.title}
-                    </button>
-                    <p className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">Category:</span> {task.category}
-                    </p>
-                  </div>
+          // Task List
+          tasks.length === 0 ? (
+            <p className="text-gray-600 text-center">No tasks found.</p>
+          ) : (
+            <ul className="space-y-6">
+              {[...tasks]
+                .sort((a, b) => a.id - b.id)
+                .map((task: any) => (
+                  <li
+                    key={task.id}
+                    className="border-b pb-4 flex justify-between items-start"
+                  >
+                    <div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleTaskClick(task.id);
+                        }}
+                        className="text-lg font-semibold text-blue-600 hover:underline text-left"
+                      >
+                        {task.title}
+                      </button>
+                      <p className="text-sm text-gray-600 mt-1">
+                        <span className="font-medium">Category:</span> {task.category}
+                      </p>
+                    </div>
 
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(task.id)}
-                      className="text-sm text-yellow-600 hover:text-yellow-800"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(task.id)}
-                      className="text-sm text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
-          </ul>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEdit(task.id)}
+                        className="text-sm text-yellow-600 hover:text-yellow-800"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(task.id)}
+                        className="text-sm text-red-600 hover:text-red-800"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                ))}
+            </ul>
+          )
         )}
 
         {/* Bottom Navigation */}

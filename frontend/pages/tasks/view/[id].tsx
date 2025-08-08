@@ -1,13 +1,21 @@
 import { useRouter } from 'next/router';
 import { useTasks } from '../../../context/TasksContext';
+import Spinner from 'components/shared/Spinner';
 
 const TaskShowPage = () => {
   const router = useRouter();
   const { id } = router.query;
-  const { tasks, setTasks } = useTasks();
+  const { tasks, setTasks, isLoading } = useTasks();
 
-  // Find the task by id (id from router.query is a string)
   const task = tasks.find(t => t.id === Number(id));
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <Spinner />
+      </div>
+    );
+  }
 
   if (!task) {
     return (
