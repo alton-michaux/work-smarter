@@ -1,17 +1,16 @@
-import { useState } from 'react';
 import withAuth from '../utils/withAuth';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import { useTasks } from '../context/TasksContext';
 import { useProjects } from '../context/ProjectsContext'
 import { useAPI } from '../context/APIContext'
-import { useSystem } from 'context/SystemContext';
+import { useSystem } from 'context/SystemsContext';
 
 function Dashboard() {
     const router = useRouter();
     const { logout } = useAuth();
     const { fileChange, selectedFile } = useSystem();
-    const { fileUpload, uploadStatus, isLoading } = useAPI();
+    const { fileUpload, uploadStatus } = useAPI();
     const { fetchTasks } = useTasks();
     const { fetchProjects } = useProjects(); 
 
