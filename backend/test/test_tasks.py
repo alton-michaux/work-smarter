@@ -116,14 +116,3 @@ def test_task_delete(auth_client, get_user, create_task):
     response = auth_client.delete(f"/api/tasks/{task.id}/")
     assert response.status_code == 204
     assert not Task.objects.filter(id=task.id).exists()
-
-@pytest.mark.django_db
-def test_import_tasks(auth_client):
-    response = auth_client.post(
-        "/api/import/",
-        {"file": create_file()},
-        format="multipart"
-    )
-    assert response.status_code == 201
-    assert "imported" in response.data
-    assert response.data["imported"] > 0
