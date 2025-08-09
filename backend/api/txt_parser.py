@@ -29,31 +29,25 @@ class DevParser(TxtParser):
             parent_stack = []  # (indent_level, title)
 
             for line_num, raw_line in enumerate(self.lines, start=1):
-                #print(f"\n[Line {line_num}] Raw: {repr(raw_line)}")
                 line = raw_line.rstrip()
                 if not line.strip():
-                    #print("  Skipped: empty/whitespace line")
                     continue
 
                 indent_level = len(raw_line) - len(raw_line.lstrip())
-                #print(f"  Indent level: {indent_level}")
 
                 # Skip divider lines like ---PRE QA---
                 if '---' in line:
-                    #print("  Skipped: divider line")
                     continue
 
                 # ✅ First: Priority check (before checking section header)
                 stripped = line.strip(':').upper()
                 if stripped in self.PRIORITY_MAP:
                     current_priority = self.PRIORITY_MAP[stripped]
-                    #print(f"  Priority set to: {current_priority}")
                     continue
 
                 # ✅ Then: Section/project check
                 if re.match(r'^[A-Za-z0-9 _\-]+:$', line) and not line.startswith("-"):
                     current_project = line.replace(":", "").strip()
-                    #print(f"  Section set to: {current_project}")
                     continue
 
                 # Task line
@@ -62,37 +56,29 @@ class DevParser(TxtParser):
                     title = match.group(1).strip()
                     done = bool(re.match(r'^-+\[x\]', line.strip(), re.IGNORECASE))
                     carry_over = not done
-                    #print(f"  Matched task: '{title}', done: {done}, carry_over: {carry_over}")
 
                     # Clean up the parent stack based on indentation
                     while parent_stack and parent_stack[-1][0] >= indent_level:
-                        popped = parent_stack.pop()
-                        #print(f"    Popped from parent_stack: {popped}")
+                        parent_stack.pop()
 
                     notes = ""
-                    if parent_stack:
-                        is_subtask = True
-                        #print(f"    Notes set: {notes}")
-                    else:
-                        is_subtask = False
+                    # compute before pushing the current task
+                    is_subtask = len(parent_stack) > 0
 
-                    # Push current task to stack
-                    parent_stack.append((indent_level, title))
-                    #print(f"    Pushed to parent_stack: {(indent_level, title)}")
-
-                    is_subtask = bool(parent_stack)
                     task = {
                         "category": current_project,
                         "title": title,
                         "done": done,
                         "priority": current_priority,
-                        "carry_over": carry_over,      # was 'project'
+                        "carry_over": carry_over,
                         "description": notes,
                         "sub_task": is_subtask,
                     }
-                    self.tasks.append(task)
-                    
-                    #print(f"    Appending task: {task}")
+
+                    # push AFTER computing is_subtask
+                    parent_stack.append((indent_level, title))
+
+                    # append once
                     self.tasks.append(task)
         except Exception as e:
             print(f"Error while parsing at line {line_num}: {e}")
