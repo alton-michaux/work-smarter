@@ -7,38 +7,62 @@ from datetime import datetime
 from .models import Resume, Project, Task
 from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer
 from .txt_parser import DevParser
-import openai
+from django.db import transaction
+from rest_framework.exceptions import ParseError
 
 class ImportTasks(APIView):
-    parser_classes = [MultiPartParser, FormParser]
-
-    def post(self, request, format=None):
+    def post(self, request):
         file = request.FILES.get('file')
         if not file or not file.name.endswith('.txt'):
-            return Response({'error': 'Only .txt files are supported.'}, status=400)
+            return Response({'error': 'Only .txt files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        content = file.read().decode('utf-8')
-        parser = DevParser(content)
-        parser.parse()
-        tasks = parser.tasks
+        try:
+            try:
+                content = file.read().decode('utf-8')
+            except UnicodeDecodeError:
+                raise ParseError("File must be UTF-8 text.")
 
-        project_id = request.data.get('project_id')
-        project = Project.objects.filter(id=project_id, user=request.user).first() if project_id else None
+            parser = DevParser(content)
+            parser.parse()  # raise ValueError for known parse errors
+            tasks = parser.tasks
 
-        for task_data in tasks:
-            Task.objects.create(
-                user=request.user,  # ✅ associate with user
-                project=project,
-                category=task_data["category"],
-                title=task_data["title"],
-                is_done=task_data["done"],
-                priority=task_data["priority"],
-                carry_over=task_data["carry_over"],
-                description=task_data["description"],
-                is_subtask=task_data["sub_task"],
-            )
+            project = None
+            project_id = request.data.get('project_id')
+            if project_id:
+                project = Project.objects.filter(id=project_id, user=request.user).first()
+                if project is None:
+                    return Response({'error': 'Project not found or not owned by user.'},
+                                    status=status.HTTP_404_NOT_FOUND)
 
-        return Response({'status': 'Import successful.', 'imported': len(tasks)}, status=201)
+            task_objs = [
+                Task(
+                    user=request.user,
+                    project=project,
+                    category=t.get("category"),
+                    title=t["title"],
+                    is_done=t["done"],
+                    priority=t.get("priority", "medium"),
+                    carry_over=t.get("carry_over", False),
+                    description=t.get("description", ""),
+                    is_subtask=t.get("sub_task", False),
+                    begin_date=t.get("begin_date"),  # from parser
+                )
+                for t in tasks
+            ]
+
+            with transaction.atomic():
+                Task.objects.bulk_create(task_objs)
+
+            return Response({'status': 'Import successful.', 'imported': len(task_objs)},
+                            status=status.HTTP_201_CREATED)
+
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except ParseError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': f'Unexpected error: {str(e)}'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
