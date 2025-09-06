@@ -13,7 +13,7 @@ def project_payload(user, **overrides):
 def test_project_index(auth_client):
     response = auth_client.get("/api/projects/")
     assert response.status_code == 200
-    assert isinstance(response.data, list)
+    assert isinstance(response.data["results"], list)
   
 @pytest.mark.django_db
 def test_project_create(auth_client, get_user):
