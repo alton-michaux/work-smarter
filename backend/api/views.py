@@ -21,50 +21,60 @@ class ImportTasks(APIView):
             return Response({'error': 'Only .txt files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            # Decode file
             try:
                 content = file.read().decode('utf-8')
             except UnicodeDecodeError:
                 raise ParseError("File must be UTF-8 text.")
 
+            # Parse tasks
             parser = DevParser(content)
-            parser.parse()  # raise ValueError for known parse errors
+            parser.parse()  # should raise ValueError for known parse issues
             tasks = parser.tasks
 
+            # Optional project (enforce ownership)
             project = None
             project_id = request.data.get('project_id')
             if project_id:
                 project = Project.objects.filter(id=project_id, user=request.user).first()
                 if project is None:
-                    return Response({'error': 'Project not found or not owned by user.'},
-                                    status=status.HTTP_404_NOT_FOUND)
+                    return Response(
+                        {'error': 'Project not found or not owned by user.'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
 
-            task_objs = [
-                Task(
-                    user=request.user,
-                    project=project,
-                    category=t.get("category"),
-                    title=t["title"],
-                    is_done=t["done"],
-                    priority=t.get("priority", "medium"),
-                    carry_over=t.get("carry_over", False),
-                    description=t.get("description", ""),
-                    is_subtask=t.get("sub_task", False),
-                    begin_date=t.get("begin_date"),  # from parser
-                )
-                for t in tasks
-            ]
-
+            # Create tasks one-by-one so model logic runs
+            created_count = 0
             with transaction.atomic():
-                Task.objects.bulk_create(task_objs)
+                for t in tasks:
+                    Task.objects.create(
+                        user=request.user,
+                        project=project,
+                        category=t.get("category"),
+                        title=t["title"],
+                        is_done=t.get("done", False),
+                        priority=t.get("priority", "medium"),
+                        carry_over=t.get("carry_over", False),
+                        description=t.get("description", ""),
+                        is_subtask=t.get("sub_task", False),
+                        begin_date=t.get("begin_date"),  # from parser
+                        # NOTE: do NOT set end_date here; let model logic handle it
+                    )
+                    created_count += 1
 
-            return Response({'status': 'Import successful.', 'imported': len(task_objs)},
-                            status=status.HTTP_201_CREATED)
+            return Response(
+                {'status': 'Import successful.', 'imported': created_count},
+                status=status.HTTP_201_CREATED
+            )
 
         except ValueError as e:
+            # Known parser/input errors (e.g., missing/invalid "Week of")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ParseError as e:
+            # Bad encoding, etc.
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            # Unexpected server-side error
             return Response({'error': f'Unexpected error: {str(e)}'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
