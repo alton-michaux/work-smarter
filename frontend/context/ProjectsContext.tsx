@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Project } from 'types/types';
@@ -26,6 +26,8 @@ export const useProjects = () => {
 
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const { getAuthHeaders } = useAPI();
+  // Memoize headers (uses your APIContext)
+  const authHeaders = useMemo(() => getAuthHeaders(), [getAuthHeaders]);
   const { loggedIn } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +38,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null); // Reset error
     try {
-      const res = await fetch(`${API_URL}/projects/`, { headers: getAuthHeaders() });
+      const res = await fetch(`${API_URL}/projects/`, { headers: authHeaders });
       if (!res.ok) throw new Error('Failed to fetch projects');
       const data = await res.json();
       setProjects(data);
@@ -59,7 +61,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await fetch(`${API_URL}/projects/`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: authHeaders,
         body: JSON.stringify(project),
       });
       if (!res.ok) throw new Error('Failed to add project');
@@ -80,7 +82,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await fetch(`${API_URL}/projects/${updatedProject.id}/`, {
         method: 'PATCH',
-        headers: getAuthHeaders(),
+        headers: authHeaders,
         body: JSON.stringify(updatedProject),
       });
       if (!res.ok) throw new Error('Failed to update project');
@@ -101,7 +103,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await fetch(`${API_URL}/projects/${id}/`, {
         method: 'DELETE',
-        headers: getAuthHeaders(),
+        headers: authHeaders,
       });
       if (!res.ok) throw new Error('Failed to delete project');
       setProjects(prev => prev.filter(p => p.id !== id));

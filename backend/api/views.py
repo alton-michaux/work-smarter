@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.pagination import CursorPagination
 from django.db.models import Q
 from datetime import datetime
 from .models import Resume, Project, Task
@@ -9,6 +10,9 @@ from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer
 from .txt_parser import DevParser
 from django.db import transaction
 from rest_framework.exceptions import ParseError
+
+class TaskCursorPagination(CursorPagination):
+    ordering = "-begin_date"
 
 class ImportTasks(APIView):
     def post(self, request):
@@ -65,6 +69,7 @@ class ImportTasks(APIView):
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class TaskViewSet(viewsets.ModelViewSet):
+    pagination_class = TaskCursorPagination
     serializer_class = TaskSerializer
 
     def get_queryset(self):

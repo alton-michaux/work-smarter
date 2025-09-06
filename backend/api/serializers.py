@@ -11,7 +11,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['id', 'name', 'tasks']
+        fields = '__all__'
         
 class ResumeSerializer(serializers.ModelSerializer):
     class Meta:
