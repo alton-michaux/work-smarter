@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useTasks } from '../../../context/TasksContext';
 import { getCurrentMonday, getEndOfWeek } from '../../../utils/dateUtils';
@@ -16,13 +16,15 @@ export default function TaskTrackerPage() {
     setSelectedWeek(getCurrentMonday());
   }, []);
 
-  // Fetch tasks once selectedWeek is ready
+  // Fetch tasks once selectedWeek is ready - using useRef to avoid using fetchTasksByDateRange as dep
+  const doFetch = useRef<((b: string, e: string) => void) | null>(null);
+  useEffect(() => { doFetch.current = fetchTasksByDateRange; }, [fetchTasksByDateRange]);
+
   useEffect(() => {
-    if (selectedWeek) {
-      const end = getEndOfWeek(selectedWeek);
-      fetchTasksByDateRange(selectedWeek, end);
-    }
-  }, [selectedWeek, fetchTasksByDateRange]);
+    if (!selectedWeek) return;
+    const end = getEndOfWeek(selectedWeek);
+    doFetch.current?.(selectedWeek, end);
+  }, [selectedWeek]); // ← depends only on selectedWeek
 
   // Don't render until selectedWeek is set (avoids hydration mismatch)
   if (!selectedWeek) return null;

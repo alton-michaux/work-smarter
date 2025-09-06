@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext, ReactNode } from 'react';
+import React, { useState, createContext, useContext, ReactNode, useCallback } from 'react';
 
 type APIContextType = {
   getAuthHeaders: () => Record<string, string>;
@@ -23,11 +23,9 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState('')
 
-  const getAuthHeaders = () => {
-    return token
-      ? { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
-      : { 'Content-Type': 'application/json' };
-  };
+  const getAuthHeaders = useCallback(() => {
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, []);
 
   const fileUpload = async (selectedFile: File | null) => {
     if (!selectedFile) return;
