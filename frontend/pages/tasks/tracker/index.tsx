@@ -20,11 +20,21 @@ export default function TaskTrackerPage() {
   const doFetch = useRef<((b: string, e: string) => void) | null>(null);
   useEffect(() => { doFetch.current = fetchTasksByDateRange; }, [fetchTasksByDateRange]);
 
+  const lastRangeRef = useRef<string | null>(null);
   useEffect(() => {
     if (!selectedWeek) return;
     const end = getEndOfWeek(selectedWeek);
-    doFetch.current?.(selectedWeek, end);
-  }, [selectedWeek]); // ← depends only on selectedWeek
+    const key = `${selectedWeek}__${end}`;
+    if (lastRangeRef.current === key) return;
+    lastRangeRef.current = key;
+    fetchTasksByDateRange(selectedWeek, end);
+  }, [selectedWeek, fetchTasksByDateRange]);
+
+  // useEffect(() => {
+  //   if (!selectedWeek) return;
+  //   const end = getEndOfWeek(selectedWeek);
+  //   doFetch.current?.(selectedWeek, end);
+  // }, [selectedWeek]); // ← depends only on selectedWeek
 
   // Don't render until selectedWeek is set (avoids hydration mismatch)
   if (!selectedWeek) return null;

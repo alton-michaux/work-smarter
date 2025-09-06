@@ -15,6 +15,7 @@ class Resume(models.Model):
 class Project(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="projects", null=False, blank=False)
     name = models.CharField(max_length=100)
+    created = models.DateTimeField(auto_now_add=True)
 
 class Task(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tasks", null=False, blank=False)

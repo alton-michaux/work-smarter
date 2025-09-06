@@ -29,7 +29,7 @@ def create_file():
 def test_task_index(auth_client):
     response = auth_client.get("/api/tasks/")
     assert response.status_code == 200
-    assert isinstance(response.data, list)
+    assert isinstance(response.data["results"], list)
     
 @pytest.mark.django_db
 def test_weekly_task_filtering(auth_client, get_user, create_task):
@@ -85,7 +85,7 @@ def test_weekly_task_filtering(auth_client, get_user, create_task):
     response = auth_client.get(f"/api/tasks/?begin_date={start_of_week}&end_date={end_of_week}")
 
     assert response.status_code == 200
-    titles = [task["title"] for task in response.data]
+    titles = [task["title"] for task in response.data["results"]]
 
     assert "Ongoing Task" in titles
     assert "New Task This Week" in titles
