@@ -1,5 +1,7 @@
 import pytest
 import re
+from datetime import date
+from api.models import Task
 from api.txt_parser import DevParser
 
 def test_parse_week_of_valid_formats():
@@ -44,3 +46,14 @@ def test_parse_without_week_of_raises():
     expected_message = "Missing 'Week of' date before tasks (line 3). Add a line like 'Week of: 3/11/2024' at the top."
     with pytest.raises(ValueError, match=re.escape(expected_message)):
         parser.parse()
+
+@pytest.mark.django_db
+def test_txt_import_sets_end_date(create_file, get_user, auth_client):
+    file = create_file("""Week of: 2024-03-11\nWork:\n- [x] Finished task""")
+    response = auth_client.post("/api/import/", {"file": file}, format="multipart")
+
+    assert response.status_code == 201
+    task = Task.objects.filter(title__icontains="Finished task").first()
+    assert task is not None, "Task with title containing 'Finished task' was not found."
+    assert task.is_done is True
+    assert task.end_date == date.today()
