@@ -3,6 +3,15 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 User = get_user_model()
+# To extend the existing User model from AllAuth, create a separate Profile model with a OneToOneField to User.
+# Example:
+# class Profile(models.Model):
+#     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+#     # Add custom fields here, e.g.:
+#     # bio = models.TextField(blank=True)
+#     # avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+#
+# Then, use signals to automatically create/update the Profile when a User is created.
 
 class Resume(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="resume", null=False, blank=False)

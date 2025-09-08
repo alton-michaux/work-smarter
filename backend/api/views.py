@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -6,10 +6,11 @@ from rest_framework.pagination import CursorPagination
 from django.db.models import Q
 from datetime import datetime
 from .models import Resume, Project, Task
-from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer
+from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer
 from .txt_parser import DevParser
 from django.db import transaction
 from rest_framework.exceptions import ParseError
+from django.contrib.auth import get_user_model
 
 class TaskCursorPagination(CursorPagination):
     ordering = "-begin_date"
@@ -122,9 +123,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Project.objects.filter(user=self.request.user)
+    
+    
+User = get_user_model()
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+class UserViewSet(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['id', 'date_joined', 'username', 'email']  # allowed
+    ordering = ['-date_joined']  # default if client doesn't pass ?ordering=
+
+    def get_queryset(self):
+        # Clear ANY model/base default ordering that might include 'created'
+        qs = User.objects.filter(id=self.request.user.id).order_by()
+
+        # Optionally enforce a safe default here too:
+        return qs.order_by('-date_joined')
     
 class ResumeViewSet(viewsets.ViewSet):
     parser_classes = (MultiPartParser, FormParser)
