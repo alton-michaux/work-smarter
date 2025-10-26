@@ -1,14 +1,16 @@
 import { useRouter } from 'next/router';
 import { useProjects } from '../../context/ProjectsContext';
+import { useAuth } from 'context/AuthContext';
 import ProjectForm from '../../components/projects/ProjectForm';
 import Spinner from 'components/shared/Spinner';
 
-const emptyProject = { name: '' };
+const emptyProject = { name: '', user: '' };
 
 export default function ProjectCreatePage() {
   const router = useRouter();
   const { addProject, isLoading } = useProjects();
-
+  const auth = useAuth();
+  console.log("user", auth.user)
   const handleCreate = async (project) => {
     await addProject(project);
     router.push('/projects');
@@ -22,7 +24,7 @@ export default function ProjectCreatePage() {
           <Spinner />
         </div>
       ) : (
-        <ProjectForm initialProject={emptyProject} onSubmit={handleCreate} submitLabel="Create" />
+        <ProjectForm initialProject={emptyProject} onSubmit={handleCreate} submitLabel="Create" user={auth.user} />
       )}
       <div className="mt-8 flex justify-between">
         <button

@@ -58,9 +58,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const [params, setParams] = useState<Filters>({ ordering: '-begin_date' });
   const inFlight = useRef<string | null>(null); // avoids duplicate fetches for same URL
 
-  // Memoize headers (uses your APIContext)
-  const authHeaders = useMemo(() => getAuthHeaders(), [getAuthHeaders]);
-
   // --- Cursor helpers ---
   const buildInitialUrl = (filters: Filters = params) => {
     const qs = new URLSearchParams();
@@ -85,7 +82,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(url, { headers: authHeaders });
+      const res = await fetch(url, { headers: getAuthHeaders() });
 
       if (res.status === 401) {
         setError('Unauthorized');
@@ -163,7 +160,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          ...authHeaders,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ is_done: !isDone }),
       });
@@ -183,7 +180,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...authHeaders,
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(task),
     });
@@ -197,7 +194,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        ...authHeaders,
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(task),
     });
@@ -208,7 +205,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (!loggedIn) return;
     await fetch(`${API_URL}/tasks/${id}/`, {
       method: 'DELETE',
-      headers: authHeaders,
+      headers: getAuthHeaders(),
     });
     await fetchTasks();
   };

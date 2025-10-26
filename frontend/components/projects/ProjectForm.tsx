@@ -1,14 +1,15 @@
 import { useState } from 'react';
 
-export default function ProjectForm({ initialProject, onSubmit, submitLabel = "Save" }) {
+export default function ProjectForm({ initialProject, onSubmit, submitLabel = "Save", user }) {
   const [project, setProject] = useState(initialProject);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProject(p => ({ ...p, [name]: value }));
+    setProject(p => ({ ...p, [name]: value, user: user?.id }));
   };
 
   const handleSubmit = (e) => {
+    console.log("project", project)
     e.preventDefault();
     onSubmit(project);
   };
@@ -32,6 +33,20 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
           onChange={handleChange}
           required
           className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+        {/* Hidden userId field with associated (hidden) label */}
+        <label
+          htmlFor="user"
+          className="sr-only"
+        >
+          User
+        </label>
+        <input
+          id="user"
+          type="hidden"
+          name="user"
+          required
+          value={user?.id}
         />
       </div>
 

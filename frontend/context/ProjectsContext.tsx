@@ -1,14 +1,14 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Project } from 'types/types';
+import { Project, NewProject } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 type ProjectsContextType = {
-  projects: Project[];
-  setProjects: (projects: Project[]) => void;
-  addProject: (project: Omit<Project, 'id'>) => Promise<void>;
+  projects: Project[];  
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  addProject: (project: Omit<NewProject, 'id'>) => Promise<void>;
   updateProject: (project: Project) => Promise<void>;
   deleteProject: (id: number) => Promise<void>;
   fetchProjects: () => Promise<void>;
@@ -26,10 +26,9 @@ export const useProjects = () => {
 
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const { getAuthHeaders } = useAPI();
-  // Memoize headers (uses your APIContext)
-  const authHeaders = useMemo(() => getAuthHeaders(), [getAuthHeaders]);
+  
   const { loggedIn } = useAuth();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Project[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null); // Add error state
 
@@ -38,7 +37,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null); // Reset error
     try {
-      const res = await fetch(`${API_URL}/projects/`, { headers: authHeaders });
+      const res = await fetch(`${API_URL}/projects/`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to fetch projects');
       const data = await res.json();
       setProjects(data);
@@ -54,19 +53,20 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     if (loggedIn) fetchProjects();
   }, [loggedIn]);
 
-  const addProject = async (project: Omit<Project, 'id'>) => {
+  const addProject = async (project: Omit<NewProject, 'id'>) => {
     if (!loggedIn) return;
     setIsLoading(true);
     setError(null); // Reset error
     try {
+      console.log("Project", project)
       const res = await fetch(`${API_URL}/projects/`, {
         method: 'POST',
-        headers: authHeaders,
+        headers: getAuthHeaders(),
         body: JSON.stringify(project),
       });
       if (!res.ok) throw new Error('Failed to add project');
       const newProject = await res.json();
-      setProjects(prev => [...prev, newProject]);
+      setProjects(prev => (prev ? [...prev, newProject] : [newProject]));
     } catch (err: any) {
       setError(err.message || 'Unknown error');
       console.error(err);
@@ -82,7 +82,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await fetch(`${API_URL}/projects/${updatedProject.id}/`, {
         method: 'PATCH',
-        headers: authHeaders,
+        headers: getAuthHeaders(),
         body: JSON.stringify(updatedProject),
       });
       if (!res.ok) throw new Error('Failed to update project');
@@ -103,7 +103,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await fetch(`${API_URL}/projects/${id}/`, {
         method: 'DELETE',
-        headers: authHeaders,
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Failed to delete project');
       setProjects(prev => prev.filter(p => p.id !== id));
