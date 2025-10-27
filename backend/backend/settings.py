@@ -115,6 +115,8 @@ DATABASES = {
     'default': env.db(),  # expects DATABASE_URL in .env
 }
 
+DATABASES["default"]["CONN_MAX_AGE"] = 600
+
 # --- Password Validators ---
 AUTH_PASSWORD_VALIDATORS = [
     {
