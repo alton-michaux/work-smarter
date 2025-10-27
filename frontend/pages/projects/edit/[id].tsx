@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import { useProjects } from '../../../context/ProjectsContext';
+import { useAuth } from 'context/AuthContext';
 import ProjectForm from '../../../components/projects/ProjectForm';
 import Spinner from 'components/shared/Spinner';
 
@@ -7,6 +8,9 @@ export default function ProjectEditPage() {
   const router = useRouter();
   const { id } = router.query;
   const { projects, updateProject, isLoading } = useProjects();
+  const getUser = useAuth();
+
+  const user = getUser
 
   const project = projects.find(p => p.id === Number(id));
   if (!project) return <div>Project not found</div>;
@@ -24,7 +28,7 @@ export default function ProjectEditPage() {
           <Spinner />
         </div>
       ) : (
-        <ProjectForm initialProject={project} onSubmit={handleUpdate} submitLabel="Update" />
+        <ProjectForm initialProject={project} user={user} onSubmit={handleUpdate} submitLabel="Update" />
       )}
       <button className="text-gray-500 text-sm hover:underline" onClick={() => router.push(`/projects/view/${id}`)} style={{ marginTop: 12 }}>Cancel</button>
     </div>
