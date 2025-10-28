@@ -58,7 +58,6 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null); // Reset error
     try {
-      console.log("Project", project)
       const res = await fetch(`${API_URL}/projects/`, {
         method: 'POST',
         headers: getAuthHeaders(),

@@ -24,6 +24,7 @@ export type Project = {
 
 export type NewProject = {
   name: string;
+  user: number;
 };
 
 export type User = {

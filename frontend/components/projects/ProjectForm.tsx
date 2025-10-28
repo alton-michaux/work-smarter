@@ -9,7 +9,6 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
   };
 
   const handleSubmit = (e) => {
-    console.log("project", project)
     e.preventDefault();
     onSubmit(project);
   };
