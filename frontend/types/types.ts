@@ -18,8 +18,8 @@ export type Task = {
 export type Project = {
   id: number;
   name: string;
-  tasks: Task[];
-  user: number;
+  tasks?: Task[];
+  user?: number | User;
 };
 
 export type NewProject = {

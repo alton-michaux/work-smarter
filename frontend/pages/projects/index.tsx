@@ -7,7 +7,6 @@ const ProjectsPage = () => {
   const router = useRouter();
   
   const results = projects["results"]
-  console.log("actual results", results)
   const handleProjectClick = (id: number) => {
     router.push(`/projects/view/${id}`);
   };

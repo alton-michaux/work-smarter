@@ -161,7 +161,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     if (token && !hydratedOnce.current) {
-      console.log("fetching the damn user")
       setLoggedIn(true);
       getUser().catch(() => {
         // if rehydrate fails, force logout state

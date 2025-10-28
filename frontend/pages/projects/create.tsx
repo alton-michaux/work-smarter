@@ -10,7 +10,6 @@ export default function ProjectCreatePage() {
   const router = useRouter();
   const { addProject, isLoading } = useProjects();
   const auth = useAuth();
-  console.log("user", auth.user)
   const handleCreate = async (project) => {
     await addProject(project);
     router.push('/projects');
