@@ -39,11 +39,11 @@ const ProjectsPage = () => {
           <div className="flex justify-center py-8">
             <Spinner />
           </div>
-        ) : results.length === 0 ? (
+        ) : results?.length === 0 ? (
           <p className="text-gray-600 text-center">No projects found.</p>
         ) : (
           <ul className="space-y-4">
-            {results.map((project: any) => (
+            {results?.map((project: any) => (
               <li
                 key={project.id}
                 className="flex justify-between items-center border-b pb-2"
