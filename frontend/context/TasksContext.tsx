@@ -96,9 +96,9 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       const data: CursorPage<Task> = await res.json();
       setNextUrl(data.next);
       setPreviousUrl(data.previous);
-      setTasks(prev => mode === 'reset' ? data.results
-                    : mode === 'append' ? [...prev, ...data.results]
-                    : [...data.results, ...prev]);
+      setTasks(prev => mode === 'reset' ? data?.results
+                    : mode === 'append' ? [...prev, ...data?.results]
+                    : [...data?.results, ...prev]);
     } catch (e: any) {
       setError(e.message ?? 'unknown error');
     } finally {

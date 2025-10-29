@@ -12,7 +12,7 @@ export default function ProjectEditPage() {
 
   const user = getUser
 
-  const project = projects.find(p => p.id === Number(id));
+  const project = projects?.find(p => p.id === Number(id));
   if (!project) return <div>Project not found</div>;
 
   const handleUpdate = async (updatedProject) => {

@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Handle either {results: [...]} or a single object
-      const maybeUser = Array.isArray(data?.results) ? data.results[0] ?? null : data;
+      const maybeUser = Array.isArray(data?.results) ? data?.results[0] ?? null : data;
       setUser(maybeUser);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch user');
