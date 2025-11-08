@@ -2,6 +2,8 @@ import { useProjects } from '../../context/ProjectsContext';
 import { useRouter } from 'next/router';
 import Spinner from 'components/shared/Spinner';
 
+export const dynamic = "force-dynamic";
+
 const ProjectsPage = () => {
   const { projects, deleteProject, isLoading } = useProjects(); // Add isLoading
   const router = useRouter();
