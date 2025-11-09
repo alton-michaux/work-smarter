@@ -28,7 +28,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const { getAuthHeaders } = useAPI();
   
   const { loggedIn } = useAuth();
-  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null); // Add error state
 

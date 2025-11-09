@@ -5,7 +5,7 @@ import Spinner from 'components/shared/Spinner';
 const ProjectsPage = () => {
   const { projects, deleteProject, isLoading } = useProjects(); // Add isLoading
   const router = useRouter();
-  
+
   const results = projects["results"]
   const handleProjectClick = (id: number) => {
     router.push(`/projects/view/${id}`);
