@@ -16,9 +16,16 @@ export type Task = {
 };
 
 export type Project = {
+  created: Date;
   id: number;
   name: string;
-  tasks: Task[];
+  tasks?: Task[];
+  user?: number | User;
+};
+
+export type NewProject = {
+  name: string;
+  user: number;
 };
 
 export type User = {
@@ -46,4 +53,10 @@ export type LoginPayload = {
 
 export type ApiError = {
   [key: string]: string[]; // Example: { "email": ["This field is required."] }
+};
+
+export type CursorPage<T> = {
+  next: string | null;
+  previous: string | null;
+  results: T[];
 };

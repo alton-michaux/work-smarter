@@ -77,3 +77,16 @@ def create_project(db):
     def make_project(name="work", user=None):
         return Project.objects.create(name=name, user=user)
     return make_project
+
+@pytest.fixture
+def create_file():
+    def make_file(content=None):
+        file_content = content or """
+        Week of: 2024-03-11
+        Dev:
+        - [ ] Auto-generated task
+        """
+        file = io.BytesIO(file_content.encode("utf-8"))
+        file.name = "tasks.txt"
+        return file
+    return make_file

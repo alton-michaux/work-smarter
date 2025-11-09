@@ -7,7 +7,7 @@ export default function TaskEditPage() {
   const { id } = router.query;
   const { tasks, updateTask } = useTasks();
 
-  const task = tasks.find(t => t.id === Number(id));
+  const task = tasks?.find(t => t.id === Number(id));
   if (!task) return <div>Task not found</div>;
 
   const handleUpdate = (updatedTask) => {
