@@ -27,7 +27,7 @@ distro==1.4.0
 distro-info==1.0
 dj-database-url==2.1.0
 dj-rest-auth==7.0.1
-Django==4.2.26
+Django==4.2.27
 django-allauth==65.9.0
 django-cors-headers==3.14.0
 django-debug-toolbar==4.2.0
