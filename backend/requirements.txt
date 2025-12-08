@@ -134,7 +134,7 @@ traitlets==5.14.2
 typing_extensions==4.10.0
 tzdata==2025.2
 uritemplate==4.1.1
-urllib3==2.2.1
+urllib3==2.6.0
 virtualenv==20.28.1
 wadllib==1.3.3
 wheel==0.45.1
