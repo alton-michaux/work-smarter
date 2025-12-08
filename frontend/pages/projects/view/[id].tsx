@@ -7,7 +7,7 @@ const ProjectShowPage = () => {
   const { id } = router.query;
   const { projects, isLoading } = useProjects();
 
-  const project = projects.find(p => p.id === Number(id));
+  const project = projects?.find(p => p.id === Number(id));
 
   if (isLoading) {
     return (

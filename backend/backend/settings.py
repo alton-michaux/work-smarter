@@ -65,7 +65,9 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ]
+    ],    
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.CursorPagination",
+    "PAGE_SIZE": 50,
 }
 
 # --- REST Auth Customization ---
@@ -112,6 +114,8 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': env.db(),  # expects DATABASE_URL in .env
 }
+
+DATABASES["default"]["CONN_MAX_AGE"] = 600
 
 # --- Password Validators ---
 AUTH_PASSWORD_VALIDATORS = [

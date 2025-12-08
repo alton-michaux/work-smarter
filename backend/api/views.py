@@ -1,14 +1,19 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.pagination import CursorPagination
 from django.db.models import Q
 from datetime import datetime
 from .models import Resume, Project, Task
-from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer
+from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer
 from .txt_parser import DevParser
 from django.db import transaction
 from rest_framework.exceptions import ParseError
+from django.contrib.auth import get_user_model
+
+class TaskCursorPagination(CursorPagination):
+    ordering = "-begin_date"
 
 class ImportTasks(APIView):
     def post(self, request):
@@ -17,54 +22,65 @@ class ImportTasks(APIView):
             return Response({'error': 'Only .txt files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            # Decode file
             try:
                 content = file.read().decode('utf-8')
             except UnicodeDecodeError:
                 raise ParseError("File must be UTF-8 text.")
 
+            # Parse tasks
             parser = DevParser(content)
-            parser.parse()  # raise ValueError for known parse errors
+            parser.parse()  # should raise ValueError for known parse issues
             tasks = parser.tasks
 
+            # Optional project (enforce ownership)
             project = None
             project_id = request.data.get('project_id')
             if project_id:
                 project = Project.objects.filter(id=project_id, user=request.user).first()
                 if project is None:
-                    return Response({'error': 'Project not found or not owned by user.'},
-                                    status=status.HTTP_404_NOT_FOUND)
+                    return Response(
+                        {'error': 'Project not found or not owned by user.'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
 
-            task_objs = [
-                Task(
-                    user=request.user,
-                    project=project,
-                    category=t.get("category"),
-                    title=t["title"],
-                    is_done=t["done"],
-                    priority=t.get("priority", "medium"),
-                    carry_over=t.get("carry_over", False),
-                    description=t.get("description", ""),
-                    is_subtask=t.get("sub_task", False),
-                    begin_date=t.get("begin_date"),  # from parser
-                )
-                for t in tasks
-            ]
-
+            # Create tasks one-by-one so model logic runs
+            created_count = 0
             with transaction.atomic():
-                Task.objects.bulk_create(task_objs)
+                for t in tasks:
+                    Task.objects.create(
+                        user=request.user,
+                        project=project,
+                        category=t.get("category"),
+                        title=t["title"],
+                        is_done=t.get("done", False),
+                        priority=t.get("priority", "medium"),
+                        carry_over=t.get("carry_over", False),
+                        description=t.get("description", ""),
+                        is_subtask=t.get("sub_task", False),
+                        begin_date=t.get("begin_date"),  # from parser
+                        # NOTE: do NOT set end_date here; let model logic handle it
+                    )
+                    created_count += 1
 
-            return Response({'status': 'Import successful.', 'imported': len(task_objs)},
-                            status=status.HTTP_201_CREATED)
+            return Response(
+                {'status': 'Import successful.', 'imported': created_count},
+                status=status.HTTP_201_CREATED
+            )
 
         except ValueError as e:
+            # Known parser/input errors (e.g., missing/invalid "Week of")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ParseError as e:
+            # Bad encoding, etc.
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            # Unexpected server-side error
             return Response({'error': f'Unexpected error: {str(e)}'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class TaskViewSet(viewsets.ModelViewSet):
+    pagination_class = TaskCursorPagination
     serializer_class = TaskSerializer
 
     def get_queryset(self):
@@ -107,9 +123,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Project.objects.filter(user=self.request.user)
+    
+    
+User = get_user_model()
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+class UserViewSet(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['id', 'date_joined', 'username', 'email']  # allowed
+    ordering = ['-date_joined']  # default if client doesn't pass ?ordering=
+
+    def get_queryset(self):
+        # Clear ANY model/base default ordering that might include 'created'
+        qs = User.objects.filter(id=self.request.user.id).order_by()
+
+        # Optionally enforce a safe default here too:
+        return qs.order_by('-date_joined')
     
 class ResumeViewSet(viewsets.ViewSet):
     parser_classes = (MultiPartParser, FormParser)

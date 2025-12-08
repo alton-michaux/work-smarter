@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Resume, Task, Project
+from .models import Resume, Task, Project, User
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["email", "id", "username"]
+        read_only_fields = ["id"]
 
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,7 +17,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['id', 'name', 'tasks']
+        fields = '__all__'
         
 class ResumeSerializer(serializers.ModelSerializer):
     class Meta:

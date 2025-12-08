@@ -31,7 +31,7 @@ class DevParser(TxtParser):
     }
 
     HEADER_REGEX = re.compile(r'^[A-Za-z0-9 _\-]+:$')  # e.g., "Meetings:", "Admin:", "Dev:"
-    TASK_REGEX = re.compile(r'^-+\[?x?\]?\s*(.+)$', re.IGNORECASE)
+    TASK_REGEX = re.compile(r'^\s*-\s*\[(x| )\]\s*(.+)$', re.IGNORECASE)
     DONE_REGEX = re.compile(r'^-+\[x\]', re.IGNORECASE)
     DIVIDER_REGEX = re.compile(r'-{3,}')  # lines like ---PRE QA---
 
@@ -120,10 +120,11 @@ class DevParser(TxtParser):
                     continue
 
                 # Task line
-                task_match = self.TASK_REGEX.match(line.strip())
-                if task_match:
-                    title = task_match.group(1).strip()
-                    done = bool(self.DONE_REGEX.match(line.strip()))
+                match = self.TASK_REGEX.match(line)
+                if match:
+                    done_symbol, title = match.groups()
+                    done = done_symbol.lower() == "x"
+
                     carry_over = not done
 
                     # Clean up the parent stack based on indentation BEFORE computing is_subtask

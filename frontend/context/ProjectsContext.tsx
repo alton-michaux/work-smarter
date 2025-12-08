@@ -1,14 +1,14 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Project } from 'types/types';
+import { Project, NewProject } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 type ProjectsContextType = {
-  projects: Project[];
-  setProjects: (projects: Project[]) => void;
-  addProject: (project: Omit<Project, 'id'>) => Promise<void>;
+  projects: Project[];  
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  addProject: (project: Omit<NewProject, 'id'>) => Promise<void>;
   updateProject: (project: Project) => Promise<void>;
   deleteProject: (id: number) => Promise<void>;
   fetchProjects: () => Promise<void>;
@@ -26,6 +26,7 @@ export const useProjects = () => {
 
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const { getAuthHeaders } = useAPI();
+  
   const { loggedIn } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +53,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     if (loggedIn) fetchProjects();
   }, [loggedIn]);
 
-  const addProject = async (project: Omit<Project, 'id'>) => {
+  const addProject = async (project: Omit<NewProject, 'id'>) => {
     if (!loggedIn) return;
     setIsLoading(true);
     setError(null); // Reset error
@@ -64,7 +65,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       });
       if (!res.ok) throw new Error('Failed to add project');
       const newProject = await res.json();
-      setProjects(prev => [...prev, newProject]);
+      setProjects(prev => (prev ? [...prev, newProject] : [newProject]));
     } catch (err: any) {
       setError(err.message || 'Unknown error');
       console.error(err);

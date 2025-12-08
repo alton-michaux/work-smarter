@@ -13,23 +13,12 @@ def task_payload(user, **overrides):
     }
     payload.update(overrides)
     return payload
-  
-def create_file():    
-    # Simulate a .txt file with task content expected by DevParser
-    file_content = """
-    Work:
-    - [ ] Test Import Task
-    """
-    file = io.BytesIO(file_content.encode("utf-8"))
-    file.name = "tasks.txt"
-    
-    return file
 
 @pytest.mark.django_db
 def test_task_index(auth_client):
     response = auth_client.get("/api/tasks/")
     assert response.status_code == 200
-    assert isinstance(response.data, list)
+    assert isinstance(response.data["results"], list)
     
 @pytest.mark.django_db
 def test_weekly_task_filtering(auth_client, get_user, create_task):
@@ -85,7 +74,7 @@ def test_weekly_task_filtering(auth_client, get_user, create_task):
     response = auth_client.get(f"/api/tasks/?begin_date={start_of_week}&end_date={end_of_week}")
 
     assert response.status_code == 200
-    titles = [task["title"] for task in response.data]
+    titles = [task["title"] for task in response.data["results"]]
 
     assert "Ongoing Task" in titles
     assert "New Task This Week" in titles
@@ -103,12 +92,21 @@ def test_task_create(auth_client, get_user):
   
 @pytest.mark.django_db
 def test_task_update(auth_client, get_user, create_task):
-    task = create_task(title="test_update", description="for testing update", begin_date="2025-07-31", end_date="2025-08-01", is_done=True, user=get_user)
-    response = auth_client.put(f"/api/tasks/{task.id}/", task_payload(get_user, title="Test Task Update", description="Task for testing update"))
+    task = create_task(title="test_update", description="for testing update", begin_date="2025-07-31", end_date=None, is_done=False, user=get_user)
+    response = auth_client.put(f"/api/tasks/{task.id}/", task_payload(get_user, title="Test Task Update", description="Task for testing update", is_done=True))
+    
     assert response.status_code == 200
     assert response.data["title"] == "Test Task Update"
+    
     task.refresh_from_db()
+    
     assert task.title == "Test Task Update"
+    assert task.end_date == date.today() # ensures that end_date is populated when task is marked as "done"
+    
+    response = auth_client.put(f"/api/tasks/{task.id}/", task_payload(get_user, is_done=False))
+    task.refresh_from_db()
+    
+    assert task.end_date == None # end_date should be cleared when "done" task is marked as "False"
   
 @pytest.mark.django_db
 def test_task_delete(auth_client, get_user, create_task):

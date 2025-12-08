@@ -7,7 +7,7 @@ const TaskShowPage = () => {
   const { id } = router.query;
   const { tasks, setTasks, isLoading } = useTasks();
 
-  const task = tasks.find(t => t.id === Number(id));
+  const task = tasks?.find(t => t.id === Number(id));
 
   if (isLoading) {
     return (
