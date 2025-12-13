@@ -63,26 +63,19 @@ class DevParser(TxtParser):
         current_priority = "medium"
         current_project = None
         parent_stack = []
-        week_of = None
+        current_week_of = None
 
         try:
-            for raw in self.lines[:5]:
-                line = raw.strip()
-                w = self._parse_week_of(line)
-                if w:
-                    week_of = w
-                    break
-
             for line_num, raw_line in enumerate(self.lines, start=1):
                 line = raw_line.rstrip()
                 if not line.strip():
                     continue
 
-                if week_of is None:
-                    maybe = self._parse_week_of(line.strip())
-                    if maybe:
-                        week_of = maybe
-                        continue
+                # Check for week change ANYWHERE in the file
+                maybe = self._parse_week_of(line.strip())
+                if maybe:
+                    current_week_of = maybe
+                    continue
 
                 indent_level = len(raw_line) - len(raw_line.lstrip())
 
@@ -113,7 +106,7 @@ class DevParser(TxtParser):
                     notes = ""
                     is_subtask = len(parent_stack) > 0
 
-                    if require_week_of and week_of is None:
+                    if require_week_of and current_week_of is None:
                         raise ValueError(
                             f"Missing 'Week of' date before tasks (line {line_num}). "
                             "Add a line like 'Week of: 3/11/2024' at the top."
@@ -127,14 +120,15 @@ class DevParser(TxtParser):
                         "carry_over": carry_over,
                         "description": notes,
                         "sub_task": is_subtask,
-                        "begin_date": week_of,
+                        "begin_date": current_week_of,
+                        "end_date": current_week_of if done else None,
                         "project_name": current_project
                     }
 
                     parent_stack.append((indent_level, title))
                     self.tasks.append(task)
 
-            if require_week_of and week_of is None:
+            if require_week_of and current_week_of is None:
                 raise ValueError(
                     "No 'Week of' line found. Expected something like 'Week of: 3/11/2024'."
                 )

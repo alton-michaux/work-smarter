@@ -48,8 +48,8 @@ class Task(models.Model):
     carry_over = models.BooleanField(default=True)
     
     def save(self, *args, **kwargs):
-        if self.is_done and not self.end_date:
-            self.end_date = timezone.now().date()
+        if self.is_done and self.end_date is None and self.begin_date is not None:
+            self.end_date = self.begin_date
         elif not self.is_done and self.end_date:
             self.end_date = None
         super().save(*args, **kwargs)

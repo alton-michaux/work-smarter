@@ -77,6 +77,7 @@ class ImportTasks(APIView):
                         description=t.get("description", ""),
                         is_subtask=t.get("sub_task", False),
                         begin_date=t.get("begin_date"),
+                        end_date=t["begin_date"] if t.get("done", False) else None,
                     )
                     created_count += 1
 
