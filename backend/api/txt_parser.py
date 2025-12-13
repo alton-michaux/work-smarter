@@ -15,6 +15,8 @@ class TxtParser(ABC):
 
 
 class DevParser(TxtParser):
+    CATEGORY_LABELS = {"Meetings", "Tasks", "Notes"}
+
     # Accept common date formats for "Week of"
     WEEK_OF_FORMATS = [
         "%m/%d/%Y",  # 3/11/2024
@@ -36,15 +38,9 @@ class DevParser(TxtParser):
     DIVIDER_REGEX = re.compile(r'-{3,}')  # lines like ---PRE QA---
 
     def _parse_week_of(self, line: str):
-        """
-        Parse 'Week of: <date>' line and return canonical YYYY-MM-DD string.
-        Raises ValueError if present but unparseable.
-        Returns None if the line is not a 'Week of' line.
-        """
         if not line.lower().startswith("week of"):
             return None
 
-        # Allow "Week of: 3/11/2024" or "Week of 3/11/2024"
         parts = line.split(":", 1) if ":" in line else line.split(None, 2)
         if not parts:
             return None
@@ -63,22 +59,13 @@ class DevParser(TxtParser):
         raise ValueError(f"Unrecognized 'Week of' date format: {date_part}")
 
     def parse(self, require_week_of=True):
-        """
-        Parse the file:
-          - Extract 'Week of' date and assign as begin_date for tasks
-          - Section headers set the 'category' (e.g., Meetings, Admin, Dev)
-          - Priority headers still supported (HIGH PRIORITY, etc.)
-        Error handling:
-          - If require_week_of=True and no 'Week of' found -> raises ValueError
-          - If 'Week of' found but unparseable -> raises ValueError
-        """
         current_category = None
         current_priority = "medium"
-        parent_stack = []  # list[(indent_level, title)]
+        current_project = None
+        parent_stack = []
         week_of = None
 
         try:
-            # First pass: try to grab Week of date early if it appears near the top
             for raw in self.lines[:5]:
                 line = raw.strip()
                 w = self._parse_week_of(line)
@@ -86,14 +73,11 @@ class DevParser(TxtParser):
                     week_of = w
                     break
 
-            # If still unknown, we’ll keep scanning during the main loop,
-            # but enforce presence by the end if require_week_of=True.
             for line_num, raw_line in enumerate(self.lines, start=1):
                 line = raw_line.rstrip()
                 if not line.strip():
                     continue
 
-                # Allow 'Week of:' to appear anywhere, but keep the first valid one
                 if week_of is None:
                     maybe = self._parse_week_of(line.strip())
                     if maybe:
@@ -102,36 +86,31 @@ class DevParser(TxtParser):
 
                 indent_level = len(raw_line) - len(raw_line.lstrip())
 
-                # Skip divider lines like ---PRE QA---
                 if self.DIVIDER_REGEX.search(line):
                     continue
 
                 stripped = line.strip(':').strip()
                 upper_stripped = stripped.upper()
 
-                # Priority header?
                 if upper_stripped in self.PRIORITY_MAP:
                     current_priority = self.PRIORITY_MAP[upper_stripped]
                     continue
 
-                # Category/section header? (e.g., "Meetings:", "Admin:", "Dev:")
                 if self.HEADER_REGEX.match(line) and not line.lstrip().startswith("-"):
-                    current_category = stripped  # preserve original casing for category
+                    current_category = stripped
+                    current_project = None if stripped in self.CATEGORY_LABELS else stripped
                     continue
 
-                # Task line
                 match = self.TASK_REGEX.match(line)
                 if match:
                     done_symbol, title = match.groups()
                     done = done_symbol.lower() == "x"
-
                     carry_over = not done
 
-                    # Clean up the parent stack based on indentation BEFORE computing is_subtask
                     while parent_stack and parent_stack[-1][0] >= indent_level:
                         parent_stack.pop()
 
-                    notes = ""  # you can wire multi-line notes later if needed
+                    notes = ""
                     is_subtask = len(parent_stack) > 0
 
                     if require_week_of and week_of is None:
@@ -141,20 +120,18 @@ class DevParser(TxtParser):
                         )
 
                     task = {
-                        "category": current_category,          # e.g., Meetings, Admin, Dev
+                        "category": current_category,
                         "title": title,
                         "done": done,
                         "priority": current_priority,
                         "carry_over": carry_over,
                         "description": notes,
                         "sub_task": is_subtask,
-                        "begin_date": week_of,                 # canonical YYYY-MM-DD
+                        "begin_date": week_of,
+                        "project_name": current_project
                     }
 
-                    # Push current task after computing subtask
                     parent_stack.append((indent_level, title))
-
-                    # Append once (no duplicates)
                     self.tasks.append(task)
 
             if require_week_of and week_of is None:

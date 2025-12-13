@@ -44,13 +44,31 @@ class ImportTasks(APIView):
                         status=status.HTTP_404_NOT_FOUND
                     )
 
-            # Create tasks one-by-one so model logic runs
+            # Step 1: Collect all project names from tasks
+            project_names = set(
+                t["project_name"] for t in tasks
+                if t.get("project_name") and not request.data.get('project_id')
+            )
+
+            # Step 2: Fetch or create all needed projects for the user
+            project_map = {}  # name → Project instance
+            for name in project_names:
+                project, _ = Project.objects.get_or_create(user=request.user, name=name)
+                project_map[name] = project
+
+            # Step 3: Create tasks
             created_count = 0
             with transaction.atomic():
                 for t in tasks:
+                    task_project = project  # default if project_id passed
+
+                    # Override with dynamic project if project_id not passed
+                    if not project and t.get("project_name"):
+                        task_project = project_map.get(t["project_name"])
+
                     Task.objects.create(
                         user=request.user,
-                        project=project,
+                        project=task_project,
                         category=t.get("category"),
                         title=t["title"],
                         is_done=t.get("done", False),
@@ -58,8 +76,7 @@ class ImportTasks(APIView):
                         carry_over=t.get("carry_over", False),
                         description=t.get("description", ""),
                         is_subtask=t.get("sub_task", False),
-                        begin_date=t.get("begin_date"),  # from parser
-                        # NOTE: do NOT set end_date here; let model logic handle it
+                        begin_date=t.get("begin_date"),
                     )
                     created_count += 1
 

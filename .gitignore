@@ -33,3 +33,5 @@ Thumbs.db
 # Docker
 dbdata/
 db/data/__pycache__/
+
+node_modules
