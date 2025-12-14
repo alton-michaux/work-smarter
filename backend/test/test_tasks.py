@@ -1,4 +1,3 @@
-import io
 import pytest
 from datetime import date, timedelta
 from api.models import Task
@@ -7,7 +6,7 @@ def task_payload(user, **overrides):
     payload = {
         "title": "Test Task",
         "description": "Task for testing",
-        "begin_date": "2025-11-09",
+        "begin_date": date.today(),
         "is_done": False,
         "user": user.id
     }
@@ -100,6 +99,7 @@ def test_task_update(auth_client, get_user, create_task):
     
     task.refresh_from_db()
     
+    print({f.name: getattr(task, f.name) for f in task._meta.fields})
     assert task.title == "Test Task Update"
     assert task.end_date == date.today() # ensures that end_date is populated when task is marked as "done"
     

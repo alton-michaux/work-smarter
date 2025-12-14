@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.utils import timezone
+from datetime import date
 
 User = get_user_model()
 # To extend the existing User model from AllAuth, create a separate Profile model with a OneToOneField to User.
@@ -50,6 +50,8 @@ class Task(models.Model):
     def save(self, *args, **kwargs):
         if self.is_done and self.end_date is None and self.begin_date is not None:
             self.end_date = self.begin_date
+        elif self.is_done and self.end_date is None:
+            self.end_date = date.today()
         elif not self.is_done and self.end_date:
             self.end_date = None
         super().save(*args, **kwargs)
