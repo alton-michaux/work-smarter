@@ -56,4 +56,4 @@ def test_txt_import_sets_end_date(create_file, get_user, auth_client):
     task = Task.objects.filter(title__icontains="Finished task").first()
     assert task is not None, "Task with title containing 'Finished task' was not found."
     assert task.is_done is True
-    assert task.end_date == date.today()
+    assert task.end_date == date(2024, 3, 11)
