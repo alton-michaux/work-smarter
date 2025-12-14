@@ -15,7 +15,7 @@ class TxtParser(ABC):
 
 
 class DevParser(TxtParser):
-    CATEGORY_LABELS = {"Meetings", "Tasks", "Notes"}
+    CATEGORY_LABELS = {"Meetings", "Tasks", "Notes", "Questions", "Dev", "Admin", "Ongoing"}
 
     # Accept common date formats for "Week of"
     WEEK_OF_FORMATS = [

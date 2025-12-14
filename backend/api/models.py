@@ -45,6 +45,13 @@ class Task(models.Model):
     description = models.TextField(blank=True)
     created_at = models.DateField(auto_now_add=True)
     is_subtask = models.BooleanField(default=False)
+    parent_task = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        related_name="subtasks",
+        on_delete=models.CASCADE,
+    )
     carry_over = models.BooleanField(default=True)
     
     def save(self, *args, **kwargs):
