@@ -104,7 +104,8 @@ class DevParser(TxtParser):
                         parent_stack.pop()
 
                     notes = ""
-                    is_subtask = len(parent_stack) > 0
+                    parent_title = parent_stack[-1][1] if parent_stack else None
+                    is_subtask = parent_title is not None
 
                     if require_week_of and current_week_of is None:
                         raise ValueError(
@@ -120,6 +121,7 @@ class DevParser(TxtParser):
                         "carry_over": carry_over,
                         "description": notes,
                         "sub_task": is_subtask,
+                        "parent_title": parent_title,
                         "begin_date": current_week_of,
                         "end_date": current_week_of if done else None,
                         "project_name": current_project

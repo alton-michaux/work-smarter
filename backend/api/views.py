@@ -53,33 +53,43 @@ class ImportTasks(APIView):
             # Step 2: Fetch or create all needed projects for the user
             project_map = {}  # name → Project instance
             for name in project_names:
-                project, _ = Project.objects.get_or_create(user=request.user, name=name)
-                project_map[name] = project
+                p, _ = Project.objects.get_or_create(user=request.user, name=name)
+                project_map[name] = p
+
 
             # Step 3: Create tasks
             created_count = 0
+            created_tasks = {}  # title -> Task instance
+
             with transaction.atomic():
                 for t in tasks:
-                    task_project = project  # default if project_id passed
-
-                    # Override with dynamic project if project_id not passed
-                    if not project and t.get("project_name"):
-                        task_project = project_map.get(t["project_name"])
-
-                    Task.objects.create(
+                    task = Task.objects.create(
                         user=request.user,
-                        project=task_project,
+                        project=project_map.get(t["project_name"]),
                         category=t.get("category"),
                         title=t["title"],
                         is_done=t.get("done", False),
                         priority=t.get("priority", "medium"),
                         carry_over=t.get("carry_over", False),
-                        description=t.get("description", ""),
                         is_subtask=t.get("sub_task", False),
                         begin_date=t.get("begin_date"),
-                        end_date=t["begin_date"] if t.get("done", False) else None,
+                        end_date=t.get("end_date"),
                     )
+
+                    created_tasks[t["title"]] = task
                     created_count += 1
+
+                for t in tasks:
+                    parent_title = t.get("parent_title")
+                    if not parent_title:
+                        continue
+
+                    child = created_tasks.get(t["title"])
+                    parent = created_tasks.get(parent_title)
+
+                    if parent and child:
+                        child.parent_task = parent
+                        child.save(update_fields=["parent_task"])
 
             return Response(
                 {'status': 'Import successful.', 'imported': created_count},
