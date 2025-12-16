@@ -40,7 +40,7 @@ entrypoints==0.3
 et_xmlfile==2.0.0
 fasteners==0.19
 fastjsonschema==2.19.1
-filelock==3.16.1
+filelock==3.20.1
 frozenlist==1.7.0
 gunicorn==22.0.0
 httplib2==0.14.0
