@@ -11,14 +11,19 @@ from .txt_parser import DevParser
 from django.db import transaction
 from rest_framework.exceptions import ParseError
 from django.contrib.auth import get_user_model
+import openai
+from loguru import logger
 
+logger.add("logging.log", backtrace=True)
 class TaskCursorPagination(CursorPagination):
     ordering = "-begin_date"
 
 class ImportTasks(APIView):
     def post(self, request):
+        logger.info("Starting task import for user {}", request.user.username)
         file = request.FILES.get('file')
         if not file or not file.name.endswith('.txt'):
+            logger.warning("Invalid file upload attempt by user {}: {}", request.user.username, file.name if file else 'None')
             return Response({'error': 'Only .txt files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -81,6 +86,7 @@ class ImportTasks(APIView):
                     )
                     created_count += 1
 
+            logger.info("Imported {} tasks for user {}", created_count, request.user.username)
             return Response(
                 {'status': 'Import successful.', 'imported': created_count},
                 status=status.HTTP_201_CREATED
@@ -88,12 +94,15 @@ class ImportTasks(APIView):
 
         except ValueError as e:
             # Known parser/input errors (e.g., missing/invalid "Week of")
+            logger.error("ValueError during task import for user {}: {}", request.user.username, str(e))
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ParseError as e:
             # Bad encoding, etc.
+            logger.error("ParseError during task import for user {}: {}", request.user.username, str(e))
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             # Unexpected server-side error
+            logger.error("Unexpected error during task import for user {}: {}", request.user.username, str(e))
             return Response({'error': f'Unexpected error: {str(e)}'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -128,7 +137,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                     )
                 )
             except ValueError:
-                print("[DEBUG] Invalid date format")
+                logger.warning("Invalid date format in query params for user {}", self.request.user.username)
                 pass
 
         return queryset
@@ -162,20 +171,24 @@ class ResumeViewSet(viewsets.ViewSet):
     parser_classes = (MultiPartParser, FormParser)
 
     def create(self, request):
+        logger.info("Resume upload initiated by user {}", request.user.username)
         file = request.FILES.get('file')
         if not file:
+            logger.warning("No file uploaded in resume create for user {}", request.user.username)
             return Response({"error": "No file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
 
         resume = Resume(file=file, user=request.user)  # ✅ attach user
         resume.save()
 
         openai.api_key = request.data.get('api_key')
+        logger.info("Calling OpenAI API for resume analysis for user {}", request.user.username)
         response = openai.Completion.create(
             engine="text-davinci-003",
             prompt=f"Pretend that you are a recruiter. Please analyze this resume: {file.name}",
             max_tokens=150
         )
 
+        logger.info("Resume analysis completed for user {}", request.user.username)
         return Response({"suggestions": response.choices[0].text.strip()}, status=status.HTTP_201_CREATED)
 
     def list(self, request):
