@@ -11,11 +11,13 @@ from .txt_parser import DevParser
 from django.db import transaction
 from rest_framework.exceptions import ParseError
 from django.contrib.auth import get_user_model
+from loguru import logger
 
 class TaskCursorPagination(CursorPagination):
     ordering = "-begin_date"
 
 class ImportTasks(APIView):
+    @logger.catch
     def post(self, request):
         file = request.FILES.get('file')
         if not file or not file.name.endswith('.txt'):
@@ -101,6 +103,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     pagination_class = TaskCursorPagination
     serializer_class = TaskSerializer
 
+    @logger.catch
     def get_queryset(self):
         user = self.request.user
         queryset = Task.objects.filter(user=user)
@@ -139,6 +142,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
 
+    @logger.catch
     def get_queryset(self):
         return Project.objects.filter(user=self.request.user)
     
@@ -151,16 +155,18 @@ class UserViewSet(viewsets.ModelViewSet):
     ordering_fields = ['id', 'date_joined', 'username', 'email']  # allowed
     ordering = ['-date_joined']  # default if client doesn't pass ?ordering=
 
+    @logger.catch
     def get_queryset(self):
         # Clear ANY model/base default ordering that might include 'created'
         qs = User.objects.filter(id=self.request.user.id).order_by()
 
         # Optionally enforce a safe default here too:
         return qs.order_by('-date_joined')
-    
+
 class ResumeViewSet(viewsets.ViewSet):
     parser_classes = (MultiPartParser, FormParser)
 
+    @logger.catch
     def create(self, request):
         file = request.FILES.get('file')
         if not file:
@@ -178,6 +184,7 @@ class ResumeViewSet(viewsets.ViewSet):
 
         return Response({"suggestions": response.choices[0].text.strip()}, status=status.HTTP_201_CREATED)
 
+    @logger.catch
     def list(self, request):
         resumes = Resume.objects.filter(user=request.user)
         serializer = ResumeSerializer(resumes, many=True)
