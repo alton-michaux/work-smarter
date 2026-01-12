@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 from abc import ABC, abstractmethod
+from loguru import logger
 
 class TxtParser(ABC):
     def __init__(self, content):
@@ -37,6 +38,7 @@ class DevParser(TxtParser):
     DONE_REGEX = re.compile(r'^-+\[x\]', re.IGNORECASE)
     DIVIDER_REGEX = re.compile(r'-{3,}')  # lines like ---PRE QA---
 
+    @logger.catch
     def _parse_week_of(self, line: str):
         if not line.lower().startswith("week of"):
             return None
@@ -58,6 +60,7 @@ class DevParser(TxtParser):
 
         raise ValueError(f"Unrecognized 'Week of' date format: {date_part}")
 
+    @logger.catch
     def parse(self, require_week_of=True):
         current_category = None
         current_priority = "medium"
