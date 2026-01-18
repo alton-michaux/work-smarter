@@ -2,7 +2,7 @@ import pytest
 import re
 from datetime import date
 from api.models import Task
-from api.txt_parser import DevParser
+from backend.management.utils.txt_parser import DevParser
 
 def test_parse_week_of_valid_formats():
     parser = DevParser("")

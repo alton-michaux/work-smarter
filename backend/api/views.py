@@ -7,7 +7,7 @@ from django.db.models import Q
 from datetime import datetime
 from .models import Resume, Project, Task
 from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer
-from .txt_parser import DevParser
+from backend.management.utils.txt_parser import DevParser
 from django.db import transaction
 from rest_framework.exceptions import ParseError
 from django.contrib.auth import get_user_model
