@@ -17,7 +17,6 @@ class TaskCursorPagination(CursorPagination):
     ordering = "-begin_date"
 
 class ImportTasks(APIView):
-    @logger.catch
     def post(self, request):
         file = request.FILES.get('file')
         if not file or not file.name.endswith('.txt'):
@@ -90,12 +89,15 @@ class ImportTasks(APIView):
 
         except ValueError as e:
             # Known parser/input errors (e.g., missing/invalid "Week of")
+            logger.exception(f"ValueError in task import: {e}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ParseError as e:
             # Bad encoding, etc.
+            logger.exception(f"ParseError in task import: {e}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             # Unexpected server-side error
+            logger.exception(f"Unexpected error in task import: {e}")
             return Response({'error': f'Unexpected error: {str(e)}'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -103,7 +105,6 @@ class TaskViewSet(viewsets.ModelViewSet):
     pagination_class = TaskCursorPagination
     serializer_class = TaskSerializer
 
-    @logger.catch
     def get_queryset(self):
         user = self.request.user
         queryset = Task.objects.filter(user=user)
@@ -130,8 +131,8 @@ class TaskViewSet(viewsets.ModelViewSet):
                         Q(end_date__range=(start_of_week, end_of_week))
                     )
                 )
-            except ValueError:
-                print("[DEBUG] Invalid date format")
+            except ValueError as e:
+                logger.exception(f"Invalid date format in get_queryset: {e}")
                 pass
 
         return queryset
@@ -142,9 +143,12 @@ class TaskViewSet(viewsets.ModelViewSet):
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
 
-    @logger.catch
     def get_queryset(self):
-        return Project.objects.filter(user=self.request.user)
+        try:
+            return Project.objects.filter(user=self.request.user)
+        except Exception as e:
+            logger.exception(f"Error in ProjectViewSet.get_queryset: {e}")
+            raise
     
     
 User = get_user_model()
@@ -155,37 +159,46 @@ class UserViewSet(viewsets.ModelViewSet):
     ordering_fields = ['id', 'date_joined', 'username', 'email']  # allowed
     ordering = ['-date_joined']  # default if client doesn't pass ?ordering=
 
-    @logger.catch
     def get_queryset(self):
-        # Clear ANY model/base default ordering that might include 'created'
-        qs = User.objects.filter(id=self.request.user.id).order_by()
+        try:
+            # Clear ANY model/base default ordering that might include 'created'
+            qs = User.objects.filter(id=self.request.user.id).order_by()
 
-        # Optionally enforce a safe default here too:
-        return qs.order_by('-date_joined')
+            # Optionally enforce a safe default here too:
+            return qs.order_by('-date_joined')
+        except Exception as e:
+            logger.exception(f"Error in UserViewSet.get_queryset: {e}")
+            raise
 
 class ResumeViewSet(viewsets.ViewSet):
     parser_classes = (MultiPartParser, FormParser)
 
-    @logger.catch
     def create(self, request):
-        file = request.FILES.get('file')
-        if not file:
-            return Response({"error": "No file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            file = request.FILES.get('file')
+            if not file:
+                return Response({"error": "No file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
 
-        resume = Resume(file=file, user=request.user)  # ✅ attach user
-        resume.save()
+            resume = Resume(file=file, user=request.user)  # ✅ attach user
+            resume.save()
 
-        openai.api_key = request.data.get('api_key')
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=f"Pretend that you are a recruiter. Please analyze this resume: {file.name}",
-            max_tokens=150
-        )
+            openai.api_key = request.data.get('api_key')
+            response = openai.Completion.create(
+                engine="text-davinci-003",
+                prompt=f"Pretend that you are a recruiter. Please analyze this resume: {file.name}",
+                max_tokens=150
+            )
 
-        return Response({"suggestions": response.choices[0].text.strip()}, status=status.HTTP_201_CREATED)
+            return Response({"suggestions": response.choices[0].text.strip()}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.exception(f"Error in ResumeViewSet.create: {e}")
+            return Response({"error": "An error occurred while processing the resume."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @logger.catch
     def list(self, request):
-        resumes = Resume.objects.filter(user=request.user)
-        serializer = ResumeSerializer(resumes, many=True)
-        return Response(serializer.data)
+        try:
+            resumes = Resume.objects.filter(user=request.user)
+            serializer = ResumeSerializer(resumes, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.exception(f"Error in ResumeViewSet.list: {e}")
+            return Response({"error": "An error occurred while retrieving resumes."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
