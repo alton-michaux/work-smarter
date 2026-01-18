@@ -1,8 +1,5 @@
 import environ
 from pathlib import Path
-from backend.logging import setup_logging
-
-setup_logging()
 
 # --- Base Directory ---
 BASE_DIR = Path(__file__).resolve().parent.parent

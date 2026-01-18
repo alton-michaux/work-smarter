@@ -89,15 +89,15 @@ class ImportTasks(APIView):
 
         except ValueError as e:
             # Known parser/input errors (e.g., missing/invalid "Week of")
-            logger.exception(f"ValueError in task import: {e}")
+            logger.warning(f"ValueError in task import: {e}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ParseError as e:
             # Bad encoding, etc.
-            logger.exception(f"ParseError in task import: {e}")
+            logger.warning(f"ParseError in task import: {e}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             # Unexpected server-side error
-            logger.exception(f"Unexpected error in task import: {e}")
+            logger.warning(f"Unexpected error in task import: {e}")
             return Response({'error': f'Unexpected error: {str(e)}'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -132,7 +132,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                     )
                 )
             except ValueError as e:
-                logger.exception(f"Invalid date format in get_queryset: {e}")
+                logger.warning(f"Invalid date format in get_queryset: {e}")
                 pass
 
         return queryset
@@ -147,7 +147,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         try:
             return Project.objects.filter(user=self.request.user)
         except Exception as e:
-            logger.exception(f"Error in ProjectViewSet.get_queryset: {e}")
+            logger.warning(f"Error in ProjectViewSet.get_queryset: {e}")
             raise
     
     
@@ -167,7 +167,7 @@ class UserViewSet(viewsets.ModelViewSet):
             # Optionally enforce a safe default here too:
             return qs.order_by('-date_joined')
         except Exception as e:
-            logger.exception(f"Error in UserViewSet.get_queryset: {e}")
+            logger.warning(f"Error in UserViewSet.get_queryset: {e}")
             raise
 
 class ResumeViewSet(viewsets.ViewSet):
@@ -191,7 +191,7 @@ class ResumeViewSet(viewsets.ViewSet):
 
             return Response({"suggestions": response.choices[0].text.strip()}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            logger.exception(f"Error in ResumeViewSet.create: {e}")
+            logger.warning(f"Error in ResumeViewSet.create: {e}")
             return Response({"error": "An error occurred while processing the resume."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def list(self, request):
@@ -200,5 +200,5 @@ class ResumeViewSet(viewsets.ViewSet):
             serializer = ResumeSerializer(resumes, many=True)
             return Response(serializer.data)
         except Exception as e:
-            logger.exception(f"Error in ResumeViewSet.list: {e}")
+            logger.warning(f"Error in ResumeViewSet.list: {e}")
             return Response({"error": "An error occurred while retrieving resumes."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

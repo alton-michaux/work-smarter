@@ -60,7 +60,6 @@ class DevParser(TxtParser):
 
             raise ValueError(f"Unrecognized 'Week of' date format: {date_part}")
         except Exception as e:
-            logger.exception(f"Error parsing week of date: {e}")
             raise
 
     def parse(self, require_week_of=True):
@@ -140,5 +139,4 @@ class DevParser(TxtParser):
 
         except Exception as e:
             msg = f"Error while parsing at line {line_num}: {e}" if 'line_num' in locals() else f"Error while parsing: {e}"
-            logger.exception(msg)
             raise
