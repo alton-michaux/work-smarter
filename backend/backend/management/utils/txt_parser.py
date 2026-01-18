@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 from abc import ABC, abstractmethod
+from loguru import logger
 
 class TxtParser(ABC):
     def __init__(self, content):
@@ -38,25 +39,28 @@ class DevParser(TxtParser):
     DIVIDER_REGEX = re.compile(r'-{3,}')  # lines like ---PRE QA---
 
     def _parse_week_of(self, line: str):
-        if not line.lower().startswith("week of"):
-            return None
+        try:
+            if not line.lower().startswith("week of"):
+                return None
 
-        parts = line.split(":", 1) if ":" in line else line.split(None, 2)
-        if not parts:
-            return None
+            parts = line.split(":", 1) if ":" in line else line.split(None, 2)
+            if not parts:
+                return None
 
-        date_part = parts[-1].strip()
-        if not date_part:
-            raise ValueError("Found 'Week of' but no date provided.")
+            date_part = parts[-1].strip()
+            if not date_part:
+                raise ValueError("Found 'Week of' but no date provided.")
 
-        for fmt in self.WEEK_OF_FORMATS:
-            try:
-                dt = datetime.strptime(date_part, fmt)
-                return dt.strftime("%Y-%m-%d")
-            except ValueError:
-                continue
+            for fmt in self.WEEK_OF_FORMATS:
+                try:
+                    dt = datetime.strptime(date_part, fmt)
+                    return dt.strftime("%Y-%m-%d")
+                except ValueError:
+                    continue
 
-        raise ValueError(f"Unrecognized 'Week of' date format: {date_part}")
+            raise ValueError(f"Unrecognized 'Week of' date format: {date_part}")
+        except Exception as e:
+            raise
 
     def parse(self, require_week_of=True):
         current_category = None
@@ -135,5 +139,4 @@ class DevParser(TxtParser):
 
         except Exception as e:
             msg = f"Error while parsing at line {line_num}: {e}" if 'line_num' in locals() else f"Error while parsing: {e}"
-            print(msg)
             raise
