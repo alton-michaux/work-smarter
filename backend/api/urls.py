@@ -14,10 +14,10 @@ router.register(r'tasks', TaskViewSet, basename='task')
 router.register(r'user', UserViewSet, basename='user')
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path('import/', ImportTasks.as_view(), name='import-tasks'),
-    # JWT endpoints
-    path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path("", include(router.urls)),
+    path("import/", ImportTasks.as_view(), name="import-tasks"),
     path("resume/", include("api.resume.urls")),
+
+    path("auth/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]

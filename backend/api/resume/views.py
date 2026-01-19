@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .serializers import GenerateBulletsRequestSerializer
-from ..llm.prompt_builder import build_messages
-from ..llm.client import generate_bullets_llm
+from .llm.prompt_builder import build_messages
+from .llm.client import generate_bullets_llm
 
 
 class GenerateResumeBulletsView(APIView):
