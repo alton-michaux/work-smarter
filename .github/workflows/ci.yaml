@@ -11,37 +11,20 @@ concurrency:
 
 jobs:
   backend-tests:
-    name: Backend (Django) tests
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:18
-        env:
-          POSTGRES_DB: test_db
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     env:
-      # Adjust these to match your Django settings expectations.
       DJANGO_SETTINGS_MODULE: backend.settings
-      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/test_db
       SECRET_KEY: ci-secret-key
       DEBUG: "0"
+      POSTGRES_DB: test_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # If your backend runs tests via Docker (recommended since you're dockerized),
-      # this keeps CI identical to how you run locally/production.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -54,26 +37,50 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run backend tests (pytest or Django test runner)
+      - name: Create network
+        run: docker network create ci-net
+
+      - name: Start Postgres
         run: |
-          docker run --rm \
+          docker run -d --name postgres --network ci-net \
+            -e POSTGRES_DB="${POSTGRES_DB}" \
+            -e POSTGRES_USER="${POSTGRES_USER}" \
+            -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+            postgres:13
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..30}; do
+            docker exec postgres pg_isready -U "${POSTGRES_USER}" && exit 0
+            sleep 1
+          done
+          echo "Postgres did not become ready in time" && exit 1
+
+      - name: Run backend tests
+        run: |
+          docker run --rm --network ci-net \
             -e DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE}" \
-            -e DATABASE_URL="${DATABASE_URL}" \
+            -e DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}" \
             -e SECRET_KEY="${SECRET_KEY}" \
             -e DEBUG="${DEBUG}" \
             backend-ci:latest \
             bash -lc "python -m pytest -q"
 
-      # Optional but highly recommended: ensure migrations are in sync
       - name: Check for missing migrations
         run: |
-          docker run --rm \
+          docker run --rm --network ci-net \
             -e DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE}" \
-            -e DATABASE_URL="${DATABASE_URL}" \
+            -e DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}" \
             -e SECRET_KEY="${SECRET_KEY}" \
             -e DEBUG="${DEBUG}" \
             backend-ci:latest \
             bash -lc "python manage.py makemigrations --check --dry-run"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f postgres || true
+          docker network rm ci-net || true
 
   # frontend-checks:
   #   name: Frontend (Next.js) checks
