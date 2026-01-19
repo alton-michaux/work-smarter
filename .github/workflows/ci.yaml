@@ -31,7 +31,7 @@ jobs:
 
     env:
       # Adjust these to match your Django settings expectations.
-      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SETTINGS_MODULE: backend.settings
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/test_db
       SECRET_KEY: ci-secret-key
       DEBUG: "0"
