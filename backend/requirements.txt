@@ -23,7 +23,7 @@ cryptography==2.8
 Cython==3.1.2
 defer==1.0.4
 distlib==0.3.9
-distro==1.4.0
+distro==1.7.0
 distro-info==1.0
 dj-database-url==2.1.0
 dj-rest-auth==7.0.1
@@ -44,6 +44,7 @@ filelock==3.20.3
 frozenlist==1.7.0
 gunicorn==22.0.0
 httplib2==0.14.0
+httpx==0.27.2
 hyperlink==19.0.0
 idna==2.8
 importlib-metadata==1.5.0
@@ -74,7 +75,7 @@ nbformat==5.10.3
 networkx==3.2.1
 numpy==1.26.4
 oauthlib==3.1.0
-openai==0.27.0
+openai>=1.0.0
 openpyxl==3.1.5
 packaging==24.2
 pandas==2.2.3
@@ -132,7 +133,7 @@ tdigest==0.5.2.2
 testresources==2.0.1
 tqdm==4.66.2
 traitlets==5.14.2
-typing_extensions==4.10.0
+typing_extensions==4.13.2
 tzdata==2025.2
 uritemplate==4.1.1
 urllib3==2.6.3
