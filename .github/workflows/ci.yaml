@@ -16,7 +16,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:13
+        image: postgres:18
         env:
           POSTGRES_DB: test_db
           POSTGRES_USER: postgres
@@ -32,7 +32,7 @@ jobs:
     env:
       # Adjust these to match your Django settings expectations.
       DJANGO_SETTINGS_MODULE: config.settings
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/test_db
       SECRET_KEY: ci-secret-key
       DEBUG: "0"
 
@@ -57,7 +57,6 @@ jobs:
       - name: Run backend tests (pytest or Django test runner)
         run: |
           docker run --rm \
-            --network host \
             -e DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE}" \
             -e DATABASE_URL="${DATABASE_URL}" \
             -e SECRET_KEY="${SECRET_KEY}" \
@@ -69,7 +68,6 @@ jobs:
       - name: Check for missing migrations
         run: |
           docker run --rm \
-            --network host \
             -e DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE}" \
             -e DATABASE_URL="${DATABASE_URL}" \
             -e SECRET_KEY="${SECRET_KEY}" \
