@@ -1,10 +1,12 @@
+import csv
 from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.http import HttpResponse
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.pagination import CursorPagination
 from django.db.models import Q
-from datetime import datetime
+from datetime import date, datetime
 from .models import Resume, Project, Task
 from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer
 from backend.management.utils.txt_parser import DevParser
@@ -100,6 +102,60 @@ class ImportTasks(APIView):
             logger.warning(f"Unexpected error in task import: {e}")
             return Response({'error': f'Unexpected error: {str(e)}'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ExportTasksCSV(APIView):
+    def get(self, request):
+        # Optional: filter by date range passed as query params
+        # ?start=2026-01-01&end=2026-01-31
+        qs = Task.objects.filter(user=request.user).select_related("project").order_by("begin_date", "id")
+
+        start = request.query_params.get("start")
+        end = request.query_params.get("end")
+        if start:
+            qs = qs.filter(begin_date__gte=start)
+        if end:
+            qs = qs.filter(begin_date__lte=end)
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="tasks.csv"'
+
+        writer = csv.writer(response)
+
+        header = [
+            "id",
+            "date",
+            "project",
+            "category",
+            "title",
+            "status",
+            "priority",
+            "parent_id",
+            "created_at",
+            "completed_at",
+            "notes",
+        ]
+        writer.writerow(header)
+
+        for task in qs:
+            status = "done" if task.is_done else "todo"
+            project_name = task.project.name if task.project_id else ""
+            completed_at = task.end_date.isoformat() if task.is_done and task.end_date else ""
+
+            writer.writerow([
+                str(task.id),
+                task.begin_date.isoformat() if task.begin_date else "",
+                project_name,
+                task.category,
+                task.title or "",
+                status,
+                task.priority or "",
+                "",  # parent_id (not supported yet in your schema)
+                task.created_at.isoformat() if task.created_at else "",
+                completed_at,
+                task.description or "",
+            ])
+
+        return response
 
 class TaskViewSet(viewsets.ModelViewSet):
     pagination_class = TaskCursorPagination
