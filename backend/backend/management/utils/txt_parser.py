@@ -96,7 +96,13 @@ class DevParser(TxtParser):
 
                 if self.HEADER_REGEX.match(line) and not line.lstrip().startswith("-"):
                     current_category = stripped
-                    current_project = None if stripped in self.CATEGORY_LABELS else stripped
+
+                    # If it's a project label, keep it; otherwise, clear it
+                    if stripped in self.PROJECT_LABELS:
+                        current_project = stripped
+                    else:
+                        current_project = None
+
                     continue
 
                 match = self.TASK_REGEX.match(line)

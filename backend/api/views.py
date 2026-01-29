@@ -63,11 +63,10 @@ class ImportTasks(APIView):
             created_count = 0
             with transaction.atomic():
                 for t in tasks:
-                    task_project = project  # default if project_id passed
-
-                    # Override with dynamic project if project_id not passed
-                    if not project and t.get("project_name"):
-                        task_project = project_map.get(t["project_name"])
+                    # Always prefer per-task project if available (even if project_id is passed)
+                    task_project = (
+                        project_map.get(t["project_name"]) if t.get("project_name") else project
+                    )
 
                     Task.objects.create(
                         user=request.user,
@@ -80,7 +79,7 @@ class ImportTasks(APIView):
                         description=t.get("description", ""),
                         is_subtask=t.get("sub_task", False),
                         begin_date=t.get("begin_date"),
-                        end_date=t["begin_date"] if t.get("done", False) else None,
+                        end_date=t.get("end_date"),
                     )
                     created_count += 1
 
