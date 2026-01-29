@@ -1,10 +1,9 @@
 type BlockType = 'task' | 'meeting' | 'note';
 
-export function categoryToType(category?: string | null): BlockType {
+export function categoryToType(category?: string | null) {
   const c = (category ?? '').trim().toLowerCase();
   if (c === 'meetings' || c === 'meeting') return 'meeting';
-  if (c === 'tasks' || c === 'task') return 'task';
-  return 'note';
+  return 'task'; // default
 }
 
 export function buildTree<T extends { id: any; parent_id?: any | null }>(rows: T[]) {
