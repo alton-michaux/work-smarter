@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Project, NewProject } from 'types/types';
+import { Project, NewProject, Paginated } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -28,7 +28,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const { getAuthHeaders } = useAPI();
   
   const { loggedIn } = useAuth();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Paginated<Project> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null); // Add error state
 
@@ -40,7 +40,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       const res = await fetch(`${API_URL}/projects/`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to fetch projects');
       const data = await res.json();
-      setProjects(data);
+      setProjects(data.results ?? data);
     } catch (err: any) {
       setError(err.message || 'Unknown error');
       console.error(err);

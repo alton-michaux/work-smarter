@@ -6,7 +6,10 @@ const ProjectsPage = () => {
   const { projects, deleteProject, isLoading } = useProjects(); // Add isLoading
   const router = useRouter();
 
-  const results = projects["results"]
+  const results = Array.isArray(projects)
+  ? projects
+  : (projects?.results ?? []);
+  
   const handleProjectClick = (id: number) => {
     router.push(`/projects/view/${id}`);
   };
