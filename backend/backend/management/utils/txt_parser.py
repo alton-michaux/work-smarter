@@ -17,6 +17,7 @@ class TxtParser(ABC):
 
 class DevParser(TxtParser):
     CATEGORY_LABELS = {"Meetings", "Tasks", "Notes"}
+    PROJECT_LABELS = {"Vamos", "Datos"}
 
     # Accept common date formats for "Week of"
     WEEK_OF_FORMATS = [
@@ -126,7 +127,7 @@ class DevParser(TxtParser):
                         "sub_task": is_subtask,
                         "begin_date": current_week_of,
                         "end_date": current_week_of if done else None,
-                        "project_name": current_project
+                        "project_name": current_project if current_project in self.PROJECT_LABELS else None
                     }
 
                     parent_stack.append((indent_level, title))
