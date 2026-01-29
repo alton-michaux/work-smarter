@@ -23,7 +23,7 @@ export const DateToggleUI = ({ selectedDate, setSelectedDate, last7Days }: DateT
               />
             </div>
 
-            <div className="mt-3 flex gap-2 overflow-x-auto">
+            <div className="mt-3 flex gap-2 overflow-x-auto justify-around">
               {last7Days.map((d) => (
                 <button
                   key={d.key}
