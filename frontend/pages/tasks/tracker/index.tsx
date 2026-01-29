@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useTasks } from '../../../context/TasksContext';
 import { getCurrentMonday, getEndOfWeek } from '../../../utils/dateUtils';
-import WeekSelector from '../../../components/tasks/WeekSelector';
+import WeekSelector from '../../../components/ui/WeekSelector';
 import TaskTable from '../../../components/tasks/TaskTable';
 import Spinner from 'components/shared/Spinner';
 

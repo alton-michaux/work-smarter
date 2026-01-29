@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../context/AuthContext';
 import { categoryToType, buildTree, splitIntoSections } from 'lib/dailyLog';
 import { DateToggleUI } from 'components/ui/dateToggleUI';
+import { TaskLayout } from 'components/tasks/TaskLayout';
 
 const ROW_HEIGHT = 88; // adjust if your rows are taller/shorter
 const LIST_HEIGHT = 600;
@@ -220,34 +221,7 @@ const TasksPage = () => {
         ) : (!isLoading && dailyTasks.length === 0 ? (
           <p className="text-gray-600 text-center">No entries for {selectedDate}.</p>
         ) : (
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">MEETINGS</h2>
-              <div className="rounded border">
-                {sections.meetings.length ? <OutlineTree nodes={sections.meetings} /> : (
-                  <div className="px-4 py-3 text-sm text-gray-500">No meetings.</div>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">TASKS</h2>
-              <div className="rounded border">
-                {sections.tasks.length ? <OutlineTree nodes={sections.tasks} /> : (
-                  <div className="px-4 py-3 text-sm text-gray-500">No tasks.</div>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">NOTES</h2>
-              <div className="rounded border">
-                {sections.notes.length ? <OutlineTree nodes={sections.notes} /> : (
-                  <div className="px-4 py-3 text-sm text-gray-500">No notes.</div>
-                )}
-              </div>
-            </div>
-          </div>
+          <TaskLayout sections={sections} OutlineTree={OutlineTree}/>
         ))}
 
         {/* Bottom Navigation */}
