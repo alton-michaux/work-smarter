@@ -112,7 +112,7 @@ const ProjectShowPage = () => {
     <div className="min-h-screen flex justify-center px-4 py-10 bg-gray-50">
       <div className="w-full max-w-2xl bg-white shadow-lg rounded-lg p-8">
         <h1 className="text-2xl font-semibold text-gray-800 mb-4">
-          <span className="font-bold">Name:</span> {project.name}
+          <span className="font-bold">Project: </span> {project.name}
         </h1>
         <div className="mb-6 rounded-lg border bg-white p-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
