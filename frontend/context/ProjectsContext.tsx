@@ -28,7 +28,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const { getAuthHeaders } = useAPI();
   
   const { loggedIn } = useAuth();
-  const [projects, setProjects] = useState<Paginated<Project> | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null); // Add error state
 
@@ -40,7 +40,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       const res = await fetch(`${API_URL}/projects/`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to fetch projects');
       const data = await res.json();
-      setProjects(data.results ?? data);
+      setProjects(Array.isArray(data) ? data : data.results ?? []);
     } catch (err: any) {
       setError(err.message || 'Unknown error');
       console.error(err);
@@ -65,7 +65,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       });
       if (!res.ok) throw new Error('Failed to add project');
       const newProject = await res.json();
-      setProjects(prev => (prev ? [...prev, newProject] : [newProject]));
+      setProjects(prev => [...prev, newProject]);
     } catch (err: any) {
       setError(err.message || 'Unknown error');
       console.error(err);
