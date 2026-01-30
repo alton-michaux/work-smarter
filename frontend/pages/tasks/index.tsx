@@ -48,7 +48,7 @@ const TasksPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10 flex justify-center">
-      <div className="w-full max-w-3xl bg-white rounded-lg shadow p-8">
+      <div className="w-full max-w-6xl bg-white rounded-lg shadow p-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Daily Log</h1>
 
         {/* Day toggler */}
