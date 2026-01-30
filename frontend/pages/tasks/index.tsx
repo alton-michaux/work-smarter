@@ -57,14 +57,14 @@ const TasksPage = () => {
         <QuickAddBar selectedDate={selectedDate} />
 
         {/* Create New Task */}
-        <div className="mb-6 text-center">
+        {/* <div className="mb-6 text-center">
           <button
             onClick={() => router.push('/tasks/create')}
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
           >
             + Create New Task
           </button>
-        </div>
+        </div> */}
 
         {/* Errors */}
         {error && (
