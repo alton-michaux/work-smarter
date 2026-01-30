@@ -33,28 +33,16 @@ class ImportTasks(APIView):
 
             # Parse tasks
             parser = DevParser(content)
-            parser.parse()  # should raise ValueError for known parse issues
+            parser.parse()  # raises ValueError on known parse issues
             tasks = parser.tasks
 
-            # Optional project (enforce ownership)
-            project = None
-            project_id = request.data.get('project_id')
-            if project_id:
-                project = Project.objects.filter(id=project_id, user=request.user).first()
-                if project is None:
-                    return Response(
-                        {'error': 'Project not found or not owned by user.'},
-                        status=status.HTTP_404_NOT_FOUND
-                    )
+            # Step 1: Collect distinct project names from parsed tasks
+            project_names = {
+                t["project_name"] for t in tasks if t.get("project_name")
+            }
 
-            # Step 1: Collect all project names from tasks
-            project_names = set(
-                t["project_name"] for t in tasks
-                if t.get("project_name") and not request.data.get('project_id')
-            )
-
-            # Step 2: Fetch or create all needed projects for the user
-            project_map = {}  # name → Project instance
+            # Step 2: Fetch or create all needed projects
+            project_map = {}
             for name in project_names:
                 project, _ = Project.objects.get_or_create(user=request.user, name=name)
                 project_map[name] = project
@@ -63,11 +51,8 @@ class ImportTasks(APIView):
             created_count = 0
             with transaction.atomic():
                 for t in tasks:
-                    task_project = project  # default if project_id passed
-
-                    # Override with dynamic project if project_id not passed
-                    if not project and t.get("project_name"):
-                        task_project = project_map.get(t["project_name"])
+                    # Only assign a project if project_name is present
+                    task_project = project_map.get(t["project_name"]) if t.get("project_name") else None
 
                     Task.objects.create(
                         user=request.user,
@@ -80,7 +65,7 @@ class ImportTasks(APIView):
                         description=t.get("description", ""),
                         is_subtask=t.get("sub_task", False),
                         begin_date=t.get("begin_date"),
-                        end_date=t["begin_date"] if t.get("done", False) else None,
+                        end_date=t.get("end_date"),
                     )
                     created_count += 1
 
@@ -90,16 +75,13 @@ class ImportTasks(APIView):
             )
 
         except ValueError as e:
-            # Known parser/input errors (e.g., missing/invalid "Week of")
             logger.warning(f"ValueError in task import: {e}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ParseError as e:
-            # Bad encoding, etc.
             logger.warning(f"ParseError in task import: {e}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # Unexpected server-side error
-            logger.warning(f"Unexpected error in task import: {e}")
+            logger.exception("Unexpected error during task import")
             return Response({'error': f'Unexpected error: {str(e)}'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

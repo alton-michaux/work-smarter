@@ -7,7 +7,11 @@ const ProjectShowPage = () => {
   const { id } = router.query;
   const { projects, isLoading } = useProjects();
 
-  const project = projects?.find(p => p.id === Number(id));
+  const list = Array.isArray(projects)
+    ? projects
+    : ((projects as any)?.results ?? []); // <-- if paginated response
+
+  const project = list.find((p) => p.id === Number(id));
 
   if (isLoading) {
     return (
