@@ -1,0 +1,61 @@
+import { useEffect, useMemo, useState } from 'react';
+import { splitIntoSections } from '../lib/dailyLog';
+
+function todayYMD() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function lastNDays(selectedDate: string, n = 7) {
+  if (!selectedDate) return [];
+  const base = new Date(`${selectedDate}T12:00:00`);
+  const days: { key: string; label: string }[] = [];
+
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(base);
+    d.setDate(base.getDate() - i);
+
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const key = `${yyyy}-${mm}-${dd}`;
+    const label = d.toLocaleDateString(undefined, { weekday: 'short' });
+
+    days.push({ key, label });
+  }
+
+  return days;
+}
+
+export function useDailyLog(tasks: any[], queryDate: string | null) {
+  const [selectedDate, setSelectedDate] = useState<string>('');
+
+  // client-safe init + sync with query param
+  useEffect(() => {
+    if (queryDate) {
+      setSelectedDate(queryDate);
+      return;
+    }
+    setSelectedDate(todayYMD());
+  }, [queryDate]);
+
+  const days = useMemo(() => lastNDays(selectedDate, 7), [selectedDate]);
+
+  const dailyTasks = useMemo(() => {
+    if (!selectedDate) return [];
+    return tasks.filter(t => (t.begin_date ?? '').slice(0, 10) === selectedDate);
+  }, [tasks, selectedDate]);
+
+  const sections = useMemo(() => splitIntoSections(dailyTasks), [dailyTasks]);
+
+  return {
+    selectedDate,
+    setSelectedDate,
+    last7Days: days,
+    dailyTasks,
+    sections,
+  };
+}

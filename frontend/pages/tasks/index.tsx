@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { categoryToType, buildTree, splitIntoSections } from 'lib/dailyLog';
 import { DateToggleUI } from 'components/ui/dateToggleUI';
 import { TaskLayout } from 'components/tasks/TaskLayout';
+import { useDailyLog } from '../../hooks/useDailyLog';
 
 const ROW_HEIGHT = 88; // adjust if your rows are taller/shorter
 const LIST_HEIGHT = 600;
@@ -150,51 +151,8 @@ const TasksPage = () => {
   // Memoize counts to avoid unnecessary renders
   const itemCount = useMemo(() => tasks.length, [tasks.length]);
 
-  const [selectedDate, setSelectedDate] = useState<string>('');
-
-  // set on client after mount (avoids hydration mismatch)
-  useEffect(() => {
-    if (queryDate) {
-      setSelectedDate(queryDate);
-      return;
-    }
-
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    setSelectedDate(`${yyyy}-${mm}-${dd}`);
-  }, [queryDate]);
-
-  const last7Days = useMemo(() => {
-    if (!selectedDate) return [];
-    const base = new Date(`${selectedDate}T12:00:00`); // noon avoids DST edge weirdness
-    const days: { key: string; label: string }[] = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(base);
-      d.setDate(base.getDate() - i);
-
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const key = `${yyyy}-${mm}-${dd}`;
-
-      const label = d.toLocaleDateString(undefined, { weekday: 'short' }); // Mon, Tue…
-      days.push({ key, label });
-    }
-
-    return days;
-  }, [selectedDate]);
-
-  const dailyTasks = useMemo(() => {
-    if (!selectedDate) return [];
-    return tasks.filter(t => (t.begin_date ?? '').slice(0, 10) === selectedDate);
-  }, [tasks, selectedDate]);
-
-  // const dailyTasks = useMemo(() => tasks, [tasks]);
-
-  const sections = useMemo(() => splitIntoSections(dailyTasks), [dailyTasks]);
+  const { selectedDate, setSelectedDate, last7Days, dailyTasks, sections } =
+    useDailyLog(tasks, queryDate);
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10 flex justify-center">
