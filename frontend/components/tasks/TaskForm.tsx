@@ -44,6 +44,7 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
 
     if (!task.title?.trim()) next.title = 'Title is required.';
     if (!task.category?.trim()) next.category = 'Category is required.';
+    if (!task.priority?.trim()) next.priority = 'Priority is required.';
 
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -89,12 +90,20 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-        <input
+        <select
           name="priority"
-          value={task.priority}
+          value={task.priority ?? ''}
           onChange={handleChange}
           className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
+        >
+          <option value="">— Select —</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        {errors.priority ? (
+          <p className="text-sm text-red-600 mt-1">{errors.priority}</p>
+        ) : null}
       </div>
 
       <div>
