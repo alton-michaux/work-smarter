@@ -17,6 +17,7 @@ class TxtParser(ABC):
 
 class DevParser(TxtParser):
     CATEGORY_LABELS = {"Meetings", "Tasks", "Notes"}
+    PROJECT_LABELS = {"Vamos", "Datos"}
 
     # Accept common date formats for "Week of"
     WEEK_OF_FORMATS = [
@@ -95,7 +96,12 @@ class DevParser(TxtParser):
 
                 if self.HEADER_REGEX.match(line) and not line.lstrip().startswith("-"):
                     current_category = stripped
-                    current_project = None if stripped in self.CATEGORY_LABELS else stripped
+
+                    if stripped in self.PROJECT_LABELS:
+                        current_project = stripped
+                    elif stripped in self.CATEGORY_LABELS:
+                        current_project = None  # Meetings, Notes, Tasks: not projects
+                    # else: leave current_project unchanged for unknown headers
                     continue
 
                 match = self.TASK_REGEX.match(line)

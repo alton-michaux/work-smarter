@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Project, NewProject } from 'types/types';
+import { Project, NewProject, Paginated } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -40,7 +40,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       const res = await fetch(`${API_URL}/projects/`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to fetch projects');
       const data = await res.json();
-      setProjects(data);
+      setProjects(Array.isArray(data) ? data : data.results ?? []);
     } catch (err: any) {
       setError(err.message || 'Unknown error');
       console.error(err);
@@ -65,7 +65,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       });
       if (!res.ok) throw new Error('Failed to add project');
       const newProject = await res.json();
-      setProjects(prev => (prev ? [...prev, newProject] : [newProject]));
+      setProjects(prev => [...prev, newProject]);
     } catch (err: any) {
       setError(err.message || 'Unknown error');
       console.error(err);

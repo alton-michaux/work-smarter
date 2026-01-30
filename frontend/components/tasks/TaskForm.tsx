@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext'
 
 export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save" }) {
-  const [task, setTask] = useState(initialTask);
+  const { user } = useAuth();
+  const [task, setTask] = useState({ ...initialTask, user: user?.id || initialTask.user });
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -94,7 +96,7 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save" }
         </label>
       </div>
 
-      <div>
+      <div style={{ display: 'none' }}>
         <label className="block text-sm font-medium text-gray-700 mb-1">User</label>
         <input
           name="user"

@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useTasks } from '../../../context/TasksContext';
 import Spinner from 'components/shared/Spinner';
+import EmptyStateCard from 'components/shared/EmptyStateCard';
 
 const TaskShowPage = () => {
   const router = useRouter();
@@ -19,11 +20,13 @@ const TaskShowPage = () => {
 
   if (!task) {
     return (
-      <div>
-        <h1>Task Not Found</h1>
-        <button onClick={() => router.back()}>Back</button>
-        <button onClick={() => router.push('/tasks')}>All Tasks</button>
-      </div>
+      <EmptyStateCard
+        title="Task Not Found"
+        actions={[
+          { label: 'Back', onClick: () => router.back(), variant: 'secondary' },
+          { label: 'All Tasks', onClick: () => router.push('/tasks'), variant: 'primary' },
+        ]}
+      />
     );
   }
 

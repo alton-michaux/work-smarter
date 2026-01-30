@@ -1,11 +1,10 @@
-import { FixedSizeList as List } from 'react-window';
-import { useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useTasks } from '../../context/TasksContext';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../context/AuthContext';
-
-const ROW_HEIGHT = 88; // adjust if your rows are taller/shorter
-const LIST_HEIGHT = 600;
+import { DateToggleUI } from 'components/ui/dateToggleUI';
+import { TaskLayout } from 'components/tasks/TaskLayout';
+import { useDailyLog } from '../../hooks/useDailyLog';
 
 const TasksPage = () => {
   const {
@@ -13,11 +12,10 @@ const TasksPage = () => {
     deleteTask,
     isLoading,
     error,
-    nextUrl,
     resetAndFetch,
-    loadMore,
   } = useTasks();
   const router = useRouter();
+  const queryDate = typeof router.query.date === 'string' ? router.query.date : null;
 
   // Initial load — align with backend CursorPagination.ordering
   const { loggedIn } = useAuth();
@@ -44,52 +42,16 @@ const TasksPage = () => {
     }
   }, [deleteTask]);
 
-  // Row renderer for react-window
-  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const task = tasks[index];
-    return (
-      <li style={style} className="border-b px-4 py-4 flex justify-between items-start">
-        <div className="min-w-0">
-          <button
-            onClick={(e) => { e.preventDefault(); handleTaskClick(task.id); }}
-            className="text-lg font-semibold text-blue-600 hover:underline text-left truncate"
-            title={task.title}
-          >
-            {task.title}
-          </button>
-          <p className="text-sm text-gray-600 mt-1">
-            <span className="font-medium">Category:</span> {task.category ?? '—'}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            {(task.priority ?? '').toUpperCase()} • {task.begin_date ?? '—'}
-          </p>
-        </div>
-
-        <div className="flex-shrink-0 flex space-x-3">
-          <button
-            onClick={() => handleEdit(task.id)}
-            className="text-sm text-yellow-600 hover:text-yellow-800"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => handleDelete(task.id)}
-            className="text-sm text-red-600 hover:text-red-800"
-          >
-            Delete
-          </button>
-        </div>
-      </li>
-    );
-  };
-
-  // Memoize counts to avoid unnecessary renders
-  const itemCount = useMemo(() => tasks.length, [tasks.length]);
+  const { selectedDate, setSelectedDate, last7Days, dailyTasks, sections } =
+    useDailyLog(tasks, queryDate);
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10 flex justify-center">
       <div className="w-full max-w-3xl bg-white rounded-lg shadow p-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Tasks</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Daily Log</h1>
+
+        {/* Day toggler */}
+        {<DateToggleUI selectedDate={selectedDate} setSelectedDate={setSelectedDate} last7Days={last7Days} />}
 
         {/* Create New Task */}
         <div className="mb-6 text-center">
@@ -108,36 +70,19 @@ const TasksPage = () => {
           </div>
         )}
 
-        {/* Empty state */}
-        {!isLoading && tasks.length === 0 ? (
-          <p className="text-gray-600 text-center">No tasks found.</p>
+        {/* Empty / Loading / Content state */}
+        {!selectedDate ? (
+          <p className="text-gray-600 text-center">Loading…</p>
+        ) : (!isLoading && dailyTasks.length === 0 ? (
+          <p className="text-gray-600 text-center">No entries for {selectedDate}.</p>
         ) : (
-          <>
-            {/* Virtualized list */}
-            <List
-              height={LIST_HEIGHT}
-              width="100%"
-              itemCount={itemCount}
-              itemSize={ROW_HEIGHT}
-              outerElementType="ul"
-              className="space-y-0"
-            >
-              {Row}
-            </List>
-
-            {nextUrl && (
-              <div className="mt-4 flex justify-center">
-                <button
-                  onClick={loadMore}
-                  disabled={isLoading}
-                  className="px-4 py-2 rounded border hover:bg-gray-50"
-                >
-                  {isLoading ? 'Loading…' : 'Load more'}
-                </button>
-              </div>
-            )}
-          </>
-        )}
+          <TaskLayout
+            sections={sections}
+            onView={handleTaskClick}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        ))}
 
         {/* Bottom Navigation */}
         <div className="mt-10 flex flex-col sm:flex-row justify-between items-center gap-4">
