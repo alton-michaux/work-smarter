@@ -6,7 +6,7 @@ import EmptyStateCard from 'components/shared/EmptyStateCard';
 const TaskShowPage = () => {
   const router = useRouter();
   const { id } = router.query;
-  const { tasks, setTasks, isLoading } = useTasks();
+  const { tasks, setTasks, deleteTask, isLoading } = useTasks();
 
   const task = tasks?.find(t => t.id === Number(id));
 
@@ -34,10 +34,14 @@ const TaskShowPage = () => {
     router.push(`/tasks/edit/${id}`);
   };
 
-  const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this task?')) {
-      setTasks(tasks.filter(t => t.id !== Number(id)));
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+
+    try {
+      await deleteTask(Number(id));
       router.push('/tasks');
+    } catch (err) {
+      alert('Failed to delete task. Please try again.');
     }
   };
 
@@ -75,6 +79,12 @@ const TaskShowPage = () => {
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
         >
           Home
+        </button>
+        <button
+          onClick={handleDelete}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-green-700"
+        >
+          Delete
         </button>
       </div>
     </div>
