@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router';
+import { useMemo } from 'react';
 import { useTasks } from '../../context/TasksContext';
 import TaskForm from '../../components/tasks/TaskForm';
 import Spinner from 'components/shared/Spinner';
@@ -24,6 +25,18 @@ export default function TaskCreatePage() {
     router.push('/tasks');
   };
 
+  const initialTask = useMemo(() => {
+    const qTitle = typeof router.query.title === 'string' ? router.query.title : '';
+    const qDate = typeof router.query.date === 'string' ? router.query.date : '';
+
+    return {
+      ...emptyTask,
+      title: qTitle || emptyTask.title,
+      begin_date: qDate || undefined,
+      end_date: qDate || undefined,
+    };
+  }, [router.query.title, router.query.date]);
+
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">
       <div className="w-full max-w-2xl bg-white rounded-lg shadow p-8">
@@ -34,7 +47,11 @@ export default function TaskCreatePage() {
             <Spinner />
           </div>
         ) : (
-          <TaskForm initialTask={emptyTask} onSubmit={handleCreate} submitLabel="Create" />
+          <TaskForm
+            initialTask={initialTask}
+            onSubmit={handleCreate}
+            submitLabel="Create"
+          />
         )}
 
         <div className="mt-6 text-center">

@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { DateToggleUI } from 'components/ui/dateToggleUI';
 import { TaskLayout } from 'components/tasks/TaskLayout';
 import { useDailyLog } from '../../hooks/useDailyLog';
+import QuickAddBar from '../../components/tasks/quickAddBar';
 
 const TasksPage = () => {
   const {
@@ -52,6 +53,8 @@ const TasksPage = () => {
 
         {/* Day toggler */}
         {<DateToggleUI selectedDate={selectedDate} setSelectedDate={setSelectedDate} last7Days={last7Days} />}
+
+        <QuickAddBar selectedDate={selectedDate} />
 
         {/* Create New Task */}
         <div className="mb-6 text-center">
