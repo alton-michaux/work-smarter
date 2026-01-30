@@ -18,7 +18,7 @@ export function TaskLayout({ sections, onView, onEdit, onDelete }: Props) {
       {/* LEFT: Meetings (1/3) */}
       <section className="lg:col-span-4">
         <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">MEETINGS</h2>
-        <div className="rounded border bg-white">
+        <div className="rounded border bg-white max-h-[60vh] overflow-auto">
           {sections.meetings.length ? (
             <OutlineTree nodes={sections.meetings} onView={onView} onEdit={onEdit} onDelete={onDelete} />
           ) : (
@@ -30,7 +30,7 @@ export function TaskLayout({ sections, onView, onEdit, onDelete }: Props) {
       {/* RIGHT: Tasks (2/3) */}
       <section className="lg:col-span-8">
         <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">TASKS</h2>
-        <div className="rounded border bg-white">
+        <div className="rounded border bg-white max-h-[60vh] overflow-auto">
           {sections.tasks.length ? (
             <OutlineTree nodes={sections.tasks} onView={onView} onEdit={onEdit} onDelete={onDelete} />
           ) : (
