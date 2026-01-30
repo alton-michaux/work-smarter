@@ -98,6 +98,12 @@ const ProjectShowPage = () => {
   const remainingPreview = remainingWork.slice(0, REMAINING_LIMIT);
   const remainingOverflow = Math.max(0, remainingCount - remainingPreview.length);
 
+  const meetingsCount = meetings.length;
+
+  const workTotal = work.length;
+  const workDone = work.filter((t: any) => t.is_done).length;
+  const workOpen = workTotal - workDone;
+
   function taskDay(t: any) {
     return (t.begin_date ?? '').slice(0, 10);
   }
@@ -169,7 +175,10 @@ const ProjectShowPage = () => {
         <div className="mt-6 space-y-10">
           {/* MEETINGS */}
           <section>
-            <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-3">MEETINGS</h2>
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="text-xs font-bold tracking-widest text-gray-500">MEETINGS</h2>
+              <div className="text-xs text-gray-400">{meetingsCount} total</div>
+            </div>
 
             {meetingsGrouped.sortedDays.length === 0 ? (
               <div className="text-sm text-gray-500 rounded border bg-white px-4 py-3">
@@ -208,7 +217,12 @@ const ProjectShowPage = () => {
 
           {/* WORK */}
           <section>
-            <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-3">WORK</h2>
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="text-xs font-bold tracking-widest text-gray-500">WORK</h2>
+              <div className="text-xs text-gray-400">
+                {workTotal} total • {workDone} done • {workOpen} open
+              </div>
+            </div>
 
             {workGrouped.sortedDays.length === 0 ? (
               <div className="text-sm text-gray-500 rounded border bg-white px-4 py-3">
