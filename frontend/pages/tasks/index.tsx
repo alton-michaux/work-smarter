@@ -1,15 +1,10 @@
-import { FixedSizeList as List } from 'react-window';
-import { useEffect, useMemo, useCallback, useState } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useTasks } from '../../context/TasksContext';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../context/AuthContext';
-import { categoryToType, buildTree, splitIntoSections } from 'lib/dailyLog';
 import { DateToggleUI } from 'components/ui/dateToggleUI';
 import { TaskLayout } from 'components/tasks/TaskLayout';
 import { useDailyLog } from '../../hooks/useDailyLog';
-
-const ROW_HEIGHT = 88; // adjust if your rows are taller/shorter
-const LIST_HEIGHT = 600;
 
 const TasksPage = () => {
   const {
@@ -17,9 +12,7 @@ const TasksPage = () => {
     deleteTask,
     isLoading,
     error,
-    nextUrl,
     resetAndFetch,
-    loadMore,
   } = useTasks();
   const router = useRouter();
   const queryDate = typeof router.query.date === 'string' ? router.query.date : null;
@@ -48,108 +41,6 @@ const TasksPage = () => {
       // No need to manually refetch here; your context’s deleteTask already refreshes
     }
   }, [deleteTask]);
-
-  const OutlineRow = ({
-    node,
-    depth,
-  }: {
-    node: any;
-    depth: number;
-  }) => {
-    const type = categoryToType(node.category);
-
-    return (
-      <li
-        className="border-b px-4 py-3 flex justify-between items-start group"
-        style={{ paddingLeft: 16 + depth * 20 }}
-      >
-        <div className="min-w-0">
-          <button
-            onClick={(e) => { e.preventDefault(); handleTaskClick(node.id); }}
-            className="text-lg font-semibold text-blue-600 hover:underline text-left truncate"
-            title={node.title}
-          >
-            {/* simple type cue */}
-            {type === 'meeting' ? '🗓️ ' : type === 'task' ? '☐ ' : '• '}
-            {node.title}
-          </button>
-
-          <p className="text-xs text-gray-500 mt-1">
-            {(node.priority ?? '').toUpperCase()} • {node.begin_date ?? '—'}
-          </p>
-        </div>
-
-        {/* actions only on hover */}
-        <div className="flex-shrink-0 hidden group-hover:flex space-x-3">
-          <button
-            onClick={() => handleEdit(node.id)}
-            className="text-sm text-yellow-600 hover:text-yellow-800"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => handleDelete(node.id)}
-            className="text-sm text-red-600 hover:text-red-800"
-          >
-            Delete
-          </button>
-        </div>
-      </li>
-    );
-  };
-
-  const OutlineTree = ({ nodes, depth = 0 }: { nodes: any[]; depth?: number }) => (
-    <ul>
-      {nodes.map((n) => (
-        <div key={n.id}>
-          <OutlineRow node={n} depth={depth} />
-          {n.children?.length ? <OutlineTree nodes={n.children} depth={depth + 1} /> : null}
-        </div>
-      ))}
-    </ul>
-  );
-
-  // Row renderer for react-window
-  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const task = tasks[index];
-    return (
-      <li style={style} className="border-b px-4 py-4 flex justify-between items-start">
-        <div className="min-w-0">
-          <button
-            onClick={(e) => { e.preventDefault(); handleTaskClick(task.id); }}
-            className="text-lg font-semibold text-blue-600 hover:underline text-left truncate"
-            title={task.title}
-          >
-            {task.title}
-          </button>
-          <p className="text-sm text-gray-600 mt-1">
-            <span className="font-medium">Category:</span> {task.category ?? '—'}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            {(task.priority ?? '').toUpperCase()} • {task.begin_date ?? '—'}
-          </p>
-        </div>
-
-        <div className="flex-shrink-0 flex space-x-3">
-          <button
-            onClick={() => handleEdit(task.id)}
-            className="text-sm text-yellow-600 hover:text-yellow-800"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => handleDelete(task.id)}
-            className="text-sm text-red-600 hover:text-red-800"
-          >
-            Delete
-          </button>
-        </div>
-      </li>
-    );
-  };
-
-  // Memoize counts to avoid unnecessary renders
-  const itemCount = useMemo(() => tasks.length, [tasks.length]);
 
   const { selectedDate, setSelectedDate, last7Days, dailyTasks, sections } =
     useDailyLog(tasks, queryDate);
@@ -185,7 +76,12 @@ const TasksPage = () => {
         ) : (!isLoading && dailyTasks.length === 0 ? (
           <p className="text-gray-600 text-center">No entries for {selectedDate}.</p>
         ) : (
-          <TaskLayout sections={sections} OutlineTree={OutlineTree}/>
+          <TaskLayout
+            sections={sections}
+            onView={handleTaskClick}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         ))}
 
         {/* Bottom Navigation */}
