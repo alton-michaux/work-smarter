@@ -39,7 +39,6 @@ const TasksPage = () => {
 
   const handleToggleDone = useCallback(
     async (id: number, isDone: boolean) => {
-      console.log("WHAT THE FUCK")
       const task = tasks.find((t: any) => Number(t.id) === Number(id));
       if (!task) {
         console.warn('handleToggleDone: task not found for id', id);

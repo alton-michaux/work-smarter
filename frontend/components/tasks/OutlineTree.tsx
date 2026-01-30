@@ -44,7 +44,6 @@ function OutlineRow({
               type="checkbox"
               checked={!!node.is_done}
               onChange={(e) => {
-                console.log('checkbox change fired', node.id, e.target.checked);
                 onToggleDone?.(Number(node.id), e.target.checked);
               }}
               onClick={(e) => e.stopPropagation()}
@@ -116,6 +115,7 @@ export default function OutlineTree({
               onView={onView}
               onEdit={onEdit}
               onDelete={onDelete}
+              onToggleDone={onToggleDone}
             />
           ) : null}
         </React.Fragment>
