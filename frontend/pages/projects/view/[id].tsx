@@ -18,6 +18,11 @@ function groupByBeginDate(tasks: any[]) {
   return { groups, sortedDays };
 }
 
+function isMeetingTask(t: any) {
+  const c = String(t.category ?? '').trim().toLowerCase();
+  return c === 'meeting' || c === 'meetings';
+}
+
 const ProjectShowPage = () => {
   const router = useRouter();
   const { id } = router.query;
@@ -61,15 +66,37 @@ const ProjectShowPage = () => {
     );
   }
 
-  const { groups, sortedDays } = groupByBeginDate(project.tasks);
+  const meetings = (project.tasks ?? []).filter(isMeetingTask);
+  const work = (project.tasks ?? []).filter((t: any) => !isMeetingTask(t));
+
+  const meetingsGrouped = groupByBeginDate(meetings);
+  const workGrouped = groupByBeginDate(work);
 
   const totalCount = project.tasks?.length ?? 0;
   const doneCount = project.tasks?.filter((t: any) => t.is_done)?.length ?? 0;
 
-  const activeStart = sortedDays.length ? sortedDays[sortedDays.length - 1] : '—'; // oldest
-  const activeEnd = sortedDays.length ? sortedDays[0] : '—'; // newest
+  const allDays = Array.from(
+    new Set([
+      ...(meetingsGrouped.sortedDays ?? []),
+      ...(workGrouped.sortedDays ?? []),
+    ])
+  ).sort().reverse();
+
+  const activeStart = allDays.length ? allDays[allDays.length - 1] : '—'; // oldest
+  const activeEnd = allDays.length ? allDays[0] : '—'; // newest
   const lastActivity = activeEnd;
   const progressPct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+
+  const remainingWork = work
+    .filter((t: any) => !t.is_done)
+    .sort((a: any, b: any) => String(a.begin_date ?? '').localeCompare(String(b.begin_date ?? '')));
+
+  const remainingCount = remainingWork.length;
+
+  // Optional: show only top N to keep it clean
+  const REMAINING_LIMIT = 6;
+  const remainingPreview = remainingWork.slice(0, REMAINING_LIMIT);
+  const remainingOverflow = Math.max(0, remainingCount - remainingPreview.length);
 
   return (
     <div className="min-h-screen flex justify-center px-4 py-10 bg-gray-50">
@@ -101,38 +128,111 @@ const ProjectShowPage = () => {
           </div>
         </div>
 
-        <div className="mt-6 space-y-6">
-          {sortedDays.map((day) => (
-            <div key={day}>
-              <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">
-                {day}
-              </h2>
+        <div className="mb-8 rounded-lg border bg-white p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-800">What’s left</h3>
+            <div className="text-xs text-gray-500">{remainingCount} open</div>
+          </div>
 
-              <div className="rounded border bg-white">
-                <ul>
-                  {groups[day].map((t) => (
-                    <li key={t.id} className="border-b last:border-b-0 px-4 py-3 flex items-start gap-3">
-                      <span className="mt-0.5 text-lg leading-none">
-                        {t.is_done ? '☑' : '☐'}
-                      </span>
+          {remainingCount === 0 ? (
+            <div className="mt-3 text-sm text-gray-500">All caught up 🎉</div>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {remainingPreview.map((t: any) => (
+                <li key={t.id} className="flex items-start gap-3">
+                  <span className="mt-0.5 text-lg leading-none">☐</span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {t.title}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {String(t.begin_date ?? '').slice(0, 10) || '—'}
+                      {t.priority ? ` • ${String(t.priority).toUpperCase()}` : ''}
+                    </div>
+                  </div>
+                </li>
+              ))}
 
-                      <div className="min-w-0">
-                        <div className={`font-medium ${t.is_done ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
-                          {t.title}
-                        </div>
+              {remainingOverflow > 0 && (
+                <li className="text-xs text-gray-500 pt-1">
+                  +{remainingOverflow} more
+                </li>
+              )}
+            </ul>
+          )}
+        </div>
 
-                        {/* optional tiny metadata line */}
-                        <div className="text-xs text-gray-500 mt-1">
-                          {t.priority ? String(t.priority).toUpperCase() : '—'}
-                          {t.category ? ` • ${t.category}` : ''}
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+        <div className="mt-6 space-y-10">
+          {/* MEETINGS */}
+          <section>
+            <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-3">MEETINGS</h2>
+
+            {meetingsGrouped.sortedDays.length === 0 ? (
+              <div className="text-sm text-gray-500 rounded border bg-white px-4 py-3">
+                No meetings logged for this project.
               </div>
-            </div>
-          ))}
+            ) : (
+              <div className="space-y-6">
+                {meetingsGrouped.sortedDays.map((day) => (
+                  <div key={`m-${day}`}>
+                    <h3 className="text-xs font-bold tracking-widest text-gray-400 mb-2">{day}</h3>
+                    <div className="rounded border bg-white">
+                      <ul>
+                        {meetingsGrouped.groups[day].map((t: any) => (
+                          <li key={t.id} className="border-b last:border-b-0 px-4 py-3 flex items-start gap-3">
+                            <span className="mt-0.5 text-lg leading-none">🗓️</span>
+                            <div className="min-w-0">
+                              <div className="font-medium text-gray-900">{t.title}</div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {t.priority ? String(t.priority).toUpperCase() : '—'}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* WORK */}
+          <section>
+            <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-3">WORK</h2>
+
+            {workGrouped.sortedDays.length === 0 ? (
+              <div className="text-sm text-gray-500 rounded border bg-white px-4 py-3">
+                No work items logged for this project.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {workGrouped.sortedDays.map((day) => (
+                  <div key={`w-${day}`}>
+                    <h3 className="text-xs font-bold tracking-widest text-gray-400 mb-2">{day}</h3>
+                    <div className="rounded border bg-white">
+                      <ul>
+                        {workGrouped.groups[day].map((t: any) => (
+                          <li key={t.id} className="border-b last:border-b-0 px-4 py-3 flex items-start gap-3">
+                            <span className="mt-0.5 text-lg leading-none">{t.is_done ? '☑' : '☐'}</span>
+                            <div className="min-w-0">
+                              <div className={`font-medium ${t.is_done ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                                {t.title}
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {t.priority ? String(t.priority).toUpperCase() : '—'}
+                                {t.category ? ` • ${t.category}` : ''}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
 
         <div className="flex gap-4">
