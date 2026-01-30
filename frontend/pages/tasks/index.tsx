@@ -21,6 +21,7 @@ const TasksPage = () => {
     loadMore,
   } = useTasks();
   const router = useRouter();
+  const queryDate = typeof router.query.date === 'string' ? router.query.date : null;
 
   // Initial load — align with backend CursorPagination.ordering
   const { loggedIn } = useAuth();
@@ -153,12 +154,17 @@ const TasksPage = () => {
 
   // set on client after mount (avoids hydration mismatch)
   useEffect(() => {
+    if (queryDate) {
+      setSelectedDate(queryDate);
+      return;
+    }
+
     const d = new Date();
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
     setSelectedDate(`${yyyy}-${mm}-${dd}`);
-  }, []);
+  }, [queryDate]);
 
   const last7Days = useMemo(() => {
     if (!selectedDate) return [];

@@ -98,6 +98,10 @@ const ProjectShowPage = () => {
   const remainingPreview = remainingWork.slice(0, REMAINING_LIMIT);
   const remainingOverflow = Math.max(0, remainingCount - remainingPreview.length);
 
+  function taskDay(t: any) {
+    return (t.begin_date ?? '').slice(0, 10);
+  }
+
   return (
     <div className="min-h-screen flex justify-center px-4 py-10 bg-gray-50">
       <div className="w-full max-w-2xl bg-white shadow-lg rounded-lg p-8">
@@ -180,13 +184,18 @@ const ProjectShowPage = () => {
                       <ul>
                         {meetingsGrouped.groups[day].map((t: any) => (
                           <li key={t.id} className="border-b last:border-b-0 px-4 py-3 flex items-start gap-3">
-                            <span className="mt-0.5 text-lg leading-none">🗓️</span>
-                            <div className="min-w-0">
-                              <div className="font-medium text-gray-900">{t.title}</div>
-                              <div className="text-xs text-gray-500 mt-1">
-                                {t.priority ? String(t.priority).toUpperCase() : '—'}
+                            <button
+                              onClick={() => router.push(`/tasks?date=${taskDay(t)}`)}
+                              className="flex items-start gap-3 w-full text-left hover:bg-gray-50 px-2 py-1 rounded"
+                            >
+                              <span className="mt-0.5 text-lg leading-none">🗓️</span>
+                              <div className="min-w-0">
+                                <div className="font-medium text-gray-900">{t.title}</div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {taskDay(t)}
+                                </div>
                               </div>
-                            </div>
+                            </button>
                           </li>
                         ))}
                       </ul>
@@ -214,16 +223,21 @@ const ProjectShowPage = () => {
                       <ul>
                         {workGrouped.groups[day].map((t: any) => (
                           <li key={t.id} className="border-b last:border-b-0 px-4 py-3 flex items-start gap-3">
-                            <span className="mt-0.5 text-lg leading-none">{t.is_done ? '☑' : '☐'}</span>
-                            <div className="min-w-0">
-                              <div className={`font-medium ${t.is_done ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
-                                {t.title}
+                            <button
+                              onClick={() => router.push(`/tasks?date=${taskDay(t)}`)}
+                              className="flex items-start gap-3 w-full text-left hover:bg-gray-50 px-2 py-1 rounded"
+                            >
+                              <span className="mt-0.5 text-lg leading-none">{t.is_done ? '☑' : '☐'}</span>
+                              <div className="min-w-0">
+                                <div className={`font-medium ${t.is_done ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                                  {t.title}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {taskDay(t)}
+                                  {t.priority ? ` • ${String(t.priority).toUpperCase()}` : ''}
+                                </div>
                               </div>
-                              <div className="text-xs text-gray-500 mt-1">
-                                {t.priority ? String(t.priority).toUpperCase() : '—'}
-                                {t.category ? ` • ${t.category}` : ''}
-                              </div>
-                            </div>
+                            </button>
                           </li>
                         ))}
                       </ul>
