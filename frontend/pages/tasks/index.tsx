@@ -5,11 +5,13 @@ import { useAuth } from '../../context/AuthContext';
 import { DateToggleUI } from 'components/ui/dateToggleUI';
 import { TaskLayout } from 'components/tasks/TaskLayout';
 import { useDailyLog } from '../../hooks/useDailyLog';
+import QuickAddBar from '../../components/tasks/quickAddBar';
 
 const TasksPage = () => {
   const {
     tasks,
     deleteTask,
+    updateTask,
     isLoading,
     error,
     resetAndFetch,
@@ -35,6 +37,26 @@ const TasksPage = () => {
     router.push(`/tasks/edit/${id}`);
   }, [router]);
 
+  const handleToggleDone = useCallback(
+    async (id: number, isDone: boolean) => {
+      const task = tasks.find((t: any) => Number(t.id) === Number(id));
+      if (!task) {
+        console.warn('handleToggleDone: task not found for id', id);
+        return;
+      }
+
+      try {
+        await updateTask({
+          ...task,
+          is_done: isDone,
+        });
+      } catch (e) {
+        alert('Failed to update task. Please try again.');
+      }
+    },
+    [tasks, updateTask]
+  );
+
   const handleDelete = useCallback(async (id: number) => {
     if (confirm('Are you sure you want to delete this task?')) {
       await deleteTask(id);
@@ -47,21 +69,13 @@ const TasksPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10 flex justify-center">
-      <div className="w-full max-w-3xl bg-white rounded-lg shadow p-8">
+      <div className="w-full max-w-6xl bg-white rounded-lg shadow p-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Daily Log</h1>
 
         {/* Day toggler */}
         {<DateToggleUI selectedDate={selectedDate} setSelectedDate={setSelectedDate} last7Days={last7Days} />}
 
-        {/* Create New Task */}
-        <div className="mb-6 text-center">
-          <button
-            onClick={() => router.push('/tasks/create')}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-          >
-            + Create New Task
-          </button>
-        </div>
+        <QuickAddBar selectedDate={selectedDate} />
 
         {/* Errors */}
         {error && (
@@ -80,7 +94,8 @@ const TasksPage = () => {
             sections={sections}
             onView={handleTaskClick}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={handleDelete}            
+            onToggleDone={handleToggleDone}
           />
         ))}
 
