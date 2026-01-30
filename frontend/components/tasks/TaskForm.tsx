@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext'
 
-export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save" }) {
+type ProjectOption = { id: number; name: string };
+
+type TaskFormProps = {
+  initialTask: any;
+  onSubmit: (task: any) => void;
+  submitLabel: string;
+  projects?: ProjectOption[];
+};
+
+export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", projects }: TaskFormProps) {
   const { user } = useAuth();
   const [task, setTask] = useState({ ...initialTask, user: user?.id || initialTask.user });
 
@@ -106,15 +115,28 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save" }
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
-        <input
+      <label className="block">
+        <span className="text-sm font-medium text-gray-700">Project</span>
+
+        <select
           name="project"
-          value={task.project}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-      </div>
+          value={task.project ?? ''}
+          onChange={(e) =>
+            setTask((prev: any) => ({
+              ...prev,
+              project: e.target.value === '' ? '' : Number(e.target.value),
+            }))
+          }
+          className="mt-1 w-full border rounded px-3 py-2"
+        >
+          <option value="">— None —</option>
+          {(projects ?? []).map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <button
         type="submit"

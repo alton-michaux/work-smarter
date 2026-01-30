@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/router';
 import { useProjects } from '../../../context/ProjectsContext';
 import Spinner from 'components/shared/Spinner';
-import { groupByBeginDate, isMeetingTask, taskDay } from '../../../lib/projectInsights';
+import { taskDay } from '../../../lib/projectInsights';
 import ProjectTimelineSection from '../../../components/projects/projectTimeline';
 import ProjectSummaryCards from 'components/projects/ProjectSummaryCards';
 import EmptyStateCard from 'components/shared/EmptyStateCard';
