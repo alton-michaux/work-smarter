@@ -10,6 +10,7 @@ type Props = {
   onView: (id: number) => void;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
+  onToggleDone?: (id: number, isDone: boolean) => void;
 };
 
 function OutlineRow({
@@ -18,12 +19,14 @@ function OutlineRow({
   onView,
   onEdit,
   onDelete,
+  onToggleDone,
 }: {
   node: Node;
   depth: number;
   onView: (id: number) => void;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
+  onToggleDone?: (id: number, isDone: boolean) => void;
 }) {
   const type = categoryToType(node.category);
 
@@ -32,19 +35,44 @@ function OutlineRow({
       className="border-b px-4 py-3 flex justify-between items-start group"
       style={{ paddingLeft: 16 + depth * 20 }}
     >
-      <div className="min-w-0">
-        <button
-          onClick={(e) => { e.preventDefault(); onView(node.id); }}
-          className="text-lg font-semibold text-blue-600 hover:underline text-left truncate"
-          title={node.title}
-        >
-          {type === 'meeting' ? '🗓️ ' : type === 'task' ? '☐ ' : '• '}
-          {node.title}
-        </button>
+      <div className="min-w-0 flex-1 flex items-start gap-3">
+        {/* left: checkbox/icon */}
+        <div className="mt-1">
+          {type === 'task' ? (
+            <input
+              type="checkbox"
+              checked={!!node.is_done}
+              onChange={(e) => {
+                e.stopPropagation();
+                onToggleDone?.(Number(node.id), e.target.checked);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="h-4 w-4"
+            />
+          ) : (
+            <span className="text-lg leading-none">
+              {type === 'meeting' ? '🗓️' : '•'}
+            </span>
+          )}
+        </div>
 
-        <p className="text-xs text-gray-500 mt-1">
-          {(node.priority ?? '').toUpperCase()} • {node.begin_date ?? '—'}
-        </p>
+        {/* middle: title + meta */}
+        <div className="min-w-0">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onView(Number(node.id));
+            }}
+            className="text-lg font-semibold text-blue-600 hover:underline text-left truncate block"
+            title={node.title}
+          >
+            {node.title}
+          </button>
+
+          <p className="text-xs text-gray-500 mt-1">
+            {(node.priority ?? '').toUpperCase()} • {node.begin_date ?? '—'}
+          </p>
+        </div>
       </div>
 
       <div className="flex-shrink-0 hidden group-hover:flex space-x-3">
