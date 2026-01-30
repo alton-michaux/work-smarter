@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useProjects } from '../../../context/ProjectsContext';
 import Spinner from 'components/shared/Spinner';
 import { groupByBeginDate, isMeetingTask, taskDay } from '../../../lib/projectInsights';
+import ProjectTimelineSection from '../../../components/projects/projectTimeline';
 
 const ProjectShowPage = () => {
   const router = useRouter();
@@ -150,94 +151,34 @@ const ProjectShowPage = () => {
         </div>
 
         <div className="mt-6 space-y-10">
-          {/* MEETINGS */}
-          <section>
-            <div className="flex items-baseline justify-between mb-3">
-              <h2 className="text-xs font-bold tracking-widest text-gray-500">MEETINGS</h2>
-              <div className="text-xs text-gray-400">{meetingsCount} total</div>
-            </div>
+          {/* MEETINGS/WORK */}
+          <div className="mt-6 space-y-10">
+            <ProjectTimelineSection
+              title="MEETINGS"
+              summaryRight={`${meetings.length} total`}
+              emptyText="No meetings logged for this project."
+              grouped={meetingsGrouped}
+              iconFor={() => '🗓️'}
+              metaFor={(t: any) => taskDay(t)}
+              onItemClick={(t: any) => router.push(`/tasks?date=${taskDay(t)}`)}
+            />
 
-            {meetingsGrouped.sortedDays.length === 0 ? (
-              <div className="text-sm text-gray-500 rounded border bg-white px-4 py-3">
-                No meetings logged for this project.
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {meetingsGrouped.sortedDays.map((day) => (
-                  <div key={`m-${day}`}>
-                    <h3 className="text-xs font-bold tracking-widest text-gray-400 mb-2">{day}</h3>
-                    <div className="rounded border bg-white">
-                      <ul>
-                        {meetingsGrouped.groups[day].map((t: any) => (
-                          <li key={t.id} className="border-b last:border-b-0 px-4 py-3 flex items-start gap-3">
-                            <button
-                              onClick={() => router.push(`/tasks?date=${taskDay(t)}`)}
-                              className="flex items-start gap-3 w-full text-left hover:bg-gray-50 px-2 py-1 rounded"
-                            >
-                              <span className="mt-0.5 text-lg leading-none">🗓️</span>
-                              <div className="min-w-0">
-                                <div className="font-medium text-gray-900">{t.title}</div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  {taskDay(t)}
-                                </div>
-                              </div>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* WORK */}
-          <section>
-            <div className="flex items-baseline justify-between mb-3">
-              <h2 className="text-xs font-bold tracking-widest text-gray-500">WORK</h2>
-              <div className="text-xs text-gray-400">
-                {workTotal} total • {workDone} done • {workOpen} open
-              </div>
-            </div>
-
-            {workGrouped.sortedDays.length === 0 ? (
-              <div className="text-sm text-gray-500 rounded border bg-white px-4 py-3">
-                No work items logged for this project.
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {workGrouped.sortedDays.map((day) => (
-                  <div key={`w-${day}`}>
-                    <h3 className="text-xs font-bold tracking-widest text-gray-400 mb-2">{day}</h3>
-                    <div className="rounded border bg-white">
-                      <ul>
-                        {workGrouped.groups[day].map((t: any) => (
-                          <li key={t.id} className="border-b last:border-b-0 px-4 py-3 flex items-start gap-3">
-                            <button
-                              onClick={() => router.push(`/tasks?date=${taskDay(t)}`)}
-                              className="flex items-start gap-3 w-full text-left hover:bg-gray-50 px-2 py-1 rounded"
-                            >
-                              <span className="mt-0.5 text-lg leading-none">{t.is_done ? '☑' : '☐'}</span>
-                              <div className="min-w-0">
-                                <div className={`font-medium ${t.is_done ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
-                                  {t.title}
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  {taskDay(t)}
-                                  {t.priority ? ` • ${String(t.priority).toUpperCase()}` : ''}
-                                </div>
-                              </div>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+            <ProjectTimelineSection
+              title="WORK"
+              summaryRight={`${workTotal} total • ${workDone} done • ${workOpen} open`}
+              emptyText="No work items logged for this project."
+              grouped={workGrouped}
+              iconFor={(t: any) => (t.is_done ? '☑' : '☐')}
+              titleClassFor={(t: any) => (t.is_done ? 'text-gray-500 line-through' : 'text-gray-900')}
+              metaFor={(t: any) => (
+                <>
+                  {taskDay(t)}
+                  {t.priority ? ` • ${String(t.priority).toUpperCase()}` : ''}
+                </>
+              )}
+              onItemClick={(t: any) => router.push(`/tasks?date=${taskDay(t)}`)}
+            />
+          </div>
         </div>
 
         <div className="flex gap-4">
