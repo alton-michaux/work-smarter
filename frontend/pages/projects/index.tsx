@@ -8,7 +8,7 @@ const ProjectsPage = () => {
 
   const results = Array.isArray(projects)
   ? projects
-  : (projects?.results ?? []);
+  : (projects as any)?.results ?? [];
   
   const handleProjectClick = (id: number) => {
     router.push(`/projects/view/${id}`);
