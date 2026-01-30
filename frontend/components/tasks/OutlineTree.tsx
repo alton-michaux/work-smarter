@@ -35,15 +35,16 @@ function OutlineRow({
       className="border-b px-4 py-3 flex justify-between items-start group"
       style={{ paddingLeft: 16 + depth * 20 }}
     >
+      {/* LEFT/MIDDLE: checkbox + content */}
       <div className="min-w-0 flex-1 flex items-start gap-3">
-        {/* left: checkbox/icon */}
+        {/* checkbox/icon MUST NOT be inside any <button> */}
         <div className="mt-1">
           {type === 'task' ? (
             <input
               type="checkbox"
               checked={!!node.is_done}
               onChange={(e) => {
-                e.stopPropagation();
+                console.log('checkbox change fired', node.id, e.target.checked);
                 onToggleDone?.(Number(node.id), e.target.checked);
               }}
               onClick={(e) => e.stopPropagation()}
@@ -56,9 +57,9 @@ function OutlineRow({
           )}
         </div>
 
-        {/* middle: title + meta */}
         <div className="min-w-0">
           <button
+            type="button"
             onClick={(e) => {
               e.preventDefault();
               onView(Number(node.id));
@@ -75,17 +76,12 @@ function OutlineRow({
         </div>
       </div>
 
+      {/* RIGHT: actions */}
       <div className="flex-shrink-0 hidden group-hover:flex space-x-3">
-        <button
-          onClick={() => onEdit(node.id)}
-          className="text-sm text-yellow-600 hover:text-yellow-800"
-        >
+        <button onClick={() => onEdit(node.id)} className="text-sm text-yellow-600 hover:text-yellow-800">
           Edit
         </button>
-        <button
-          onClick={() => onDelete(node.id)}
-          className="text-sm text-red-600 hover:text-red-800"
-        >
+        <button onClick={() => onDelete(node.id)} className="text-sm text-red-600 hover:text-red-800">
           Delete
         </button>
       </div>
@@ -99,6 +95,7 @@ export default function OutlineTree({
   onView,
   onEdit,
   onDelete,
+  onToggleDone,
 }: Props) {
   return (
     <ul>
@@ -110,6 +107,7 @@ export default function OutlineTree({
             onView={onView}
             onEdit={onEdit}
             onDelete={onDelete}
+            onToggleDone={onToggleDone}
           />
           {n.children?.length ? (
             <OutlineTree

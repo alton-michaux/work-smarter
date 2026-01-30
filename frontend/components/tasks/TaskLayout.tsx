@@ -10,9 +10,10 @@ type Props = {
   onView: (id: number) => void;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
+  onToggleDone?: (id: number, isDone: boolean) => void;
 };
 
-export function TaskLayout({ sections, onView, onEdit, onDelete }: Props) {
+export function TaskLayout({ sections, onView, onEdit, onDelete, onToggleDone }: Props) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* LEFT: Meetings (1/3) */}
@@ -32,7 +33,13 @@ export function TaskLayout({ sections, onView, onEdit, onDelete }: Props) {
         <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">TASKS</h2>
         <div className="rounded border bg-white max-h-[60vh] overflow-auto">
           {sections.tasks.length ? (
-            <OutlineTree nodes={sections.tasks} onView={onView} onEdit={onEdit} onDelete={onDelete} />
+            <OutlineTree
+              nodes={sections.tasks}
+              onView={onView}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onToggleDone={onToggleDone}
+            />
           ) : (
             <div className="px-4 py-3 text-sm text-gray-500">No tasks.</div>
           )}

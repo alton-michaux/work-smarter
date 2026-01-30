@@ -11,6 +11,7 @@ const TasksPage = () => {
   const {
     tasks,
     deleteTask,
+    updateTask,
     isLoading,
     error,
     resetAndFetch,
@@ -35,6 +36,27 @@ const TasksPage = () => {
   const handleEdit = useCallback((id: number) => {
     router.push(`/tasks/edit/${id}`);
   }, [router]);
+
+  const handleToggleDone = useCallback(
+    async (id: number, isDone: boolean) => {
+      console.log("WHAT THE FUCK")
+      const task = tasks.find((t: any) => Number(t.id) === Number(id));
+      if (!task) {
+        console.warn('handleToggleDone: task not found for id', id);
+        return;
+      }
+
+      try {
+        await updateTask({
+          ...task,
+          is_done: isDone,
+        });
+      } catch (e) {
+        alert('Failed to update task. Please try again.');
+      }
+    },
+    [tasks, updateTask]
+  );
 
   const handleDelete = useCallback(async (id: number) => {
     if (confirm('Are you sure you want to delete this task?')) {
@@ -73,7 +95,8 @@ const TasksPage = () => {
             sections={sections}
             onView={handleTaskClick}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={handleDelete}            
+            onToggleDone={handleToggleDone}
           />
         ))}
 
