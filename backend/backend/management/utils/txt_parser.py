@@ -97,12 +97,11 @@ class DevParser(TxtParser):
                 if self.HEADER_REGEX.match(line) and not line.lstrip().startswith("-"):
                     current_category = stripped
 
-                    # If it's a project label, keep it; otherwise, clear it
                     if stripped in self.PROJECT_LABELS:
                         current_project = stripped
-                    else:
-                        current_project = None
-
+                    elif stripped in self.CATEGORY_LABELS:
+                        current_project = None  # Meetings, Notes, Tasks: not projects
+                    # else: leave current_project unchanged for unknown headers
                     continue
 
                 match = self.TASK_REGEX.match(line)
@@ -133,7 +132,7 @@ class DevParser(TxtParser):
                         "sub_task": is_subtask,
                         "begin_date": current_week_of,
                         "end_date": current_week_of if done else None,
-                        "project_name": current_project if current_project in self.PROJECT_LABELS else None
+                        "project_name": current_project
                     }
 
                     parent_stack.append((indent_level, title))
