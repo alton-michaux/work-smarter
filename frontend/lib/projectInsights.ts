@@ -1,0 +1,34 @@
+// lib/projectInsights.ts
+
+export type TaskLike = {
+  id: number | string;
+  title: string;
+  begin_date?: string | null;
+  category?: string | null;
+  priority?: string | null;
+  is_done?: boolean;
+};
+
+export function taskDay(t: any) {
+  return (t.begin_date ?? '').slice(0, 10);
+}
+
+export function isMeetingTask(t: any) {
+  const c = String(t.category ?? '').trim().toLowerCase();
+  return c === 'meeting' || c === 'meetings';
+}
+
+export function groupByBeginDate(tasks: any[]) {
+  const groups: Record<string, any[]> = {};
+
+  for (const t of tasks || []) {
+    const day = (t.begin_date ?? '—').slice(0, 10);
+    groups[day] = groups[day] || [];
+    groups[day].push(t);
+  }
+
+  // newest day first
+  const sortedDays = Object.keys(groups).sort().reverse();
+
+  return { groups, sortedDays };
+}

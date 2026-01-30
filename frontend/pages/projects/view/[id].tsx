@@ -2,26 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/router';
 import { useProjects } from '../../../context/ProjectsContext';
 import Spinner from 'components/shared/Spinner';
-
-function groupByBeginDate(tasks: any[]) {
-  const groups: Record<string, any[]> = {};
-
-  for (const t of tasks || []) {
-    const day = (t.begin_date ?? '—').slice(0, 10);
-    groups[day] = groups[day] || [];
-    groups[day].push(t);
-  }
-
-  // newest day first
-  const sortedDays = Object.keys(groups).sort().reverse();
-
-  return { groups, sortedDays };
-}
-
-function isMeetingTask(t: any) {
-  const c = String(t.category ?? '').trim().toLowerCase();
-  return c === 'meeting' || c === 'meetings';
-}
+import { groupByBeginDate, isMeetingTask, taskDay } from '../../../lib/projectInsights';
 
 const ProjectShowPage = () => {
   const router = useRouter();
@@ -103,10 +84,6 @@ const ProjectShowPage = () => {
   const workTotal = work.length;
   const workDone = work.filter((t: any) => t.is_done).length;
   const workOpen = workTotal - workDone;
-
-  function taskDay(t: any) {
-    return (t.begin_date ?? '').slice(0, 10);
-  }
 
   return (
     <div className="min-h-screen flex justify-center px-4 py-10 bg-gray-50">
