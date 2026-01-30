@@ -1,3 +1,4 @@
+import React from 'react';
 import { useRouter } from 'next/router';
 import { useProjects } from '../../../context/ProjectsContext';
 import Spinner from 'components/shared/Spinner';
@@ -62,12 +63,44 @@ const ProjectShowPage = () => {
 
   const { groups, sortedDays } = groupByBeginDate(project.tasks);
 
+  const totalCount = project.tasks?.length ?? 0;
+  const doneCount = project.tasks?.filter((t: any) => t.is_done)?.length ?? 0;
+
+  const activeStart = sortedDays.length ? sortedDays[sortedDays.length - 1] : '—'; // oldest
+  const activeEnd = sortedDays.length ? sortedDays[0] : '—'; // newest
+  const lastActivity = activeEnd;
+  const progressPct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+
   return (
     <div className="min-h-screen flex justify-center px-4 py-10 bg-gray-50">
       <div className="w-full max-w-2xl bg-white shadow-lg rounded-lg p-8">
         <h1 className="text-2xl font-semibold text-gray-800 mb-4">
           <span className="font-bold">Name:</span> {project.name}
         </h1>
+        <div className="mb-6 rounded-lg border bg-white p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div className="text-sm text-gray-600">
+                Progress: <span className="font-medium text-gray-900">{doneCount}</span> / {totalCount} done
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Active days: {activeStart} – {activeEnd} • Last activity: {lastActivity}
+              </div>
+            </div>
+
+            <div className="text-sm font-medium text-gray-700">
+              {progressPct}%
+            </div>
+          </div>
+
+          <div className="mt-3 h-2 w-full rounded bg-gray-100 overflow-hidden">
+            <div
+              className="h-full bg-blue-600"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+
         <div className="mt-6 space-y-6">
           {sortedDays.map((day) => (
             <div key={day}>
