@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from datetime import date
 
@@ -26,16 +27,19 @@ class Project(models.Model):
     name = models.CharField(max_length=100)
     created = models.DateTimeField(auto_now_add=True)
 
-class RecurringTask(models.Model):
+class RecurringTask(models.Model):        
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="recurring_tasks",
+    )
     title = models.CharField(max_length=255)
     project = models.ForeignKey(Project, null=True, on_delete=models.CASCADE)
     category = models.CharField(max_length=50, null=True)
-
     frequency = models.CharField(
         max_length=10,
         choices=[('daily', 'Daily'), ('weekly', 'Weekly'), ('monthly', 'Monthly')]
     )
-
     day_of_week = models.IntegerField(null=True, blank=True)  # 0–6
     start_date = models.DateField()
     is_active = models.BooleanField(default=True)
@@ -61,7 +65,6 @@ class Task(models.Model):
     created_at = models.DateField(auto_now_add=True)
     is_subtask = models.BooleanField(default=False)
     carry_over = models.BooleanField(default=True)
-
     recurring_task = models.ForeignKey(
         RecurringTask,
         null=True,

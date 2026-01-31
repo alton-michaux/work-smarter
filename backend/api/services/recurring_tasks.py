@@ -29,7 +29,7 @@ def _should_generate(rt: RecurringTask, d):
 
 @transaction.atomic
 def ensure_recurring_tasks_in_range(date_from, date_to, *, user, project=None):
-    qs = RecurringTask.objects.filter(is_active=True)
+    qs = RecurringTask.objects.filter(is_active=True, user=user)
     if project is not None:
         qs = qs.filter(project=project)
 
