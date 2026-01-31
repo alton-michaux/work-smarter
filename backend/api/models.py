@@ -74,7 +74,7 @@ class Task(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["recurring_task", "begin_date"],
-                name="uniq_task_recurring_task_date",
+                name="uniq_task_recurring_task_begin_date",
             )
         ]
     

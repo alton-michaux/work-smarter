@@ -10,6 +10,7 @@ from datetime import date, datetime
 from .models import Resume, Project, Task
 from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer
 from backend.management.utils.txt_parser import DevParser
+from api.services.recurring_tasks import ensure_recurring_tasks_in_range
 from django.db import transaction
 from rest_framework.exceptions import ParseError
 from django.contrib.auth import get_user_model
@@ -147,31 +148,30 @@ class TaskViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = Task.objects.filter(user=user)
 
-        begin_date_str = self.request.query_params.get('begin_date')
-        end_date_str = self.request.query_params.get('end_date')
+        begin_date_str = self.request.query_params.get("begin_date")
+        end_date_str = self.request.query_params.get("end_date")
 
         if begin_date_str and end_date_str:
             try:
                 start_of_week = datetime.strptime(begin_date_str, "%Y-%m-%d").date()
                 end_of_week = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
+                # ✅ Generate occurrences for THIS user and THIS range
+                ensure_recurring_tasks_in_range(start_of_week, end_of_week, user=user)
+
                 queryset = queryset.filter(
-                    Q(  # Case 1: begin_date exists
+                    Q(
                         Q(begin_date__lte=end_of_week) &
-                        (
-                            Q(end_date__isnull=True) |
-                            Q(end_date__gte=start_of_week)
-                        )
+                        (Q(end_date__isnull=True) | Q(end_date__gte=start_of_week))
                     )
                     |
-                    Q(  # Case 2: begin_date is null but end_date is within the week
+                    Q(
                         Q(begin_date__isnull=True) &
                         Q(end_date__range=(start_of_week, end_of_week))
                     )
                 )
             except ValueError as e:
                 logger.warning(f"Invalid date format in get_queryset: {e}")
-                pass
 
         return queryset
 
