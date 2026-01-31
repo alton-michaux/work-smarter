@@ -180,7 +180,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     try {
       let recurringTaskId: number | null = null;
 
-      // 1️⃣ Create recurring template first (if needed)
+      // 1) Create recurring template if requested
       if (task.recurrence?.repeats) {
         const payload: any = {
           title: task.title,
@@ -213,15 +213,11 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         recurringTaskId = created.id;
       }
 
-      // 2️⃣ Create the task (link to recurring template if present)
-      const taskPayload = {
-        ...task,
-        ...(recurringTaskId ? { recurring_task: recurringTaskId } : {}),
-      };
+      // 2) Create the task (link to recurring template if present)
+      const taskPayload = { ...task, ...(recurringTaskId ? { recurring_task: recurringTaskId } : {}) };
+      delete taskPayload.recurrence;
 
-      delete taskPayload.recurrence; // backend doesn't need this
-
-      await fetch(`${API_URL}/tasks/`, {
+      const res2 = await fetch(`${API_URL}/tasks/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -230,11 +226,16 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify(taskPayload),
       });
 
-      // 3️⃣ Reload first page so cursor state stays sane
+      if (!res2.ok) {
+        const text = await res2.text();
+        throw new Error(`Failed to create task: ${text}`);
+      }
+
+      // Refresh list (keeps cursor state sane)
       await fetchTasks();
     } catch (err: any) {
       setError(err.message || 'Failed to add task');
-      throw err; // allow UI to show form error
+      throw err;
     }
   };
 
