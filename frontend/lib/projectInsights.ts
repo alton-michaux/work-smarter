@@ -18,7 +18,7 @@ export function isMeetingTask(t: any) {
   return c === 'meeting' || c === 'meetings';
 }
 
-export function groupByBeginDate(tasks: any[]) {
+export function groupByBeginDate(tasks: any[], direction: 'asc' | 'desc' = 'desc') {
   const groups: Record<string, any[]> = {};
 
   for (const t of tasks || []) {
@@ -29,6 +29,7 @@ export function groupByBeginDate(tasks: any[]) {
 
   // newest day first
   const sortedDays = Object.keys(groups).sort().reverse();
+  if (direction === 'desc') sortedDays.reverse();
 
   return { groups, sortedDays };
 }
