@@ -61,6 +61,14 @@ class Task(models.Model):
     created_at = models.DateField(auto_now_add=True)
     is_subtask = models.BooleanField(default=False)
     carry_over = models.BooleanField(default=True)
+
+    recurring_task = models.ForeignKey(
+        RecurringTask,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="tasks",
+    )
     
     def save(self, *args, **kwargs):
         if self.is_done and self.end_date is None and self.begin_date is not None:
