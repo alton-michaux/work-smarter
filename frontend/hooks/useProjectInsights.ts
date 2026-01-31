@@ -3,7 +3,7 @@ import { groupByBeginDate, isMeetingTask } from '../lib/projectInsights';
 
 export function useProjectInsights(project: any, remainingLimit = 6) {
   return useMemo(() => {
-    const tasks = project?.tasks ?? [];
+    const tasks = project?.dashboard_tasks ?? project?.tasks ?? [];
 
     const meetings = tasks.filter(isMeetingTask);
     const work = tasks.filter((t: any) => !isMeetingTask(t));
