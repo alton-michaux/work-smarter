@@ -9,6 +9,11 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 class TaskSerializer(serializers.ModelSerializer):
+    recurring_task = serializers.PrimaryKeyRelatedField(
+        queryset=RecurringTask.objects.all(),
+        required=False,
+        allow_null=True,
+    )
     recurring_task_id = serializers.IntegerField(
         source="recurring_task.id",
         read_only=True
@@ -21,6 +26,9 @@ class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = "__all__"
+        extra_kwargs = {
+            "recurring_task": {"required": False, "allow_null": True},
+        }
         
 class RecurringTaskSerializer(serializers.ModelSerializer):
     class Meta:
