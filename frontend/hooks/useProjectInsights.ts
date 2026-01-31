@@ -8,8 +8,8 @@ export function useProjectInsights(project: any, remainingLimit = 6) {
     const meetings = tasks.filter(isMeetingTask);
     const work = tasks.filter((t: any) => !isMeetingTask(t));
 
-    const meetingsGrouped = groupByBeginDate(meetings);
-    const workGrouped = groupByBeginDate(work);
+    const meetingsGrouped = groupByBeginDate(meetings, 'desc');
+    const workGrouped = groupByBeginDate(work, 'asc');
 
     const totalCount = tasks.length;
     const doneCount = tasks.filter((t: any) => t.is_done).length;
