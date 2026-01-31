@@ -69,6 +69,14 @@ class Task(models.Model):
         on_delete=models.SET_NULL,
         related_name="tasks",
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["recurring_task", "begin_date"],
+                name="uniq_task_recurring_task_date",
+            )
+        ]
     
     def save(self, *args, **kwargs):
         if self.is_done and self.end_date is None and self.begin_date is not None:
