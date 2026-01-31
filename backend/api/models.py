@@ -26,6 +26,21 @@ class Project(models.Model):
     name = models.CharField(max_length=100)
     created = models.DateTimeField(auto_now_add=True)
 
+class RecurringTask(models.Model):
+    title = models.CharField(max_length=255)
+    project = models.ForeignKey(Project, null=True, on_delete=models.CASCADE)
+    category = models.CharField(max_length=50, null=True)
+
+    frequency = models.CharField(
+        max_length=10,
+        choices=[('daily', 'Daily'), ('weekly', 'Weekly'), ('monthly', 'Monthly')]
+    )
+
+    day_of_week = models.IntegerField(null=True, blank=True)  # 0–6
+    start_date = models.DateField()
+    is_active = models.BooleanField(default=True)
+    last_generated_at = models.DateField(null=True, blank=True)
+
 class Task(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tasks", null=False, blank=False)
     PRIORITY_CHOICES = [
