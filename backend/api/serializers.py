@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Resume, Task, Project, User
+from .models import Resume, Task, Project, User, RecurringTask
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,6 +20,12 @@ class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = "__all__"
+        
+class RecurringTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecurringTask
+        fields = "__all__"
+        read_only_fields = ("user",)
 
 class ProjectSerializer(serializers.ModelSerializer):
     tasks = TaskSerializer(many=True, read_only=True)

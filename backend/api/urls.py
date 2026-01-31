@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ProjectViewSet, TaskViewSet, UserViewSet, ImportTasks, ExportTasksCSV
+from .views import ProjectViewSet, TaskViewSet, UserViewSet, ImportTasks, ExportTasksCSV, RecurringTaskViewSet
 
 # JWT views
 from rest_framework_simplejwt.views import (
@@ -11,6 +11,7 @@ from rest_framework_simplejwt.views import (
 router = DefaultRouter()
 router.register(r'projects', ProjectViewSet, basename='project')
 router.register(r'tasks', TaskViewSet, basename='task')
+router.register(r"recurring-tasks", RecurringTaskViewSet, basename="recurring-task")
 router.register(r'user', UserViewSet, basename='user')
 
 urlpatterns = [

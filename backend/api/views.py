@@ -7,8 +7,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.pagination import CursorPagination
 from django.db.models import Q
 from datetime import date, datetime
-from .models import Resume, Project, Task
-from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer
+from .models import Resume, Project, Task, RecurringTask
+from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
 from backend.management.utils.txt_parser import DevParser
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range
 from django.db import transaction
@@ -178,6 +178,15 @@ class TaskViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
         
+class RecurringTaskViewSet(viewsets.ModelViewSet):
+    serializer_class = RecurringTaskSerializer
+
+    def get_queryset(self):
+        return RecurringTask.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
 
