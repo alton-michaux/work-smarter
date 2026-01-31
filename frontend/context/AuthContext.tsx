@@ -15,6 +15,7 @@ type AuthContextType = {
   login: (form: { username: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   getUser: () => Promise<void>;
+  getAuthHeaders: () => Record<string, string>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -51,6 +52,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getAuthHeaders = () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
   const getUser = async () => {
@@ -174,7 +180,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loggedIn, isLoading, error, setLoggedIn, register, login, logout, getUser }}
+      value={{ user, loggedIn, isLoading, error, setLoggedIn, register, login, logout, getUser, getAuthHeaders }}
     >
       {children}
     </AuthContext.Provider>

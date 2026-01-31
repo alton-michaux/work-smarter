@@ -174,18 +174,68 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addTask = async (task: Omit<Task, 'id'>) => {
+  const addTask = async (task: any) => {
     if (!loggedIn) return;
-    await fetch(`${API_URL}/tasks/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders(),
-      },
-      body: JSON.stringify(task),
-    });
-    // Reload first page so cursors are fresh
-    await fetchTasks();
+
+    try {
+      let recurringTaskId: number | null = null;
+
+      // 1️⃣ Create recurring template first (if needed)
+      if (task.recurrence?.repeats) {
+        const payload: any = {
+          title: task.title,
+          project: task.project || null,
+          category: task.category || null,
+          frequency: task.recurrence.frequency,
+          start_date: task.recurrence.start_date || task.begin_date,
+          is_active: true,
+        };
+
+        if (task.recurrence.frequency === 'weekly') {
+          payload.day_of_week = task.recurrence.day_of_week;
+        }
+
+        const res = await fetch(`${API_URL}/recurring-tasks/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Failed to create recurring task: ${text}`);
+        }
+
+        const created = await res.json();
+        recurringTaskId = created.id;
+      }
+
+      // 2️⃣ Create the task (link to recurring template if present)
+      const taskPayload = {
+        ...task,
+        ...(recurringTaskId ? { recurring_task: recurringTaskId } : {}),
+      };
+
+      delete taskPayload.recurrence; // backend doesn't need this
+
+      await fetch(`${API_URL}/tasks/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(taskPayload),
+      });
+
+      // 3️⃣ Reload first page so cursor state stays sane
+      await fetchTasks();
+    } catch (err: any) {
+      setError(err.message || 'Failed to add task');
+      throw err; // allow UI to show form error
+    }
   };
 
   const updateTask = async (task: Task) => {
