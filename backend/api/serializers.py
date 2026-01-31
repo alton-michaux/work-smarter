@@ -8,9 +8,18 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 class TaskSerializer(serializers.ModelSerializer):
+    recurring_task_id = serializers.IntegerField(
+        source="recurring_task.id",
+        read_only=True
+    )
+    is_recurring = serializers.SerializerMethodField()
+
+    def get_is_recurring(self, obj):
+        return obj.recurring_task is not None
+
     class Meta:
         model = Task
-        fields = '__all__'
+        fields = "__all__"
 
 class ProjectSerializer(serializers.ModelSerializer):
     tasks = TaskSerializer(many=True, read_only=True)
