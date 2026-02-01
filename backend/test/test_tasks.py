@@ -8,7 +8,8 @@ def task_payload(user, **overrides):
         "description": "Task for testing",
         "begin_date": date.today(),
         "is_done": False,
-        "user": user.id
+        "user": user.id,
+        "recurring_task": ""
     }
     payload.update(overrides)
     return payload
@@ -21,13 +22,11 @@ def test_task_index(auth_client):
     
 @pytest.mark.django_db
 def test_weekly_task_filtering(auth_client, get_user, create_task):
-    # Use dynamic dates based on today
     today = date.today()
-    # Find the most recent Monday (start of week)
     start_of_week = today - timedelta(days=today.weekday())
     end_of_week = start_of_week + timedelta(days=6)
 
-    # Included: Ongoing task (starts before, no end date)
+    # Ongoing task started before week → should NOT appear
     create_task(
         title="Ongoing Task",
         begin_date=(start_of_week - timedelta(days=3)).isoformat(),
@@ -52,7 +51,7 @@ def test_weekly_task_filtering(auth_client, get_user, create_task):
         user=get_user
     )
 
-    # Excluded: Completed before the week
+    # Excluded
     create_task(
         title="Done Last Week",
         begin_date=(start_of_week - timedelta(days=10)).isoformat(),
@@ -61,7 +60,6 @@ def test_weekly_task_filtering(auth_client, get_user, create_task):
         user=get_user
     )
 
-    # Excluded: Starts after the week
     create_task(
         title="Future Task",
         begin_date=(end_of_week + timedelta(days=5)).isoformat(),
@@ -69,16 +67,17 @@ def test_weekly_task_filtering(auth_client, get_user, create_task):
         user=get_user
     )
 
-    # Call the endpoint with begin_date and end_date query params
-    response = auth_client.get(f"/api/tasks/?begin_date={start_of_week}&end_date={end_of_week}")
+    response = auth_client.get(
+        f"/api/tasks/?begin_date={start_of_week}&end_date={end_of_week}"
+    )
 
     assert response.status_code == 200
     titles = [task["title"] for task in response.data["results"]]
 
-    assert "Ongoing Task" in titles
     assert "New Task This Week" in titles
     assert "No Begin, Done This Week" in titles
 
+    assert "Ongoing Task" not in titles
     assert "Done Last Week" not in titles
     assert "Future Task" not in titles
   

@@ -29,9 +29,11 @@ export function buildTree<T extends { id: any; parent_id?: any | null }>(rows: T
 }
 
 export function splitIntoSections(tasks: any[]) {
-  const meetings = tasks.filter(t => categoryToType(t.category) === 'meeting');
-  const taskItems = tasks.filter(t => categoryToType(t.category) === 'task');
-  const notes = tasks.filter(t => categoryToType(t.category) === 'note');
+  const uniq = Array.from(new Map((tasks ?? []).map(t => [t.id, t])).values());
+  
+  const meetings = uniq.filter(t => categoryToType(t.category) === 'meeting');
+  const taskItems = uniq.filter(t => categoryToType(t.category) === 'task');
+  const notes = uniq.filter(t => categoryToType(t.category) === 'note');
 
   return {
     meetings: buildTree(meetings),

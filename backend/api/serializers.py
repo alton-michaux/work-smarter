@@ -1,5 +1,6 @@
+from django.utils import timezone
 from rest_framework import serializers
-from .models import Resume, Task, Project, User
+from .models import Resume, Task, Project, User, RecurringTask
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -8,16 +9,66 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 class TaskSerializer(serializers.ModelSerializer):
+    recurring_task = serializers.PrimaryKeyRelatedField(
+        queryset=RecurringTask.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    recurring_task_id = serializers.IntegerField(
+        source="recurring_task.id",
+        read_only=True
+    )
+    is_recurring = serializers.SerializerMethodField()
+
+    def get_is_recurring(self, obj):
+        return obj.recurring_task is not None
+
     class Meta:
         model = Task
-        fields = '__all__'
+        fields = "__all__"
+        extra_kwargs = {
+            "recurring_task": {"required": False, "allow_null": True},
+        }
+        
+class RecurringTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecurringTask
+        fields = "__all__"
+        read_only_fields = ("user",)
 
 class ProjectSerializer(serializers.ModelSerializer):
     tasks = TaskSerializer(many=True, read_only=True)
+    dashboard_tasks = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
-        fields = '__all__'
+        fields = "__all__"
+
+    def get_dashboard_tasks(self, obj):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return []
+
+        today = timezone.localdate()
+
+        non_recurring = obj.tasks.filter(user=user, recurring_task__isnull=True)
+
+        next_recurring = (
+            obj.tasks
+            .filter(
+                user=user,
+                recurring_task__isnull=False,
+                begin_date__gte=today,
+            )
+            .order_by("recurring_task_id", "begin_date")
+            .distinct("recurring_task_id")
+        )
+
+        combined = list(non_recurring) + list(next_recurring)
+        combined.sort(key=lambda t: (t.begin_date or "9999-12-31", str(t.id)))
+
+        return TaskSerializer(combined, many=True, context=self.context).data
         
 class ResumeSerializer(serializers.ModelSerializer):
     class Meta:

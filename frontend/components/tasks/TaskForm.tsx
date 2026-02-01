@@ -11,8 +11,15 @@ type TaskFormProps = {
 };
 
 export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", projects }: TaskFormProps) {
-  const { user } = useAuth();
+  const { user, getAuthHeaders } = useAuth();
   const [task, setTask] = useState({ ...initialTask, user: user?.id || initialTask.user });
+
+  const [recurrence, setRecurrence] = useState({
+    repeats: false,
+    frequency: "weekly",      // "daily" | "weekly" | "monthly"
+    day_of_week: 0,           // 0=Mon ... 6=Sun
+    start_date: initialTask.begin_date || "", // default from task if present
+  });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>('');
@@ -32,7 +39,7 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
     if (!validate()) return;
 
     try {
-      await onSubmit(task);
+      await onSubmit({ ...task, recurrence });
     } catch (err: any) {
       // This is where we’ll later map backend errors -> field errors
       setFormError(err?.message || 'Something went wrong. Please try again.');
@@ -183,6 +190,78 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
           ))}
         </select>
       </label>
+
+      <div className="border rounded p-3 space-y-3">
+        <label className="flex items-center space-x-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={recurrence.repeats}
+            onChange={(e) =>
+              setRecurrence((r) => ({ ...r, repeats: e.target.checked }))
+            }
+            className="h-4 w-4 text-green-600"
+          />
+          <span>Repeats</span>
+        </label>
+
+        {recurrence.repeats && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Frequency
+              </label>
+              <select
+                value={recurrence.frequency}
+                onChange={(e) =>
+                  setRecurrence((r) => ({ ...r, frequency: e.target.value }))
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded"
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+
+            {recurrence.frequency === "weekly" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Day of week
+                </label>
+                <select
+                  value={recurrence.day_of_week}
+                  onChange={(e) =>
+                    setRecurrence((r) => ({ ...r, day_of_week: Number(e.target.value) }))
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded"
+                >
+                  <option value={0}>Monday</option>
+                  <option value={1}>Tuesday</option>
+                  <option value={2}>Wednesday</option>
+                  <option value={3}>Thursday</option>
+                  <option value={4}>Friday</option>
+                  <option value={5}>Saturday</option>
+                  <option value={6}>Sunday</option>
+                </select>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start date
+              </label>
+              <input
+                type="date"
+                value={recurrence.start_date}
+                onChange={(e) =>
+                  setRecurrence((r) => ({ ...r, start_date: e.target.value }))
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded"
+              />
+            </div>
+          </>
+        )}
+      </div>
 
       <button
         type="submit"

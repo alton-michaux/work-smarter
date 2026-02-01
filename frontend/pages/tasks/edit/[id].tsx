@@ -5,13 +5,13 @@ import TaskForm from '../../../components/tasks/TaskForm';
 export default function TaskEditPage() {
   const router = useRouter();
   const { id } = router.query;
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTaskAndReload } = useTasks();
 
   const task = tasks?.find(t => t.id === Number(id));
   if (!task) return <div>Task not found</div>;
 
   const handleUpdate = (updatedTask) => {
-    updateTask({ ...updatedTask, id: Number(id) });
+    updateTaskAndReload({ ...updatedTask, id: Number(id) });
     router.push(`/tasks/view/${id}`);
   };
 
