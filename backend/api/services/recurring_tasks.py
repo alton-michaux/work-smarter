@@ -48,3 +48,5 @@ def ensure_recurring_tasks_in_range(date_from, date_to, *, user, project=None):
                     "category": rt.category,
                 },
             )
+        
+    return qs

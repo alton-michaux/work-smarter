@@ -169,12 +169,13 @@ class TaskViewSet(viewsets.ModelViewSet):
                         ensure_recurring_tasks_in_range(day, day, user=user)
 
                         # return tasks active on that day (open tasks)
-                        return queryset.filter(
-                            is_done=False,
+                        filtered_queryset = queryset.filter(
                             begin_date__lte=day,
                         ).filter(
                             Q(end_date__isnull=True) | Q(end_date__gte=day)
                         )
+
+                        return filtered_queryset
                     except ValueError as e:
                         logger.warning(f"Invalid active_on format: {e}")
                 else:
