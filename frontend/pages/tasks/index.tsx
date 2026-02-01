@@ -11,11 +11,12 @@ const TasksPage = () => {
   const {
     tasks,
     deleteTask,
-    updateTask,
+    updateTaskAndReload,
     isLoading,
     error,
     resetAndFetch,
-    fetchTasksByDateRange
+    fetchTasksByDateRange,
+    toggleTaskDone
   } = useTasks();
   const router = useRouter();
   const queryDate = typeof router.query.date === 'string' ? router.query.date : null;
@@ -47,15 +48,12 @@ const TasksPage = () => {
       }
 
       try {
-        await updateTask({
-          ...task,
-          is_done: isDone,
-        });
+        await toggleTaskDone(id, isDone)
       } catch (e) {
         alert('Failed to update task. Please try again.');
       }
     },
-    [tasks, updateTask]
+    [tasks, updateTaskAndReload]
   );
 
   const handleDelete = useCallback(async (id: number) => {

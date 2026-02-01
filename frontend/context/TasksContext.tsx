@@ -21,7 +21,7 @@ type TasksContextType = {
   tasks: Task[];
   setTasks: (tasks: Task[]) => void;
   addTask: (task: Omit<Task, 'id'>) => Promise<void>;
-  updateTask: (task: Task) => Promise<void>;
+  updateTaskAndReload: (task: Task) => Promise<void>;
   deleteTask: (id: number) => Promise<void>;
   fetchTasks: () => Promise<void>; // kept for compatibility (loads first page with default ordering)
   fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
@@ -77,6 +77,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fetchUrl = async (url: string, mode: 'reset' | 'append' | 'prepend') => {
+    console.log("[fetchUrl]", mode, url);
+
     if (!loggedIn) return;
     if (inFlight.current === url) return;
     inFlight.current = url;
@@ -157,6 +159,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (!loggedIn) return;
     setError(null);
     try {
+      console.log("[toggleTaskDone] PATCH", taskId, nextDone);
+
       const res = await fetch(`${API_URL}/tasks/${taskId}/`, {
         method: 'PATCH',
         headers: {
@@ -241,7 +245,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateTask = async (task: Task) => {
+  const updateTaskAndReload = async (task: Task) => {
     if (!loggedIn) return;
     await fetch(`${API_URL}/tasks/${task.id}/`, {
       method: 'PUT',
@@ -275,7 +279,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         tasks,
         setTasks,
         addTask,
-        updateTask,
+        updateTaskAndReload,
         deleteTask,
         fetchTasks,
         fetchTasksByDateRange,
