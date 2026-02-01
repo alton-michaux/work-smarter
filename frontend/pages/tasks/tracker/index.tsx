@@ -17,7 +17,7 @@ export default function TaskTrackerPage() {
   }, []);
 
   // Fetch tasks once selectedWeek is ready - using useRef to avoid using fetchTasksByDateRange as dep
-  const doFetch = useRef<((b: string, e: string) => void) | null>(null);
+  const doFetch = useRef<((b: string, e: string, a: string) => Promise<void>) | null>(null);
   useEffect(() => { doFetch.current = fetchTasksByDateRange; }, [fetchTasksByDateRange]);
 
   const lastRangeRef = useRef<string | null>(null);
@@ -27,7 +27,7 @@ export default function TaskTrackerPage() {
     const key = `${selectedWeek}__${end}`;
     if (lastRangeRef.current === key) return;
     lastRangeRef.current = key;
-    fetchTasksByDateRange(selectedWeek, end);
+    fetchTasksByDateRange(selectedWeek, end, null);
   }, [selectedWeek, fetchTasksByDateRange]);
 
   // useEffect(() => {
