@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from datetime import date
 
@@ -26,6 +27,24 @@ class Project(models.Model):
     name = models.CharField(max_length=100)
     created = models.DateTimeField(auto_now_add=True)
 
+class RecurringTask(models.Model):        
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="recurring_tasks",
+    )
+    title = models.CharField(max_length=255)
+    project = models.ForeignKey(Project, null=True, on_delete=models.CASCADE)
+    category = models.CharField(max_length=50, null=True)
+    frequency = models.CharField(
+        max_length=10,
+        choices=[('daily', 'Daily'), ('weekly', 'Weekly'), ('monthly', 'Monthly')]
+    )
+    day_of_week = models.IntegerField(null=True, blank=True)  # 0–6
+    start_date = models.DateField()
+    is_active = models.BooleanField(default=True)
+    last_generated_at = models.DateField(null=True, blank=True)
+
 class Task(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tasks", null=False, blank=False)
     PRIORITY_CHOICES = [
@@ -46,6 +65,21 @@ class Task(models.Model):
     created_at = models.DateField(auto_now_add=True)
     is_subtask = models.BooleanField(default=False)
     carry_over = models.BooleanField(default=True)
+    recurring_task = models.ForeignKey(
+        RecurringTask,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="tasks",
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["recurring_task", "begin_date"],
+                name="uniq_task_recurring_task_begin_date",
+            )
+        ]
     
     def save(self, *args, **kwargs):
         if self.is_done and self.end_date is None and self.begin_date is not None:

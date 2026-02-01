@@ -30,7 +30,12 @@ function lastNDays(selectedDate: string, n = 7) {
   return days;
 }
 
-export function useDailyLog(tasks: any[], queryDate: string | null) {
+export function useDailyLog(
+    tasks: any[],
+    queryDate?: string,
+    options?: { activeOn?: boolean }
+  ) {
+
   const [selectedDate, setSelectedDate] = useState<string>('');
 
   // client-safe init + sync with query param
@@ -43,10 +48,15 @@ export function useDailyLog(tasks: any[], queryDate: string | null) {
   }, [queryDate]);
 
   const days = useMemo(() => lastNDays(selectedDate, 7), [selectedDate]);
+  
+  const activeOn = options?.activeOn ?? false;
 
   const dailyTasks = useMemo(() => {
-    if (!selectedDate) return [];
-    return tasks.filter(t => (t.begin_date ?? '').slice(0, 10) === selectedDate);
+    activeOn
+      ? tasks = tasks // ✅ trust backend when using active_on
+      : tasks = tasks.filter(t => (t.begin_date ?? '').slice(0, 10) === selectedDate);
+
+      return tasks
   }, [tasks, selectedDate]);
 
   const sections = useMemo(() => splitIntoSections(dailyTasks), [dailyTasks]);

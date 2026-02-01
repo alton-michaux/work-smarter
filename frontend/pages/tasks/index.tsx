@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { useTasks } from '../../context/TasksContext';
+import { useTasks } from 'context/TasksContext';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../context/AuthContext';
 import { DateToggleUI } from 'components/ui/dateToggleUI';
@@ -11,10 +11,12 @@ const TasksPage = () => {
   const {
     tasks,
     deleteTask,
-    updateTask,
+    updateTaskAndReload,
     isLoading,
     error,
     resetAndFetch,
+    fetchTasksByDateRange,
+    toggleTaskDone
   } = useTasks();
   const router = useRouter();
   const queryDate = typeof router.query.date === 'string' ? router.query.date : null;
@@ -46,15 +48,12 @@ const TasksPage = () => {
       }
 
       try {
-        await updateTask({
-          ...task,
-          is_done: isDone,
-        });
+        await toggleTaskDone(id, isDone)
       } catch (e) {
         alert('Failed to update task. Please try again.');
       }
     },
-    [tasks, updateTask]
+    [tasks, updateTaskAndReload]
   );
 
   const handleDelete = useCallback(async (id: number) => {
@@ -65,7 +64,13 @@ const TasksPage = () => {
   }, [deleteTask]);
 
   const { selectedDate, setSelectedDate, last7Days, dailyTasks, sections } =
-    useDailyLog(tasks, queryDate);
+    useDailyLog(tasks, queryDate, { activeOn: true });
+
+    
+  useEffect(() => {
+    if (!selectedDate) return;
+    fetchTasksByDateRange(selectedDate, selectedDate, selectedDate);
+  }, [selectedDate]);
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10 flex justify-center">

@@ -66,7 +66,18 @@ function OutlineRow({
             className="text-lg font-semibold text-blue-600 hover:underline text-left truncate block"
             title={node.title}
           >
-            {node.title}
+            <span className="flex items-center gap-2">
+              <span className="truncate">{node.title}</span>
+
+              {node.is_recurring && (
+                <span
+                  className="text-xs opacity-60"
+                  title="Recurring task"
+                >
+                  🔁
+                </span>
+              )}
+            </span>
           </button>
 
           <p className="text-xs text-gray-500 mt-1">

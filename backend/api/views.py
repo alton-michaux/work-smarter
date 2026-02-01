@@ -7,9 +7,10 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.pagination import CursorPagination
 from django.db.models import Q
 from datetime import date, datetime
-from .models import Resume, Project, Task
-from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer
+from .models import Resume, Project, Task, RecurringTask
+from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
 from backend.management.utils.txt_parser import DevParser
+from api.services.recurring_tasks import ensure_recurring_tasks_in_range
 from django.db import transaction
 from rest_framework.exceptions import ParseError
 from django.contrib.auth import get_user_model
@@ -147,37 +148,65 @@ class TaskViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = Task.objects.filter(user=user)
 
-        begin_date_str = self.request.query_params.get('begin_date')
-        end_date_str = self.request.query_params.get('end_date')
+        begin_date_str = self.request.query_params.get("begin_date")
+        end_date_str = self.request.query_params.get("end_date")
 
         if begin_date_str and end_date_str:
             try:
                 start_of_week = datetime.strptime(begin_date_str, "%Y-%m-%d").date()
                 end_of_week = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
-                queryset = queryset.filter(
-                    Q(  # Case 1: begin_date exists
-                        Q(begin_date__lte=end_of_week) &
-                        (
-                            Q(end_date__isnull=True) |
-                            Q(end_date__gte=start_of_week)
+                # ✅ Generate occurrences for THIS user and THIS range
+                ensure_recurring_tasks_in_range(start_of_week, end_of_week, user=user)
+
+                active_on_str = self.request.query_params.get("active_on")
+
+                if active_on_str:
+                    try:
+                        day = datetime.strptime(active_on_str, "%Y-%m-%d").date()
+
+                        # generate recurring occurrences for that specific day
+                        ensure_recurring_tasks_in_range(day, day, user=user)
+
+                        # return tasks active on that day (open tasks)
+                        filtered_queryset = queryset.filter(
+                            begin_date__lte=day,
+                        ).filter(
+                            Q(end_date__isnull=True) | Q(end_date__gte=day)
                         )
+
+                        return filtered_queryset
+                    except ValueError as e:
+                        logger.warning(f"Invalid active_on format: {e}")
+                else:
+                    queryset = queryset.filter(
+                        # Single-day tasks (end_date is null): must be within the week
+                        Q(end_date__isnull=True, begin_date__range=(start_of_week, end_of_week))
+                        |
+                        # Spanning tasks (end_date not null): overlap the week window
+                        Q(end_date__isnull=False, begin_date__lte=end_of_week, end_date__gte=start_of_week)
+                        |
+                        # If you truly have begin_date null but end_date set
+                        Q(begin_date__isnull=True, end_date__range=(start_of_week, end_of_week))
                     )
-                    |
-                    Q(  # Case 2: begin_date is null but end_date is within the week
-                        Q(begin_date__isnull=True) &
-                        Q(end_date__range=(start_of_week, end_of_week))
-                    )
-                )
+
             except ValueError as e:
                 logger.warning(f"Invalid date format in get_queryset: {e}")
-                pass
 
         return queryset
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
         
+class RecurringTaskViewSet(viewsets.ModelViewSet):
+    serializer_class = RecurringTaskSerializer
+
+    def get_queryset(self):
+        return RecurringTask.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
 
