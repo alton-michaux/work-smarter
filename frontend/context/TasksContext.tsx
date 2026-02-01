@@ -14,6 +14,7 @@ type Filters = {
   ordering?: string;     // should match your CursorPagination.ordering (e.g. "-begin_date")
   begin_date?: string;   // if your API accepts these as query params
   end_date?: string;     // (you previously used begin_date/end_date)
+  active_on?: string;
 };
 
 type TasksContextType = {
@@ -23,7 +24,7 @@ type TasksContextType = {
   updateTask: (task: Task) => Promise<void>;
   deleteTask: (id: number) => Promise<void>;
   fetchTasks: () => Promise<void>; // kept for compatibility (loads first page with default ordering)
-  fetchTasksByDateRange: (begin: string, end: string) => Promise<void>;
+  fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
   isLoading: boolean;
   error: string | null;
@@ -70,7 +71,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     // keep compatibility with your prior date range params
     if (filters.begin_date) qs.set('begin_date', filters.begin_date);
     if (filters.end_date) qs.set('end_date', filters.end_date);
-
+    if (filters.active_on) qs.set('active_on', filters.active_on);
     // NOTE: backend must be a CursorPagination endpoint
     return `${API_URL}/tasks/?${qs.toString()}`;
   };
@@ -148,11 +149,11 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Keep your date-range method, but route through cursor “reset”
-  const fetchTasksByDateRange = useCallback(async (begin: string, end: string) => {
-    await resetAndFetch({ ...params, begin_date: begin, end_date: end });
+  const fetchTasksByDateRange = useCallback(async (begin: string, end: string, active_on: string) => {
+    await resetAndFetch({ ...params, begin_date: begin, end_date: end, active_on: active_on });
   }, [resetAndFetch, params]);
 
-  const toggleTaskDone = async (taskId: number, isDone: boolean) => {
+  const toggleTaskDone = async (taskId: number, nextDone: boolean) => {
     if (!loggedIn) return;
     setError(null);
     try {
@@ -162,8 +163,9 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
         },
-        body: JSON.stringify({ is_done: !isDone }),
+        body: JSON.stringify({ is_done: nextDone }),
       });
+
       if (res.ok) {
         const updated = await res.json();
         setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...updated } : t)));
@@ -214,7 +216,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // 2) Create the task (link to recurring template if present)
-      const taskPayload = { ...task, ...(recurringTaskId ? { recurring_task: recurringTaskId } : {}) };
+      const taskPayload = { ...task, ...(recurringTaskId ? { recurring_task: recurringTaskId } : { recurring_task: null }) };
       delete taskPayload.recurrence;
 
       const res2 = await fetch(`${API_URL}/tasks/`, {

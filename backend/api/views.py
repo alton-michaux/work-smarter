@@ -159,17 +159,24 @@ class TaskViewSet(viewsets.ModelViewSet):
                 # ✅ Generate occurrences for THIS user and THIS range
                 ensure_recurring_tasks_in_range(start_of_week, end_of_week, user=user)
 
-                active_on = self.request.query_params.get("active_on")
+                active_on_str = self.request.query_params.get("active_on")
 
-                if active_on:
-                    day = datetime.strptime(active_on, "%Y-%m-%d").date()
-                    queryset = queryset.filter(
-                        is_done=False,
-                        begin_date__lte=day,
-                    ).filter(
-                        Q(end_date__isnull=True) | Q(end_date__gte=day)
-                    )
-                    return queryset
+                if active_on_str:
+                    try:
+                        day = datetime.strptime(active_on_str, "%Y-%m-%d").date()
+
+                        # generate recurring occurrences for that specific day
+                        ensure_recurring_tasks_in_range(day, day, user=user)
+
+                        # return tasks active on that day (open tasks)
+                        return queryset.filter(
+                            is_done=False,
+                            begin_date__lte=day,
+                        ).filter(
+                            Q(end_date__isnull=True) | Q(end_date__gte=day)
+                        )
+                    except ValueError as e:
+                        logger.warning(f"Invalid active_on format: {e}")
                 else:
                     queryset = queryset.filter(
                         # Single-day tasks (end_date is null): must be within the week

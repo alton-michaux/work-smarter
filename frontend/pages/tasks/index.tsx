@@ -66,12 +66,12 @@ const TasksPage = () => {
   }, [deleteTask]);
 
   const { selectedDate, setSelectedDate, last7Days, dailyTasks, sections } =
-    useDailyLog(tasks, queryDate);
+    useDailyLog(tasks, queryDate, { activeOn: true });
 
     
   useEffect(() => {
     if (!selectedDate) return;
-    fetchTasksByDateRange(selectedDate, selectedDate);
+    fetchTasksByDateRange(selectedDate, selectedDate, selectedDate);
   }, [selectedDate]);
 
   return (
