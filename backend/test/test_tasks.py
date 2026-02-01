@@ -8,7 +8,8 @@ def task_payload(user, **overrides):
         "description": "Task for testing",
         "begin_date": date.today(),
         "is_done": False,
-        "user": user.id
+        "user": user.id,
+        "recurring_task": ""
     }
     payload.update(overrides)
     return payload
