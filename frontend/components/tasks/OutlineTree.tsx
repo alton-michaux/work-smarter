@@ -87,7 +87,7 @@ function OutlineRow({
       </div>
 
       {/* RIGHT: actions */}
-      <div className="flex-shrink-0 hidden group-hover:flex space-x-3">
+      <div className="flex-shrink-0 group-hover:flex space-x-3">
         <button onClick={() => onEdit(node.id)} className="text-sm text-yellow-600 hover:text-yellow-800">
           Edit
         </button>

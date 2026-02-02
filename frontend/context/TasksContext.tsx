@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback, useMemo, useRef } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Task, CursorPage } from 'types/types'
@@ -257,11 +257,14 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteTask = async (id: number) => {
     if (!loggedIn) return;
-    await fetch(`${API_URL}/tasks/${id}/`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
+    const res = await fetch(`${API_URL}/tasks/${id}/`, { 
+      method: "DELETE", 
+      headers: getAuthHeaders() 
     });
-    await fetchTasks();
+
+    if (!res.ok) throw new Error("Delete failed");
+
+    setTasks(prev => prev.filter(t => t.id !== id));
   };
 
   return (
