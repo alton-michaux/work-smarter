@@ -23,7 +23,6 @@ const TaskShowPage = () => {
       <EmptyStateCard
         title="Task Not Found"
         actions={[
-          { label: 'Back', onClick: () => router.back(), variant: 'secondary' },
           { label: 'All Tasks', onClick: () => router.push('/tasks'), variant: 'primary' },
         ]}
       />
@@ -63,22 +62,16 @@ const TaskShowPage = () => {
 
       <div className="mt-6 flex gap-3">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push("/tasks")}
           className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-        >
-          Back
-        </button>
-        <button
-          onClick={() => router.push('/tasks')}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           All Tasks
         </button>
         <button
-          onClick={() => router.push('/')}
+          onClick={handleEdit}
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
         >
-          Home
+          Edit
         </button>
         <button
           onClick={handleDelete}
