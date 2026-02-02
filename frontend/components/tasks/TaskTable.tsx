@@ -7,6 +7,9 @@ type Props = {
 };
 
 export default function TaskTable({ tasks, meetings, work }: Props) {
+  const isDone = (t: any) => Boolean(t.effective_is_done ?? t.is_done);
+  const isAutoDoneMeeting = (t: any) => t.effective_is_done && !t.is_done;
+
   return (
     <>
       <section className="mb-8">
@@ -26,17 +29,22 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
             </thead>
             <tbody>
               {meetings.map((t: any) => (
-                <tr key={t.id} className={`font-medium ${
-                        t.is_done
-                          ? 'border-b last:border-b-0 hover:bg-gray-50 bg-green-50'
-                          : 'border-b last:border-b-0 hover:bg-gray-50'
-                      }`}
-                      >
+                <tr
+                  key={t.id}
+                  className={`font-medium border-b last:border-b-0 hover:bg-gray-50 ${
+                    isDone(t)
+                      ? isAutoDoneMeeting(t)
+                        ? 'bg-blue-50/60'
+                        : 'bg-green-50'
+                      : ''
+                    }`
+                  }
+                >
                   <td className="p-3">
                     <span className="mr-2">🗓️</span>
                     <span
                       className={`font-medium ${
-                        t.is_done
+                        isDone(t)
                           ? 'text-gray-500 line-through'
                           : 'text-gray-900'
                       }`}

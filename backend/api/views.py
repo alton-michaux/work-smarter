@@ -180,16 +180,16 @@ class TaskViewSet(viewsets.ModelViewSet):
                         logger.warning(f"Invalid active_on format: {e}")
                 else:
                     queryset = queryset.filter(
-                        # Single-day tasks (end_date is null): must be within the week
                         Q(end_date__isnull=True, begin_date__range=(start_of_week, end_of_week))
                         |
-                        # Spanning tasks (end_date not null): overlap the week window
                         Q(begin_date__range=(start_of_week, end_of_week), end_date__range=(start_of_week, end_of_week))
                         |
-                        # Active tasks
-                        Q(end_date__isnull=True, is_done=False, begin_date__lte=end_of_week)
+                        (
+                            Q(recurring_task__isnull=True, end_date__isnull=True, is_done=False, begin_date__lte=end_of_week)
+                            |
+                            Q(recurring_task__isnull=False, end_date__isnull=True, is_done=False, begin_date__range=(start_of_week, end_of_week))
+                        )
                         |
-                        # If you truly have begin_date null but end_date set
                         Q(begin_date__isnull=True, end_date__range=(start_of_week, end_of_week))
                     )
 
