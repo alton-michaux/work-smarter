@@ -2,12 +2,11 @@ import { Task } from "types/types";
 
 type Props = {
   tasks: Task[];
-  toggleTaskDone: (task: Task, boolean) => void;
   meetings: Task[];
   work: Task[];
 };
 
-export default function TaskTable({ tasks, toggleTaskDone, meetings, work }: Props) {
+export default function TaskTable({ tasks, meetings, work }: Props) {
   return (
     <>
       <section className="mb-8">
@@ -17,10 +16,9 @@ export default function TaskTable({ tasks, toggleTaskDone, meetings, work }: Pro
         </div>
 
         <div className="rounded-lg border bg-blue-50/40">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-fixed">
             <thead className="text-xs text-gray-600">
               <tr className="border-b">
-                <th className="p-3 text-left w-10">Done</th>
                 <th className="p-3 text-left">Title</th>
                 <th className="p-3 text-left w-32">Date</th>
                 <th className="p-3 text-left w-28">Priority</th>
@@ -28,20 +26,23 @@ export default function TaskTable({ tasks, toggleTaskDone, meetings, work }: Pro
             </thead>
             <tbody>
               {meetings.map((t: any) => (
-                <tr key={t.id} className="border-b last:border-b-0">
+                <tr key={t.id} className={`font-medium ${
+                        t.is_done
+                          ? 'border-b last:border-b-0 hover:bg-gray-50 bg-green-50'
+                          : 'border-b last:border-b-0 hover:bg-gray-50'
+                      }`}
+                      >
                   <td className="p-3">
-                    <input
-                      type="checkbox"
-                      checked={t.is_done}
-                      onClick={(e) => {
-                        const next = (e.currentTarget as HTMLInputElement).checked;
-                        toggleTaskDone(t, next);
-                      }}
-                      onChange={() => {}} // noop to silence React warning about controlled input
-                    />
-                  </td>
-                  <td className="p-3 font-medium text-gray-900">
-                    <span className="mr-2">🗓️</span>{t.title}
+                    <span className="mr-2">🗓️</span>
+                    <span
+                      className={`font-medium ${
+                        t.is_done
+                          ? 'text-gray-500 line-through'
+                          : 'text-gray-900'
+                      }`}
+                    >
+                      {t.title}
+                    </span>
                   </td>
                   <td className="p-3 text-gray-600">{String(t.begin_date ?? '').slice(0, 10)}</td>
                   <td className="p-3 text-gray-600">{t.priority}</td>
@@ -62,10 +63,9 @@ export default function TaskTable({ tasks, toggleTaskDone, meetings, work }: Pro
         </div>
 
         <div className="rounded-lg border bg-white">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-fixed">
             <thead className="text-xs text-gray-600">
               <tr className="border-b bg-gray-50">
-                <th className="p-3 text-left w-10">Done</th>
                 <th className="p-3 text-left">Title</th>
                 <th className="p-3 text-left w-32">Date</th>
                 <th className="p-3 text-left w-36">Category</th>
@@ -75,31 +75,29 @@ export default function TaskTable({ tasks, toggleTaskDone, meetings, work }: Pro
 
             <tbody>
               {work.map((t: any) => (
-                <tr key={t.id} className="border-b last:border-b-0 hover:bg-gray-50">
+                <tr key={t.id} className={`font-medium ${
+                        t.is_done
+                          ? 'border-b last:border-b-0 hover:bg-gray-50 bg-green-50'
+                          : 'border-b last:border-b-0 hover:bg-gray-50'
+                      }`}
+                      >
                   <td className="p-3">
-                    <input
-                      type="checkbox"
-                      checked={!!t.is_done}
-                      onClick={(e) => {
-                        const next = (e.currentTarget as HTMLInputElement).checked;
-                        toggleTaskDone(t, next);
-                      }}
-                      onChange={() => {}} // noop to silence React warning about controlled input
-                    />
+                    <span
+                      className={`font-medium ${
+                        t.is_done
+                          ? 'text-gray-500 line-through'
+                          : 'text-gray-900'
+                      }`}
+                    >
+                      {t.title}
+                    </span>
                   </td>
-
-                  <td className="p-3 font-medium text-gray-900">
-                    {t.title}
-                  </td>
-
                   <td className="p-3 text-gray-600">
                     {String(t.begin_date ?? '').slice(0, 10)}
                   </td>
-
                   <td className="p-3 text-gray-600">
                     {t.category ?? '—'}
                   </td>
-
                   <td className="p-3 text-gray-600">
                     {t.priority ?? '—'}
                   </td>

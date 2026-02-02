@@ -8,7 +8,7 @@ import Spinner from 'components/shared/Spinner';
 
 export default function TaskTrackerPage() {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
-  const { tasks, fetchTasksByDateRange, toggleTaskDone, isLoading } = useTasks(); // Add isLoading
+  const { tasks, fetchTasksByDateRange, isLoading } = useTasks(); // Add isLoading
   const router = useRouter();
 
   // Set current Monday only on the client
@@ -70,7 +70,6 @@ export default function TaskTrackerPage() {
           ) : (
             <TaskTable
               tasks={tasks}
-              toggleTaskDone={(task) => toggleTaskDone(task.id, !task.is_done)}
               meetings={meetings}
               work={work}
             />
