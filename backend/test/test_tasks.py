@@ -115,7 +115,6 @@ def test_weekly_task_filtering(auth_client, get_user, create_task, create_recurr
     assert "New Task This Week" in titles
     assert "No Begin, Done This Week" in titles
     assert "Ongoing Task" in titles
-
     assert "Done Last Week" not in titles
     assert "Future Task" not in titles
 
