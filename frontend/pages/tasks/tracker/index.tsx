@@ -70,7 +70,7 @@ export default function TaskTrackerPage() {
           ) : (
             <TaskTable
               tasks={tasks}
-              toggleTaskDone={(task) => toggleTaskDone(task.id, task.is_done)}
+              toggleTaskDone={(task) => toggleTaskDone(task.id, !task.is_done)}
               meetings={meetings}
               work={work}
             />

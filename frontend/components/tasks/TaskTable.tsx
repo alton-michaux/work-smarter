@@ -2,9 +2,9 @@ import { Task } from "types/types";
 
 type Props = {
   tasks: Task[];
-  toggleTaskDone: (task: Task) => void;
-  meetings: [];
-  work: [];
+  toggleTaskDone: (task: Task, boolean) => void;
+  meetings: Task[];
+  work: Task[];
 };
 
 export default function TaskTable({ tasks, toggleTaskDone, meetings, work }: Props) {
@@ -30,7 +30,15 @@ export default function TaskTable({ tasks, toggleTaskDone, meetings, work }: Pro
               {meetings.map((t: any) => (
                 <tr key={t.id} className="border-b last:border-b-0">
                   <td className="p-3">
-                    <input type="checkbox" checked={!!t.is_done} readOnly />
+                    <input
+                      type="checkbox"
+                      checked={t.is_done}
+                      onClick={(e) => {
+                        const next = (e.currentTarget as HTMLInputElement).checked;
+                        toggleTaskDone(t, next);
+                      }}
+                      onChange={() => {}} // noop to silence React warning about controlled input
+                    />
                   </td>
                   <td className="p-3 font-medium text-gray-900">
                     <span className="mr-2">🗓️</span>{t.title}
@@ -69,7 +77,15 @@ export default function TaskTable({ tasks, toggleTaskDone, meetings, work }: Pro
               {work.map((t: any) => (
                 <tr key={t.id} className="border-b last:border-b-0 hover:bg-gray-50">
                   <td className="p-3">
-                    <input type="checkbox" checked={!!t.is_done} readOnly />
+                    <input
+                      type="checkbox"
+                      checked={!!t.is_done}
+                      onClick={(e) => {
+                        const next = (e.currentTarget as HTMLInputElement).checked;
+                        toggleTaskDone(t, next);
+                      }}
+                      onChange={() => {}} // noop to silence React warning about controlled input
+                    />
                   </td>
 
                   <td className="p-3 font-medium text-gray-900">
