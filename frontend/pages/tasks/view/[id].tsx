@@ -6,7 +6,7 @@ import EmptyStateCard from 'components/shared/EmptyStateCard';
 const TaskShowPage = () => {
   const router = useRouter();
   const { id } = router.query;
-  const { tasks, setTasks, deleteTask, isLoading } = useTasks();
+  const { tasks, deleteTask, isLoading } = useTasks();
 
   const task = tasks?.find(t => t.id === Number(id));
 

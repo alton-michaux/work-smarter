@@ -1,7 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useTasks } from 'context/TasksContext';
 import { useRouter } from 'next/router';
-import { useAuth } from '../../context/AuthContext';
 import { DateToggleUI } from 'components/ui/dateToggleUI';
 import { TaskLayout } from 'components/tasks/TaskLayout';
 import { useDailyLog } from '../../hooks/useDailyLog';
@@ -14,22 +13,11 @@ const TasksPage = () => {
     updateTaskAndReload,
     isLoading,
     error,
-    resetAndFetch,
     fetchTasksByDateRange,
     toggleTaskDone
   } = useTasks();
   const router = useRouter();
   const queryDate = typeof router.query.date === 'string' ? router.query.date : null;
-
-  // Initial load — align with backend CursorPagination.ordering
-  const { loggedIn } = useAuth();
-
-  useEffect(() => {
-    if (loggedIn) {
-      resetAndFetch({ ordering: '-begin_date' });
-    }
-    // Only run when auth state flips
-  }, [loggedIn, resetAndFetch]);
 
   const handleTaskClick = useCallback((id: number) => {
     router.push(`/tasks/view/${id}`);

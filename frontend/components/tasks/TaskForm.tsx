@@ -35,13 +35,28 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
-
     if (!validate()) return;
 
+    const payload = {
+      title: task.title,
+      category: task.category,
+      priority: task.priority,
+      description: task.description ?? "",
+      begin_date: task.begin_date,          // make sure this exists in your form / initialTask
+      end_date: task.end_date ?? null,
+      project: task.project || null,
+      is_done: !!task.is_done,
+      is_subtask: !!task.is_subtask,
+      carry_over: !!task.carry_over,
+      user: task.user,
+      // IMPORTANT: do not include recurring_task unless editing an existing recurring occurrence intentionally
+      ...(recurrence.repeats ? { recurrence } : {}),
+    };
+
     try {
-      await onSubmit({ ...task, recurrence });
+      console.log("TASK CREATE payload", payload);
+      await onSubmit(payload);
     } catch (err: any) {
-      // This is where we’ll later map backend errors -> field errors
       setFormError(err?.message || 'Something went wrong. Please try again.');
     }
   };
@@ -88,6 +103,7 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
           name="category"
           value={task.category}
           onChange={handleChange}
+          required
           className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
         />
         {errors.category ? (
@@ -101,6 +117,7 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
           name="priority"
           value={task.priority ?? ''}
           onChange={handleChange}
+          required
           className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
         >
           <option value="">— Select —</option>
