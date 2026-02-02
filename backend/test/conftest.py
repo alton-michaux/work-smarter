@@ -1,8 +1,9 @@
 import pytest
 import io
+from datetime import date
 from rest_framework.test import APIClient
 from django.contrib.auth.models import User
-from api.models import Task, Project
+from api.models import Task, Project, RecurringTask
 from django.contrib.auth import get_user_model
 
 # --- API Client Fixtures ---
@@ -61,11 +62,68 @@ def create_task(db):
     """
     Factory to create tasks easily in tests.
     Usage:
-        task = create_task(title="work", description="coding", begin_date="0000-00-00", is_done=True, user=1)
+        task = create_task(title="work", description="coding", begin_date="0000-00-00", is_done=True, user=1, recurring_task="")
     """
-    def make_task(title="work", description="coding", begin_date="0000-00-00", end_date="0000-00-00", is_done=True, user=None):
-        return Task.objects.create(title=title, description=description, begin_date=begin_date, end_date=end_date, is_done=is_done, user=user)
+    def make_task(
+        title="work", 
+        description="coding", 
+        begin_date="0000-00-00", 
+        end_date="0000-00-00", 
+        is_done=True, 
+        user=None,
+        recurring_task=None
+        ):
+            return Task.objects.create(
+                title=title, 
+                description=description, 
+                begin_date=begin_date, 
+                end_date=end_date, 
+                is_done=is_done, 
+                user=user,
+                recurring_task=recurring_task
+            )
     return make_task
+
+@pytest.fixture
+def create_recurring_task(db):
+    """"
+    Factory to create recurring tasks for tests.
+    Usage:
+        recurring_task = create_recurring_task(title="work", description="coding", begin_date="0000-00-00", is_done=True, user=1)
+    """
+    def make_recurring_task(
+        title="Recurring",
+        project=None,
+        category=None,
+        frequency="weekly",     # 'daily' | 'weekly' | 'monthly'
+        day_of_week=None,       # required for weekly
+        start_date=None,        # required by your model
+        is_active=True,
+        last_generated_at=None,
+        user=None,
+    ):
+        if start_date is None:
+            start_date = date.today()
+
+        # Enforce weekly rules so tests fail loudly if misconfigured
+        if frequency == "weekly" and day_of_week is None:
+            raise ValueError("day_of_week is required when frequency='weekly'")
+
+        if frequency != "weekly":
+            day_of_week = None
+
+        return RecurringTask.objects.create(
+            title=title,
+            project=project,
+            category=category,
+            frequency=frequency,
+            day_of_week=day_of_week,
+            start_date=start_date,
+            is_active=is_active,
+            last_generated_at=last_generated_at,
+            user=user,  # only include if your model has user FK
+        )
+    return make_recurring_task
 
 @pytest.fixture
 def create_project(db):
