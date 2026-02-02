@@ -54,7 +54,6 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
     };
 
     try {
-      console.log("TASK CREATE payload", payload);
       await onSubmit(payload);
     } catch (err: any) {
       setFormError(err?.message || 'Something went wrong. Please try again.');

@@ -44,6 +44,7 @@ export default function TaskCreatePage() {
     ? projects
     : (projects && typeof projects === 'object' && 'results' in projects ? (projects as any).results : []);
 
+  console.log("PROJECTS", projects)
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">
       <div className="w-full max-w-2xl bg-white rounded-lg shadow p-8">
