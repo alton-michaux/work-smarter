@@ -15,7 +15,7 @@ const ProjectShowPage = () => {
 
   const list = Array.isArray(projects)
     ? projects
-    : ((projects as any)?.results ?? []); // <-- if paginated response
+    : ((projects as any)?.results ?? []);
 
   const project = list.find((p) => p.id === Number(id));
   const insights = useProjectInsights(project);

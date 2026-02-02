@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Project, NewProject, Paginated } from 'types/types';
+import { Project, NewProject } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
