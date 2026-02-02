@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode, useMemo } from 'react';
+import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Project, NewProject, Paginated } from 'types/types';
@@ -48,10 +48,6 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (loggedIn) fetchProjects();
-  }, [loggedIn]);
 
   const addProject = async (project: Omit<NewProject, 'id'>) => {
     if (!loggedIn) return;

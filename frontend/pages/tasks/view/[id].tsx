@@ -38,7 +38,7 @@ const TaskShowPage = () => {
 
     try {
       await deleteTask(Number(id));
-      router.push('/tasks');
+      await router.push('/tasks');
     } catch (err) {
       alert('Failed to delete task. Please try again.');
     }
@@ -75,7 +75,7 @@ const TaskShowPage = () => {
         </button>
         <button
           onClick={handleDelete}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-green-700"
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
         >
           Delete
         </button>
