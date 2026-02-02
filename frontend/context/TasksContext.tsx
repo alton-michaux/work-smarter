@@ -77,7 +77,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fetchUrl = async (url: string, mode: 'reset' | 'append' | 'prepend') => {
-    console.log("[fetchUrl]", mode, url);
 
     if (!loggedIn) return;
     if (inFlight.current === url) return;
@@ -159,8 +158,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (!loggedIn) return;
     setError(null);
     try {
-      console.log("[toggleTaskDone] PATCH", taskId, nextDone);
-
       const res = await fetch(`${API_URL}/tasks/${taskId}/`, {
         method: 'PATCH',
         headers: {
@@ -266,12 +263,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     });
     await fetchTasks();
   };
-
-  // Load initial page when user logs in
-  useEffect(() => {
-    if (loggedIn) fetchTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loggedIn]);
 
   return (
     <TasksContext.Provider

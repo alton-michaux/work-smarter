@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useTasks } from '../../../context/TasksContext';
 import { getCurrentMonday, getEndOfWeek } from '../../../utils/dateUtils';
@@ -8,7 +8,7 @@ import Spinner from 'components/shared/Spinner';
 
 export default function TaskTrackerPage() {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
-  const { tasks, fetchTasksByDateRange, toggleTaskDone, isLoading } = useTasks(); // Add isLoading
+  const { tasks, fetchTasksByDateRange, isLoading } = useTasks(); // Add isLoading
   const router = useRouter();
 
   // Set current Monday only on the client
@@ -30,11 +30,22 @@ export default function TaskTrackerPage() {
     fetchTasksByDateRange(selectedWeek, end, null);
   }, [selectedWeek, fetchTasksByDateRange]);
 
-  // useEffect(() => {
-  //   if (!selectedWeek) return;
-  //   const end = getEndOfWeek(selectedWeek);
-  //   doFetch.current?.(selectedWeek, end);
-  // }, [selectedWeek]); // ← depends only on selectedWeek
+  const isMeeting = (t: any) => {
+    const c = String(t.category ?? '').trim().toLowerCase();
+    return c === 'meeting' || c === 'meetings';
+  };
+
+  const meetings = useMemo(() => {
+    return (tasks ?? [])
+      .filter(isMeeting)
+      .sort((a: any, b: any) => String(a.begin_date ?? '').localeCompare(String(b.begin_date ?? '')));
+  }, [tasks]);
+
+  const work = useMemo(() => {
+    return (tasks ?? [])
+      .filter((t: any) => !isMeeting(t))
+      .sort((a: any, b: any) => String(b.begin_date ?? '').localeCompare(String(a.begin_date ?? ''))); // newest first
+  }, [tasks]);
 
   // Don't render until selectedWeek is set (avoids hydration mismatch)
   if (!selectedWeek) return null;
@@ -59,7 +70,8 @@ export default function TaskTrackerPage() {
           ) : (
             <TaskTable
               tasks={tasks}
-              toggleTaskDone={(task) => toggleTaskDone(task.id, task.is_done)}
+              meetings={meetings}
+              work={work}
             />
           )}
         </div>
