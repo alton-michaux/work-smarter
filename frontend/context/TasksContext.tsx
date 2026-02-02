@@ -1,19 +1,18 @@
-import React, { createContext, useState, useContext, ReactNode, useCallback, useMemo, useRef } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Task, CursorPage } from 'types/types'
+import { Task } from 'types/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 type Filters = {
-  // optional server-side filters that your API supports
   search?: string;
   project?: number;
   is_done?: boolean;
   priority?: string;
-  ordering?: string;     // should match your CursorPagination.ordering (e.g. "-begin_date")
-  begin_date?: string;   // if your API accepts these as query params
-  end_date?: string;     // (you previously used begin_date/end_date)
+  ordering?: string;
+  begin_date?: string;
+  end_date?: string;
   active_on?: string;
 };
 
@@ -23,18 +22,11 @@ type TasksContextType = {
   addTask: (task: Omit<Task, 'id'>) => Promise<void>;
   updateTaskAndReload: (task: Task) => Promise<void>;
   deleteTask: (id: number) => Promise<void>;
-  fetchTasks: () => Promise<void>; // kept for compatibility (loads first page with default ordering)
+  fetchTasks: () => Promise<void>;
   fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
   isLoading: boolean;
   error: string | null;
-
-  // NEW: cursor pagination controls
-  nextUrl: string | null;
-  previousUrl: string | null;
-  resetAndFetch: (filters?: Filters) => Promise<void>;
-  loadMore: () => Promise<void>;
-  loadPrevious: () => Promise<void>;
 };
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
@@ -53,106 +45,66 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // NEW: cursor state
-  const [nextUrl, setNextUrl] = useState<string | null>(null);
-  const [previousUrl, setPreviousUrl] = useState<string | null>(null);
-  const [params, setParams] = useState<Filters>({ ordering: '-begin_date' });
-  const inFlight = useRef<string | null>(null); // avoids duplicate fetches for same URL
-
-  // --- Cursor helpers ---
-  const buildInitialUrl = (filters: Filters = params) => {
+  const buildUrl = (filters: Filters = { ordering: '-begin_date' }) => {
     const qs = new URLSearchParams();
     if (filters.search) qs.set('search', filters.search);
     if (filters.project !== undefined) qs.set('project', String(filters.project));
     if (filters.is_done !== undefined) qs.set('is_done', String(filters.is_done));
     if (filters.priority) qs.set('priority', filters.priority);
     if (filters.ordering) qs.set('ordering', filters.ordering);
-
-    // keep compatibility with your prior date range params
     if (filters.begin_date) qs.set('begin_date', filters.begin_date);
     if (filters.end_date) qs.set('end_date', filters.end_date);
     if (filters.active_on) qs.set('active_on', filters.active_on);
-    // NOTE: backend must be a CursorPagination endpoint
     return `${API_URL}/tasks/?${qs.toString()}`;
   };
 
-  const fetchUrl = async (url: string, mode: 'reset' | 'append' | 'prepend') => {
-
+  const fetchTasks = useCallback(async () => {
     if (!loggedIn) return;
-    if (inFlight.current === url) return;
-    inFlight.current = url;
     setIsLoading(true);
     setError(null);
     try {
+      const url = buildUrl({ ordering: '-begin_date' });
       const res = await fetch(url, { headers: getAuthHeaders() });
 
       if (res.status === 401) {
         setError('Unauthorized');
-        setNextUrl(null);      // stop infinite load attempts
-        setPreviousUrl(null);
         return;
       }
 
       if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
 
-      const data: CursorPage<Task> = await res.json();
-      setNextUrl(data.next);
-      setPreviousUrl(data.previous);
-      setTasks(prev => mode === 'reset' ? data?.results
-                    : mode === 'append' ? [...prev, ...data?.results]
-                    : [...data?.results, ...prev]);
+      const data = await res.json();
+      setTasks(data.results || []);
     } catch (e: any) {
       setError(e.message ?? 'unknown error');
     } finally {
       setIsLoading(false);
-      inFlight.current = null;
     }
-  };
+  }, [loggedIn, getAuthHeaders]);
 
-  // Shallow compare to avoid param-churn loops
-  const sameParams = (a?: Filters, b?: Filters) =>
-    JSON.stringify(a ?? {}) === JSON.stringify(b ?? {});
-
-  // Public API: reset and load first page with (optional) filters
-  const resetAndFetch = useCallback(async (filters?: Filters) => {
-    if (!loggedIn) return;
-
-    const nextParams = filters ?? params;
-
-    // Avoid resetting state if params didn't change
-    if (!sameParams(nextParams, params)) {
-      setParams(nextParams);
-      setTasks([]);
-      setNextUrl(null);
-      setPreviousUrl(null);
-    }
-
-    const url = buildInitialUrl(nextParams);
-    await fetchUrl(url, 'reset');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loggedIn]); // ← don't depend on `params`
-
-  const loadMore = useCallback(async () => {
-    if (!loggedIn || !nextUrl) return;
-    await fetchUrl(nextUrl, 'append');
-  }, [loggedIn, nextUrl]);
-
-  const loadPrevious = useCallback(async () => {
-    if (!loggedIn || !previousUrl) return;
-    await fetchUrl(previousUrl, 'prepend');
-  }, [loggedIn, previousUrl]);
-
-  // --- Your existing functions, now cursor-aware ---
-
-  // Keep this signature; it now just loads the first cursor page with default ordering
-  const fetchTasks = async () => {
-    await resetAndFetch({ ordering: '-begin_date' });
-  };
-
-  // Keep your date-range method, but route through cursor “reset”
   const fetchTasksByDateRange = useCallback(async (begin: string, end: string, active_on: string) => {
-    await resetAndFetch({ ...params, begin_date: begin, end_date: end, active_on: active_on });
-  }, [resetAndFetch, params]);
+    if (!loggedIn) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const url = buildUrl({ ordering: '-begin_date', begin_date: begin, end_date: end, active_on });
+      const res = await fetch(url, { headers: getAuthHeaders() });
+
+      if (res.status === 401) {
+        setError('Unauthorized');
+        return;
+      }
+
+      if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+
+      const data = await res.json();
+      setTasks(data.results || []);
+    } catch (e: any) {
+      setError(e.message ?? 'unknown error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loggedIn, getAuthHeaders]);
 
   const toggleTaskDone = async (taskId: number, nextDone: boolean) => {
     if (!loggedIn) return;
@@ -183,11 +135,11 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     try {
       let recurringTaskId: number | null = null;
 
-      // 1) Create recurring template if requested
-      if (task.recurrence?.repeats) {
+      // 1) If the user checked "Repeats", create the RecurringTask first
+      if (task?.recurrence?.repeats) {
         const payload: any = {
           title: task.title,
-          project: task.project || null,
+          project: task.project === '' ? null : (task.project ?? null),
           category: task.category || null,
           frequency: task.recurrence.frequency,
           start_date: task.recurrence.start_date || task.begin_date,
@@ -216,10 +168,24 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         recurringTaskId = created.id;
       }
 
-      // 2) Create the task (link to recurring template if present)
-      const taskPayload = { ...task, ...(recurringTaskId ? { recurring_task: recurringTaskId } : { recurring_task: null }) };
+      // 2) Build the task payload safely (no accidental recurring fields)
+      const taskPayload: any = { ...task };
+
+      // remove UI-only recurrence wrapper
       delete taskPayload.recurrence;
 
+      // IMPORTANT: strip any accidental recurring fields from initialTask / stale state
+      delete taskPayload.recurring_task;
+      delete taskPayload.recurring_task_id;
+      delete taskPayload.is_recurring;
+
+      // normalize project
+      if (taskPayload.project === '') taskPayload.project = null;
+
+      // set recurring_task ONLY if we intentionally created a recurring series
+      taskPayload.recurring_task = recurringTaskId; // null if not repeating
+
+      // 3) Create the Task row
       const res2 = await fetch(`${API_URL}/tasks/`, {
         method: 'POST',
         headers: {
@@ -234,7 +200,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(`Failed to create task: ${text}`);
       }
 
-      // Refresh list (keeps cursor state sane)
       await fetchTasks();
     } catch (err: any) {
       setError(err.message || 'Failed to add task');
@@ -257,14 +222,17 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteTask = async (id: number) => {
     if (!loggedIn) return;
-    const res = await fetch(`${API_URL}/tasks/${id}/`, { 
+
+    const numericId = Number(id);
+    
+    const res = await fetch(`${API_URL}/tasks/${numericId}/`, { 
       method: "DELETE", 
       headers: getAuthHeaders() 
     });
 
     if (!res.ok) throw new Error("Delete failed");
 
-    setTasks(prev => prev.filter(t => t.id !== id));
+    setTasks(prev => prev.filter(t => t.id !== numericId));
   };
 
   return (
@@ -280,11 +248,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         toggleTaskDone,
         isLoading,
         error,
-        nextUrl,
-        previousUrl,
-        resetAndFetch,
-        loadMore,
-        loadPrevious,
       }}
     >
       {children}

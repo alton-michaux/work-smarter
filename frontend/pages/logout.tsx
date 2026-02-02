@@ -3,15 +3,15 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 
 function Logout() {
-    const router = useRouter();
+    // const router = useRouter();
     const { setLoggedIn, logout, error } = useAuth();
 
-    useEffect(() => {
-        const logout_user = async () => {
-            logout()
-        };
-        logout_user();
-    }, [setLoggedIn, router]);
+    // useEffect(() => {
+    //     const logout_user = async () => {
+    //         logout()
+    //     };
+    //     logout_user();
+    // }, [setLoggedIn, router]);
 
     return (
         <div>
