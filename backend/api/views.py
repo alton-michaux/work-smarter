@@ -186,8 +186,8 @@ class TaskViewSet(viewsets.ModelViewSet):
                         # Spanning tasks (end_date not null): overlap the week window
                         Q(end_date__isnull=False, begin_date__lte=end_of_week, end_date__gte=start_of_week)
                         |
-                        # If you truly have begin_date null but end_date set
-                        Q(begin_date__isnull=True, end_date__range=(start_of_week, end_of_week))
+                        # Active tasks
+                        Q(end_date__isnull=True, is_done=False)
                     )
 
             except ValueError as e:
