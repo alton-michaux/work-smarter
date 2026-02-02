@@ -21,12 +21,12 @@ def test_task_index(auth_client):
     assert isinstance(response.data["results"], list)
     
 @pytest.mark.django_db
-def test_weekly_task_filtering(auth_client, get_user, create_task):
+def test_weekly_task_filtering(auth_client, get_user, create_task, create_recurring_task):
     today = date.today()
     start_of_week = today - timedelta(days=today.weekday())
     end_of_week = start_of_week + timedelta(days=6)
 
-    # Ongoing task started before week → should NOT appear
+    # Included: non-recurring carry-over task (started before week, still open)
     create_task(
         title="Ongoing Task",
         begin_date=(start_of_week - timedelta(days=3)).isoformat(),
@@ -51,7 +51,7 @@ def test_weekly_task_filtering(auth_client, get_user, create_task):
         user=get_user
     )
 
-    # Excluded
+    # Excluded: Done entirely last week
     create_task(
         title="Done Last Week",
         begin_date=(start_of_week - timedelta(days=10)).isoformat(),
@@ -60,10 +60,48 @@ def test_weekly_task_filtering(auth_client, get_user, create_task):
         user=get_user
     )
 
+    # Excluded: Future non-recurring open task
     create_task(
         title="Future Task",
         begin_date=(end_of_week + timedelta(days=5)).isoformat(),
         is_done=False,
+        user=get_user
+    )
+
+    # --- recurring occurrences ---
+    rt = create_recurring_task(
+        title="Weekly Standup",
+        frequency="weekly",
+        # pick a start date that ensures occurrences exist across weeks
+        start_date=(start_of_week - timedelta(days=14)).isoformat(),
+        day_of_week=start_of_week.weekday(),  # same weekday as start_of_week
+        user=get_user,
+    )
+
+    # occurrence last week (should be excluded)
+    create_task(
+        title="Weekly Standup",
+        begin_date=(start_of_week - timedelta(days=7)).isoformat(),
+        is_done=False,
+        recurring_task=rt,
+        user=get_user
+    )
+
+    # occurrence this week (should be included)
+    create_task(
+        title="Weekly Standup",
+        begin_date=start_of_week.isoformat(),
+        is_done=False,
+        recurring_task=rt,
+        user=get_user
+    )
+
+    # occurrence next week (should be excluded)
+    create_task(
+        title="Weekly Standup",
+        begin_date=(start_of_week + timedelta(days=7)).isoformat(),
+        is_done=False,
+        recurring_task=rt,
         user=get_user
     )
 
@@ -77,9 +115,11 @@ def test_weekly_task_filtering(auth_client, get_user, create_task):
     assert "New Task This Week" in titles
     assert "No Begin, Done This Week" in titles
     assert "Ongoing Task" in titles
-    
     assert "Done Last Week" not in titles
     assert "Future Task" not in titles
+
+    # Only one recurring occurrence should appear in the selected week
+    assert titles.count("Weekly Standup") == 1
   
 @pytest.mark.django_db
 def test_task_create(auth_client, get_user):

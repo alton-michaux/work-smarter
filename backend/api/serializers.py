@@ -14,18 +14,45 @@ class TaskSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
-    recurring_task_id = serializers.IntegerField(
-        source="recurring_task.id",
-        read_only=True
-    )
+    recurring_task_id = serializers.IntegerField(source="recurring_task.id", read_only=True)
     is_recurring = serializers.SerializerMethodField()
+    effective_is_done = serializers.SerializerMethodField()
 
     def get_is_recurring(self, obj):
         return obj.recurring_task is not None
 
+    def get_effective_is_done(self, obj):
+        today = timezone.localdate()
+
+        auto_done = (
+            obj.category == "Meetings"
+            and obj.begin_date is not None
+            and obj.begin_date < today
+        )
+
+        return bool(obj.is_done or auto_done)
+
     class Meta:
         model = Task
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "begin_date",
+            "end_date",
+            "project",
+            "title",
+            "category",
+            "is_done",
+            "effective_is_done",
+            "priority",
+            "description",
+            "created_at",
+            "is_subtask",
+            "carry_over",
+            "recurring_task",
+            "recurring_task_id",
+            "is_recurring",
+        ]
         extra_kwargs = {
             "recurring_task": {"required": False, "allow_null": True},
         }
