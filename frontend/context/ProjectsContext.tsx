@@ -1,7 +1,7 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode, useMemo } from 'react';
+import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Project, NewProject, Paginated } from 'types/types';
+import { Project, NewProject } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -48,10 +48,6 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (loggedIn) fetchProjects();
-  }, [loggedIn]);
 
   const addProject = async (project: Omit<NewProject, 'id'>) => {
     if (!loggedIn) return;

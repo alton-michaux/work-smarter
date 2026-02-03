@@ -7,6 +7,11 @@ type Props = {
 };
 
 export default function TaskTable({ tasks, meetings, work }: Props) {
+  /**
+   * Determines if a task is marked as done.
+   * @param t - The task object to check
+   * @returns True if the task's effective_is_done or is_done property is truthy, false otherwise
+   */
   const isDone = (t: any) => Boolean(t.effective_is_done ?? t.is_done);
   const isAutoDoneMeeting = (t: any) => t.effective_is_done && !t.is_done;
 
@@ -41,16 +46,15 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
                   }
                 >
                   <td className="p-3">
+                    <div className="min-w-0">
                     <span className="mr-2">🗓️</span>
-                    <span
-                      className={`font-medium ${
-                        isDone(t)
-                          ? 'text-gray-500 line-through'
-                          : 'text-gray-900'
-                      }`}
-                    >
-                      {t.title}
-                    </span>
+                      <span
+                        className={`font-medium truncate ${isDone(t) ? 'text-gray-500 line-through' : 'text-gray-900'}`}
+                        title={t.title}
+                      >
+                        {t.title}
+                      </span>
+                    </div>
                   </td>
                   <td className="p-3 text-gray-600">{String(t.begin_date ?? '').slice(0, 10)}</td>
                   <td className="p-3 text-gray-600">{t.priority}</td>
@@ -74,7 +78,7 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
           <table className="w-full text-sm table-fixed">
             <thead className="text-xs text-gray-600">
               <tr className="border-b bg-gray-50">
-                <th className="p-3 text-left">Title</th>
+                <th className="p-3 text-left">Task</th>
                 <th className="p-3 text-left w-32">Date</th>
                 <th className="p-3 text-left w-36">Category</th>
                 <th className="p-3 text-left w-28">Priority</th>
@@ -84,21 +88,20 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
             <tbody>
               {work.map((t: any) => (
                 <tr key={t.id} className={`font-medium ${
-                        t.is_done
+                        isDone(t)
                           ? 'border-b last:border-b-0 hover:bg-gray-50 bg-green-50'
                           : 'border-b last:border-b-0 hover:bg-gray-50'
                       }`}
                       >
                   <td className="p-3">
-                    <span
-                      className={`font-medium ${
-                        t.is_done
-                          ? 'text-gray-500 line-through'
-                          : 'text-gray-900'
-                      }`}
-                    >
-                      {t.title}
-                    </span>
+                    <div className="min-w-0">
+                      <div
+                        className={`font-medium truncate ${isDone(t) ? 'text-gray-500 line-through' : 'text-gray-900'}`}
+                        title={t.title}
+                      >
+                        {t.title}
+                      </div>
+                    </div>
                   </td>
                   <td className="p-3 text-gray-600">
                     {String(t.begin_date ?? '').slice(0, 10)}

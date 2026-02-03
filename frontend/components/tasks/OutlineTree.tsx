@@ -63,8 +63,8 @@ function OutlineRow({
               e.preventDefault();
               onView(Number(node.id));
             }}
-            className="text-lg font-semibold text-blue-600 hover:underline text-left truncate block"
-            title={node.title}
+            className="text-lg font-semibold text-blue-600 hover:underline text-left block max-w-full truncate"
+            title={node.title}  // tooltip on hover
           >
             <span className="flex items-center gap-2">
               <span className="truncate">{node.title}</span>
@@ -87,11 +87,11 @@ function OutlineRow({
       </div>
 
       {/* RIGHT: actions */}
-      <div className="flex-shrink-0 hidden group-hover:flex space-x-3">
-        <button onClick={() => onEdit(node.id)} className="text-sm text-yellow-600 hover:text-yellow-800">
+      <div className="flex-shrink-0 group-hover:flex space-x-3">
+        <button onClick={() => onEdit(Number(node.id))} className="text-sm text-yellow-600 hover:text-yellow-800">
           Edit
         </button>
-        <button onClick={() => onDelete(node.id)} className="text-sm text-red-600 hover:text-red-800">
+        <button onClick={() => onDelete(Number(node.id))} className="text-sm text-red-600 hover:text-red-800">
           Delete
         </button>
       </div>

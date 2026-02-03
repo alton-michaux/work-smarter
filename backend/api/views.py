@@ -163,22 +163,30 @@ class TaskViewSet(viewsets.ModelViewSet):
 
                 if active_on_str:
                     try:
+                        # Daily
                         day = datetime.strptime(active_on_str, "%Y-%m-%d").date()
 
                         # generate recurring occurrences for that specific day
                         ensure_recurring_tasks_in_range(day, day, user=user)
 
-                        # return tasks active on that day (open tasks)
                         filtered_queryset = queryset.filter(
-                            begin_date__lte=day,
-                        ).filter(
-                            Q(end_date__isnull=True) | Q(end_date__gte=day)
+                            (
+                                # Non-recurring tasks: active on this day (carry-over allowed)
+                                Q(recurring_task__isnull=True, begin_date__lte=day) &
+                                (Q(end_date__isnull=True) | Q(end_date__gte=day))
+                            )
+                            |
+                            (
+                                # Recurring occurrences: only the occurrence for this day
+                                Q(recurring_task__isnull=False, begin_date=day)
+                            )
                         )
 
                         return filtered_queryset
                     except ValueError as e:
                         logger.warning(f"Invalid active_on format: {e}")
                 else:
+                    # Weekly
                     queryset = queryset.filter(
                         Q(end_date__isnull=True, begin_date__range=(start_of_week, end_of_week))
                         |

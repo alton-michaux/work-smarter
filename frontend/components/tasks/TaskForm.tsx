@@ -35,13 +35,27 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
-
     if (!validate()) return;
 
+    const payload = {
+      title: task.title,
+      category: task.category,
+      priority: task.priority,
+      description: task.description ?? "",
+      begin_date: task.begin_date,          // make sure this exists in your form / initialTask
+      end_date: task.end_date ?? null,
+      project: task.project || null,
+      is_done: !!task.is_done,
+      is_subtask: !!task.is_subtask,
+      carry_over: !!task.carry_over,
+      user: task.user,
+      // IMPORTANT: do not include recurring_task unless editing an existing recurring occurrence intentionally
+      ...(recurrence.repeats ? { recurrence } : {}),
+    };
+
     try {
-      await onSubmit({ ...task, recurrence });
+      await onSubmit(payload);
     } catch (err: any) {
-      // This is where we’ll later map backend errors -> field errors
       setFormError(err?.message || 'Something went wrong. Please try again.');
     }
   };
@@ -84,12 +98,18 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-        <input
+        <select
           name="category"
           value={task.category}
           onChange={handleChange}
+          required
           className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
+        >
+          <option value="">— Select —</option>
+          <option value="Task">Task</option>
+          <option value="Meetings">Meeting</option>
+          <option value="Notes">Note</option>
+        </select>
         {errors.category ? (
           <p className="text-sm text-red-600 mt-1">{errors.category}</p>
         ) : null}
@@ -101,9 +121,11 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
           name="priority"
           value={task.priority ?? ''}
           onChange={handleChange}
+          required
           className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
         >
           <option value="">— Select —</option>
+          <option value="urgent">Urgent</option>
           <option value="high">High</option>
           <option value="medium">Medium</option>
           <option value="low">Low</option>
