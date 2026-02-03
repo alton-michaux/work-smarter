@@ -40,7 +40,6 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       const res = await fetch(`${API_URL}/projects/`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to fetch projects');
       const data = await res.json();
-      console.log("DATA:", data)
       setProjects(Array.isArray(data) ? data : data.results ?? []);
     } catch (err: any) {
       setError(err.message || 'Unknown error');

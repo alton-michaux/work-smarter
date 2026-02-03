@@ -14,6 +14,8 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
   const { user, getAuthHeaders } = useAuth();
   const [task, setTask] = useState({ ...initialTask, user: user?.id || initialTask.user });
 
+  console.log("TaskForm projects:", projects?.length, projects);
+
   const [recurrence, setRecurrence] = useState({
     repeats: false,
     frequency: "weekly",      // "daily" | "weekly" | "monthly"
