@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useTasks } from 'context/TasksContext';
+import { useProjects } from 'context/ProjectsContext';
 import { useRouter } from 'next/router';
 import { DateToggleUI } from 'components/ui/dateToggleUI';
 import { TaskLayout } from 'components/tasks/TaskLayout';
@@ -18,6 +19,8 @@ const TasksPage = () => {
   } = useTasks();
   const router = useRouter();
   const queryDate = typeof router.query.date === 'string' ? router.query.date : null;
+
+  const { projects, setProjects } = useProjects()
 
   const handleTaskClick = useCallback((id: number) => {
     router.push(`/tasks/view/${id}`);
@@ -58,6 +61,7 @@ const TasksPage = () => {
   useEffect(() => {
     if (!selectedDate) return;
     fetchTasksByDateRange(selectedDate, selectedDate, selectedDate);
+    setProjects(projects)
   }, [selectedDate]);
 
   return (

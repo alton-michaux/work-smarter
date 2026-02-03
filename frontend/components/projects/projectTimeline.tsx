@@ -63,8 +63,11 @@ export default function ProjectTimelineSection<T extends TaskLike>({
                       >
                         <span className="mt-0.5 text-lg leading-none">{iconFor(t)}</span>
                         <div className="min-w-0">
-                          <div className={`font-medium ${titleClassFor?.(t) ?? 'text-gray-900'}`}>
-                            {t.title}
+                          <div
+                            className={`font-medium ${titleClassFor?.(t) ?? 'text-gray-900'} truncate`}
+                            title={String((t as any).title ?? '')}
+                          >
+                            {(t as any).title}
                           </div>
                           {metaFor ? (
                             <div className="text-xs text-gray-500 mt-1">

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import withAuth from '../utils/withAuth';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +9,7 @@ import { useSystem } from 'context/SystemsContext';
 
 function Dashboard() {
     const router = useRouter();
-    const { logout } = useAuth();
+    const { logout, loggedIn } = useAuth();
     const { fileChange, selectedFile } = useSystem();
     const { fileUpload, uploadStatus } = useAPI();
     const { fetchTasks } = useTasks();
@@ -29,15 +30,20 @@ function Dashboard() {
 
     const handleTasks = async (e) => {
         e.preventDefault();
-        fetchTasks()
+        // fetchTasks()
         router.push('/tasks')
     }
 
     const handleProjects = async (e) => {
         e.preventDefault();
-        fetchProjects()
+        // fetchProjects()
         router.push('/projects')
     }
+
+    useEffect(() => {
+        fetchTasks()
+        fetchProjects()
+    }, [loggedIn])
 
     return (
         <div className="min-h-screen bg-gray-50 px-4 py-10 flex justify-center">

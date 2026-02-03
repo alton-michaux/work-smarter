@@ -54,7 +54,6 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
     };
 
     try {
-      console.log("TASK CREATE payload", payload);
       await onSubmit(payload);
     } catch (err: any) {
       setFormError(err?.message || 'Something went wrong. Please try again.');
@@ -99,13 +98,18 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-        <input
+        <select
           name="category"
           value={task.category}
           onChange={handleChange}
           required
           className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
+        >
+          <option value="">— Select —</option>
+          <option value="Task">Task</option>
+          <option value="Meetings">Meeting</option>
+          <option value="Notes">Note</option>
+        </select>
         {errors.category ? (
           <p className="text-sm text-red-600 mt-1">{errors.category}</p>
         ) : null}
@@ -121,6 +125,7 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
           className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
         >
           <option value="">— Select —</option>
+          <option value="urgent">Urgent</option>
           <option value="high">High</option>
           <option value="medium">Medium</option>
           <option value="low">Low</option>

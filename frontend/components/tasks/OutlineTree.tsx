@@ -63,8 +63,8 @@ function OutlineRow({
               e.preventDefault();
               onView(Number(node.id));
             }}
-            className="text-lg font-semibold text-blue-600 hover:underline text-left truncate block"
-            title={node.title}
+            className="text-lg font-semibold text-blue-600 hover:underline text-left block max-w-full truncate"
+            title={node.title}  // tooltip on hover
           >
             <span className="flex items-center gap-2">
               <span className="truncate">{node.title}</span>
