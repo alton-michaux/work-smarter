@@ -6,14 +6,21 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["email", "id", "username"]
-        read_only_fields = ["id"]
+        read_only_fields = ["id"]        
 
-class TaskSerializer(serializers.ModelSerializer):
-    recurring_task = serializers.PrimaryKeyRelatedField(
-        queryset=RecurringTask.objects.all(),
-        required=False,
-        allow_null=True,
-    )
+class RecurringTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecurringTask
+        fields = "__all__"
+        read_only_fields = ("user",)
+
+class RecurringTaskMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecurringTask
+        fields = ["id", "frequency", "day_of_week", "start_date", "is_active"]
+
+class TaskSerializer(serializers.ModelSerializer):    
+    recurring_task = RecurringTaskMiniSerializer(read_only=True)
     recurring_task_id = serializers.IntegerField(source="recurring_task.id", read_only=True)
     is_recurring = serializers.SerializerMethodField()
     effective_is_done = serializers.SerializerMethodField()
@@ -56,12 +63,6 @@ class TaskSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "recurring_task": {"required": False, "allow_null": True},
         }
-        
-class RecurringTaskSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RecurringTask
-        fields = "__all__"
-        read_only_fields = ("user",)
 
 class ProjectSerializer(serializers.ModelSerializer):
     tasks = TaskSerializer(many=True, read_only=True)

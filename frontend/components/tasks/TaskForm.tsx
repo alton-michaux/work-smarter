@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext'
 
 type ProjectOption = { id: number; name: string };
@@ -70,6 +70,25 @@ export default function TaskForm({ initialTask, onSubmit, submitLabel = "Save", 
     setErrors(next);
     return Object.keys(next).length === 0;
   };
+
+  useEffect(() => {
+    // Prefer nested object if present
+    const rt = initialTask?.recurring_task;
+
+    // Fallback: if your backend only returns recurring_task_id, treat that as repeating
+    const hasRecurring = Boolean(rt?.id ?? initialTask?.recurring_task_id);
+
+    setRecurrence((prev) => ({
+      ...prev,
+      repeats: hasRecurring,
+      frequency: rt?.frequency ?? prev.frequency,
+      day_of_week: rt?.day_of_week ?? prev.day_of_week,
+      start_date: rt?.start_date ?? initialTask?.begin_date ?? prev.start_date,
+    }));
+
+    // Also keep task state in sync when initialTask changes (edit pages are often async-loaded)
+    setTask({ ...initialTask, user: user?.id || initialTask.user });
+  }, [initialTask, user?.id]);
 
   return (
     <form
