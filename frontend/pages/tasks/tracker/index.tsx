@@ -47,6 +47,51 @@ export default function TaskTrackerPage() {
       .sort((a: any, b: any) => String(b.begin_date ?? '').localeCompare(String(a.begin_date ?? ''))); // newest first
   }, [tasks]);
 
+  function collapseDailyRecurring(tasks: any[]) {
+    const byKey = new Map<string, any>();
+
+    for (const t of tasks) {
+      const rt = t.recurring_task; // nested object if present
+      const freq = rt?.frequency;
+
+      // Only collapse DAILY recurring
+      const isDailyRecurring = Boolean(t.recurring_task_id) && freq === "daily";
+      if (!isDailyRecurring) {
+        byKey.set(`task:${t.id}`, t);
+        continue;
+      }
+
+      // Group by recurring template id
+      const key = `rt:${t.recurring_task_id}`;
+
+      const existing = byKey.get(key);
+      if (!existing) {
+        // seed: store extra info we’ll use for display
+        byKey.set(key, {
+          ...t,
+          __collapsed: true,
+          __occurrenceCount: 1,
+          __rangeStart: t.begin_date,
+          __rangeEnd: t.begin_date,
+        });
+      } else {
+        existing.__occurrenceCount += 1;
+
+        // update range
+        const d = t.begin_date;
+        if (d && (!existing.__rangeStart || d < existing.__rangeStart)) existing.__rangeStart = d;
+        if (d && (!existing.__rangeEnd || d > existing.__rangeEnd)) existing.__rangeEnd = d;
+
+        byKey.set(key, existing);
+      }
+    }
+
+    return Array.from(byKey.values());
+  }
+
+  const collapsedMeetings = collapseDailyRecurring(meetings);
+  const collapsedWork = collapseDailyRecurring(work);
+
   // Don't render until selectedWeek is set (avoids hydration mismatch)
   if (!selectedWeek) return null;
 
@@ -69,9 +114,8 @@ export default function TaskTrackerPage() {
             </div>
           ) : (
             <TaskTable
-              tasks={tasks}
-              meetings={meetings}
-              work={work}
+              collapsedMeetings={collapsedMeetings}
+              collapsedWork={collapsedWork}
             />
           )}
         </div>

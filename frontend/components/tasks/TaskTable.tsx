@@ -1,12 +1,11 @@
 import { Task } from "types/types";
 
 type Props = {
-  tasks: Task[];
-  meetings: Task[];
-  work: Task[];
+  collapsedMeetings: Task[];
+  collapsedWork: Task[];
 };
 
-export default function TaskTable({ tasks, meetings, work }: Props) {
+export default function TaskTable({ collapsedMeetings, collapsedWork }: Props) {
   /**
    * Determines if a task is marked as done.
    * @param t - The task object to check
@@ -20,7 +19,7 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
       <section className="mb-8">
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-xs font-bold tracking-widest text-gray-500">MEETINGS</h2>
-          <div className="text-xs text-gray-400">{meetings.length} total</div>
+          <div className="text-xs text-gray-400">{collapsedMeetings.length} total</div>
         </div>
 
         <div className="rounded-lg border bg-blue-50/40">
@@ -33,7 +32,7 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
               </tr>
             </thead>
             <tbody>
-              {meetings.map((t: any) => (
+              {collapsedMeetings.map((t: any) => (
                 <tr
                   key={t.id}
                   className={`font-medium border-b last:border-b-0 hover:bg-gray-50 ${
@@ -46,14 +45,21 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
                   }
                 >
                   <td className="p-3">
-                    <div className="min-w-0">
-                    <span className="mr-2">🗓️</span>
+                    <div className="min-w-0 flex items-center gap-2">
+                      <span className="mr-2">🗓️</span>
+
                       <span
                         className={`font-medium truncate ${isDone(t) ? 'text-gray-500 line-through' : 'text-gray-900'}`}
                         title={t.title}
                       >
                         {t.title}
                       </span>
+
+                      {t.__collapsed ? (
+                        <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
+                          Daily ↻ ({t.__occurrenceCount}x)
+                        </span>
+                      ) : null}
                     </div>
                   </td>
                   <td className="p-3 text-gray-600">{String(t.begin_date ?? '').slice(0, 10)}</td>
@@ -63,7 +69,7 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
             </tbody>
           </table>
 
-          {!meetings.length && (
+          {!collapsedMeetings.length && (
             <div className="px-4 py-3 text-sm text-gray-500">No meetings this week.</div>
           )}
         </div>
@@ -71,7 +77,7 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
       <section className="mb-8">
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-xs font-bold tracking-widest text-gray-500">WORK</h2>
-          <div className="text-xs text-gray-400">{work.length} total</div>
+          <div className="text-xs text-gray-400">{collapsedWork.length} total</div>
         </div>
 
         <div className="rounded-lg border bg-white">
@@ -86,7 +92,7 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
             </thead>
 
             <tbody>
-              {work.map((t: any) => (
+              {collapsedWork.map((t: any) => (
                 <tr key={t.id} className={`font-medium ${
                         isDone(t)
                           ? 'border-b last:border-b-0 hover:bg-gray-50 bg-green-50'
@@ -94,13 +100,19 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
                       }`}
                       >
                   <td className="p-3">
-                    <div className="min-w-0">
-                      <div
+                    <div className="min-w-0 flex items-center gap-2">
+                      <span
                         className={`font-medium truncate ${isDone(t) ? 'text-gray-500 line-through' : 'text-gray-900'}`}
                         title={t.title}
                       >
                         {t.title}
-                      </div>
+                      </span>
+
+                      {t.__collapsed ? (
+                        <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
+                          Daily ↻ ({t.__occurrenceCount}x)
+                        </span>
+                      ) : null}
                     </div>
                   </td>
                   <td className="p-3 text-gray-600">
@@ -117,7 +129,7 @@ export default function TaskTable({ tasks, meetings, work }: Props) {
             </tbody>
           </table>
 
-          {!work.length && (
+          {!collapsedWork.length && (
             <div className="px-4 py-3 text-sm text-gray-500">No work items this week.</div>
           )}
         </div>
