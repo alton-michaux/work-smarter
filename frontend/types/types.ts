@@ -12,7 +12,8 @@ export type Task = {
   project?: number;
   begin_date: string;
   end_date: string;
-  recurring_task: Task[];
+  recurring_task?: { frequency?: string | null } | null;
+  recurring_task_id?: number | string | null;
   user: number;
 };
 
