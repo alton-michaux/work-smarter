@@ -83,6 +83,27 @@ export type TasksContextType = {
   error: string | null;
 };
 
+export type Note = {
+  id: number | string;
+  title?: string;
+  begin_date?: string | null;
+  priority?: string | null;
+  category?: string | null;
+};
+
+export type NoteProps = {
+  note: Note;
+
+  // optional actions (daily log uses these; weekly tracker can omit)
+  onView?: (id: number) => void;
+  onEdit?: (id: number) => void;
+  onDelete?: (id: number) => void;
+
+  // display tweaks
+  showMeta?: boolean;      // date/priority line
+  variant?: 'default' | 'dashed'; // dashed looks “ongoing”
+};
+
 export type User = {
   id: number;
   username: string;

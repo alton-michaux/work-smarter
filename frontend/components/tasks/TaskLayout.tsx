@@ -1,5 +1,6 @@
 import React from 'react';
 import OutlineTree from './OutlineTree';
+import NoteCard from 'components/notes/NoteCard';
 
 type Props = {
   sections: {
@@ -49,11 +50,22 @@ export function TaskLayout({ sections, onView, onEdit, onDelete, onToggleDone }:
       {/* FULL WIDTH: Notes (stays below) */}
       <section className="lg:col-span-12">
         <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">NOTES</h2>
-        <div className="rounded border bg-white">
+
+        <div className="rounded border bg-white p-4">
           {sections.notes.length ? (
-            <OutlineTree nodes={sections.notes} onView={onView} onEdit={onEdit} onDelete={onDelete} />
+            <div className="space-y-3">
+              {sections.notes.map((n: any) => (
+                <NoteCard
+                  key={n.id}
+                  note={n}
+                  onView={onView}
+                  onEdit={onEdit}
+                  onDelete={() => onDelete(n)} // keep your existing delete signature
+                />
+              ))}
+            </div>
           ) : (
-            <div className="px-4 py-3 text-sm text-gray-500">No notes.</div>
+            <div className="text-sm text-gray-500">No notes.</div>
           )}
         </div>
       </section>
