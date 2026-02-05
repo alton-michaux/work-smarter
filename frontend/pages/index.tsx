@@ -1,5 +1,5 @@
 import { useAuth } from '../context/AuthContext';
-import withAuth from '../utils/withAuth';
+import withAuth from '../lib/withAuth';
 import Hero from '../components/shared/Hero';
 import ActionItems from 'components/shared/ActionItems';
 import FeatureList from '../components/shared/FeatureList';

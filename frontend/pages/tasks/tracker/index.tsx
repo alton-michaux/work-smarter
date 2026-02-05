@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useTasks } from '../../../context/TasksContext';
-import { getCurrentMonday, getEndOfWeek } from '../../../utils/dateUtils';
+import { getCurrentMonday, getEndOfWeek } from '../../../lib/dateUtils';
 import WeekSelector from '../../../components/ui/WeekSelector';
 import TaskTable from '../../../components/tasks/TaskTable';
 import Spinner from 'components/shared/Spinner';
+import { collapseRecurringTasks } from "../../../lib/collapseDailyRecurring";
 
 export default function TaskTrackerPage() {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
@@ -46,9 +47,29 @@ export default function TaskTrackerPage() {
       .filter((t: any) => !isMeeting(t))
       .sort((a: any, b: any) => String(b.begin_date ?? '').localeCompare(String(a.begin_date ?? ''))); // newest first
   }, [tasks]);
+  console.log("sample keys:", meetings?.[0] ? Object.keys(meetings[0]) : "no meetings");
+
+  const collapsedMeetings = useMemo(
+    () => collapseRecurringTasks(meetings, { frequency: "daily" }),
+    [meetings]
+  );
+
+  const collapsedWork = useMemo(
+    () => collapseRecurringTasks(work, { frequency: "daily" }),
+    [work]
+  );
+
+  useEffect(() => {
+    console.log("meetings:", meetings.length, "collapsedMeetings:", collapsedMeetings.length);
+    console.log("work:", work.length, "collapsedWork:", collapsedWork.length);
+    console.log("collapsedMeetings has __collapsed?", collapsedMeetings.some((t: any) => t.__collapsed));
+    console.log("collapsedWork has __collapsed?", collapsedWork.some((t: any) => t.__collapsed));
+  }, [meetings.length, work.length, collapsedMeetings.length, collapsedWork.length]);
 
   // Don't render until selectedWeek is set (avoids hydration mismatch)
   if (!selectedWeek) return null;
+
+  console.log("sample recurring:", meetings?.[0]?.recurring_task_id, meetings?.[0]?.recurring_task);
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">
@@ -70,8 +91,8 @@ export default function TaskTrackerPage() {
           ) : (
             <TaskTable
               tasks={tasks}
-              meetings={meetings}
-              work={work}
+              meetings={collapsedMeetings as any}
+              work={collapsedWork as any}
             />
           )}
         </div>
