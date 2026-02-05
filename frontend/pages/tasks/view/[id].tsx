@@ -34,13 +34,13 @@ const TaskShowPage = () => {
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this task?')) return;
+    if (!confirm("Are you sure you want to delete this occurence?\n If this is a recurring event, all past and future occurences will be deleted as well")) return;
 
     try {
-      await deleteTask(Number(id));
+      await deleteTask(task);
       await router.push('/tasks');
     } catch (err) {
-      alert('Failed to delete task. Please try again.');
+      alert('Failed to delete. Please try again.');
     }
   };
 

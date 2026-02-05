@@ -224,19 +224,41 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     await fetchTasks();
   };
 
-  const deleteTask = async (id: number) => {
+  const deleteTask = async (taskOrId: any) => {
     if (!loggedIn) return;
 
-    const numericId = Number(id);
-    
-    const res = await fetch(`${API_URL}/tasks/${numericId}/`, { 
-      method: "DELETE", 
-      headers: getAuthHeaders() 
+    const id =
+      typeof taskOrId === "number"
+        ? taskOrId
+        : (taskOrId?.id ?? taskOrId?.task?.id ?? taskOrId?.pk);
+
+    if (!id) {
+      // fail loudly with context so we find the call site fast
+      console.error("deleteTask called without an id. Argument was:", taskOrId);
+      throw new Error("Failed to delete task: missing task id");
+    }
+
+    const isRecurring =
+      typeof taskOrId === "object" &&
+      Boolean(taskOrId?.recurring_task_id || taskOrId?.recurring_task);
+
+    const url = isRecurring
+      ? `${API_URL}/tasks/${id}/?delete_series=1`
+      : `${API_URL}/tasks/${id}/`;
+
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        ...getAuthHeaders(),
+      },
     });
 
-    if (!res.ok) throw new Error("Delete failed");
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to delete task: ${text}`);
+    }
 
-    setTasks(prev => prev.filter(t => t.id !== numericId));
+    await fetchTasks();
   };
 
   return (

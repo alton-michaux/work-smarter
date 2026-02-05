@@ -12,9 +12,22 @@ export type Task = {
   project?: number;
   begin_date: string;
   end_date: string;
-  recurring_task: Task[];
+  recurring_task?: { frequency?: string | null } | null;
+  recurring_task_id?: number | string | null;
   user: number;
 };
+
+export type OutlineTreeProps = {
+  nodes: Node[];
+  depth?: number;
+
+  onView: (id: number) => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
+  onToggleDone?: (id: number, isDone: boolean) => void;
+};
+
+export type Node = any;
 
 export type RecurrenceState = {
   repeats: boolean;
@@ -61,7 +74,7 @@ export type TasksContextType = {
   setTasks: (tasks: Task[]) => void;
   addTask: (task: Omit<Task, 'id'>) => Promise<void>;
   updateTaskAndReload: (task: Task) => Promise<void>;
-  deleteTask: (id: number) => Promise<void>;
+  deleteTask: (task: Task) => Promise<void>;
   fetchTasks: () => Promise<void>;
   fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
   fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
