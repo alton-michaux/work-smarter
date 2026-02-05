@@ -1,17 +1,8 @@
 import React from 'react';
 import { categoryToType } from '../../lib/dailyLog';
+import { OutlineTreeProps } from 'types/types';
 
 type Node = any;
-
-type Props = {
-  nodes: Node[];
-  depth?: number;
-
-  onView: (id: number) => void;
-  onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
-  onToggleDone?: (id: number, isDone: boolean) => void;
-};
 
 function OutlineRow({
   node,
@@ -25,7 +16,7 @@ function OutlineRow({
   depth: number;
   onView: (id: number) => void;
   onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
+  onDelete: (task: any) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
 }) {
   const type = categoryToType(node.category);
@@ -91,7 +82,7 @@ function OutlineRow({
         <button onClick={() => onEdit(Number(node.id))} className="text-sm text-yellow-600 hover:text-yellow-800">
           Edit
         </button>
-        <button onClick={() => onDelete(Number(node.id))} className="text-sm text-red-600 hover:text-red-800">
+        <button onClick={() => onDelete(node)} className="text-sm text-red-600 hover:text-red-800">
           Delete
         </button>
       </div>
@@ -106,7 +97,7 @@ export default function OutlineTree({
   onEdit,
   onDelete,
   onToggleDone,
-}: Props) {
+}: OutlineTreeProps) {
   return (
     <ul>
       {nodes.map((n) => (

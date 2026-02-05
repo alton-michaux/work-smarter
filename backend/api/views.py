@@ -209,6 +209,26 @@ class TaskViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
         
+    def destroy(self, request, *args, **kwargs):
+        task = self.get_object()
+
+        delete_series = request.query_params.get("delete_series") in ("1", "true", "True")
+
+        # If it's a recurring occurrence and caller asked to delete the series:
+        if delete_series and task.recurring_task_id:
+            rt = task.recurring_task
+
+            # delete all occurrences for that template
+            Task.objects.filter(user=request.user, recurring_task=rt).delete()
+
+            # delete the template itself (stops regeneration)
+            rt.delete()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        # default behavior: delete just this task row
+        return super().destroy(request, *args, **kwargs)
+        
 class RecurringTaskViewSet(viewsets.ModelViewSet):
     serializer_class = RecurringTaskSerializer
 

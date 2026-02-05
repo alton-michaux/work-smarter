@@ -37,7 +37,7 @@ const TaskShowPage = () => {
     if (!confirm('Are you sure you want to delete this task?')) return;
 
     try {
-      await deleteTask(Number(id));
+      await deleteTask(task);
       await router.push('/tasks');
     } catch (err) {
       alert('Failed to delete task. Please try again.');
