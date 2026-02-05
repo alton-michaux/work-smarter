@@ -47,7 +47,6 @@ export default function TaskTrackerPage() {
       .filter((t: any) => !isMeeting(t))
       .sort((a: any, b: any) => String(b.begin_date ?? '').localeCompare(String(a.begin_date ?? ''))); // newest first
   }, [tasks]);
-  console.log("sample keys:", meetings?.[0] ? Object.keys(meetings[0]) : "no meetings");
 
   const collapsedMeetings = useMemo(
     () => collapseRecurringTasks(meetings, { frequency: "daily" }),
@@ -59,17 +58,8 @@ export default function TaskTrackerPage() {
     [work]
   );
 
-  useEffect(() => {
-    console.log("meetings:", meetings.length, "collapsedMeetings:", collapsedMeetings.length);
-    console.log("work:", work.length, "collapsedWork:", collapsedWork.length);
-    console.log("collapsedMeetings has __collapsed?", collapsedMeetings.some((t: any) => t.__collapsed));
-    console.log("collapsedWork has __collapsed?", collapsedWork.some((t: any) => t.__collapsed));
-  }, [meetings.length, work.length, collapsedMeetings.length, collapsedWork.length]);
-
   // Don't render until selectedWeek is set (avoids hydration mismatch)
   if (!selectedWeek) return null;
-
-  console.log("sample recurring:", meetings?.[0]?.recurring_task_id, meetings?.[0]?.recurring_task);
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">
