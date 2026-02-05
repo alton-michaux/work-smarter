@@ -16,6 +16,13 @@ export type Task = {
   user: number;
 };
 
+export type RecurrenceState = {
+  repeats: boolean;
+  frequency: "daily" | "weekly" | "monthly";
+  day_of_week: number; // 0=Mon .. 6=Sun
+  start_date: string;  // YYYY-MM-DD
+};
+
 export type Project = {
   created: Date;
   id: number;
@@ -27,6 +34,40 @@ export type Project = {
 export type NewProject = {
   name: string;
   user: number;
+};
+
+export type ProjectOption = { id: number; name: string };
+
+export type TaskFormProps = {
+  initialTask: any;
+  onSubmit: (task: any) => void;
+  submitLabel: string;
+  projects?: ProjectOption[];
+};
+
+export type Filters = {
+  search?: string;
+  project?: number;
+  is_done?: boolean;
+  priority?: string;
+  ordering?: string;
+  begin_date?: string;
+  end_date?: string;
+  active_on?: string;
+};
+
+export type TasksContextType = {
+  tasks: Task[];
+  setTasks: (tasks: Task[]) => void;
+  addTask: (task: Omit<Task, 'id'>) => Promise<void>;
+  updateTaskAndReload: (task: Task) => Promise<void>;
+  deleteTask: (id: number) => Promise<void>;
+  fetchTasks: () => Promise<void>;
+  fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
+  fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
+  toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
 };
 
 export type User = {
