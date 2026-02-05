@@ -12,6 +12,7 @@ export type Task = {
   project?: number;
   begin_date: string;
   end_date: string;
+  recurring_task: Task[];
   user: number;
 };
 
