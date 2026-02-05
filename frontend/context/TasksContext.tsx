@@ -1,33 +1,9 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Task } from 'types/types'
+import { Task, Filters, TasksContextType } from 'types/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-type Filters = {
-  search?: string;
-  project?: number;
-  is_done?: boolean;
-  priority?: string;
-  ordering?: string;
-  begin_date?: string;
-  end_date?: string;
-  active_on?: string;
-};
-
-type TasksContextType = {
-  tasks: Task[];
-  setTasks: (tasks: Task[]) => void;
-  addTask: (task: Omit<Task, 'id'>) => Promise<void>;
-  updateTaskAndReload: (task: Task) => Promise<void>;
-  deleteTask: (id: number) => Promise<void>;
-  fetchTasks: () => Promise<void>;
-  fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
-  toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
-  isLoading: boolean;
-  error: string | null;
-};
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
@@ -105,6 +81,34 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   }, [loggedIn, getAuthHeaders]);
+
+  const fetchRecurringTemplate = async (recurring_task_id: number, initialTask: any, setRecurrence: any) => {
+    if (!loggedIn) return;
+    setError(null)
+    try {
+      const res = await fetch(`${API_URL}/recurring-tasks/${recurring_task_id}/`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+      });
+
+      if (!res.ok) return; // silently skip; repeats remains checked
+
+      const rt = await res.json();
+
+      setRecurrence((prev) => ({
+        ...prev,
+        repeats: true,
+        frequency: rt.frequency ?? prev.frequency,
+        day_of_week: rt.day_of_week ?? prev.day_of_week,
+        start_date: rt.start_date ?? initialTask?.begin_date ?? prev.start_date,
+      }));
+    } catch (err: any) {
+      setError(err.message || 'unknown error');
+      console.error(err);
+    }
+  }
 
   const toggleTaskDone = async (taskId: number, nextDone: boolean) => {
     if (!loggedIn) return;
@@ -245,6 +249,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         deleteTask,
         fetchTasks,
         fetchTasksByDateRange,
+        fetchRecurringTemplate,
         toggleTaskDone,
         isLoading,
         error,

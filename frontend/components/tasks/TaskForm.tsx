@@ -1,23 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-
-type ProjectOption = { id: number; name: string };
-
-type TaskFormProps = {
-  initialTask: any;
-  onSubmit: (task: any) => void;
-  submitLabel: string;
-  projects?: ProjectOption[];
-};
-
-type RecurrenceState = {
-  repeats: boolean;
-  frequency: "daily" | "weekly" | "monthly";
-  day_of_week: number; // 0=Mon .. 6=Sun
-  start_date: string;  // YYYY-MM-DD
-};
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+import { RecurrenceState, ProjectOption, TaskFormProps } from "types/types";
+import { useTasks } from "../../context/TasksContext";
 
 export default function TaskForm({
   initialTask,
@@ -43,6 +27,8 @@ export default function TaskForm({
   const [formError, setFormError] = useState<string>("");
 
   const isEditing = Boolean(initialTask?.id);
+
+  const { fetchRecurringTemplate } = useTasks()
 
   const recurringTemplateId = useMemo(() => {
     // prefer recurring_task_id from serializer
@@ -149,30 +135,7 @@ export default function TaskForm({
         start_date: prev.start_date || initialTask?.begin_date || "",
       }));
 
-      (async () => {
-        try {
-          const res = await fetch(`${API_URL}/recurring-tasks/${recurringTemplateId}/`, {
-            headers: {
-              "Content-Type": "application/json",
-              ...getAuthHeaders(),
-            },
-          });
-
-          if (!res.ok) return; // silently skip; repeats remains checked
-
-          const rt = await res.json();
-
-          setRecurrence((prev) => ({
-            ...prev,
-            repeats: true,
-            frequency: rt.frequency ?? prev.frequency,
-            day_of_week: rt.day_of_week ?? prev.day_of_week,
-            start_date: rt.start_date ?? initialTask?.begin_date ?? prev.start_date,
-          }));
-        } catch {
-          // ignore; repeats stays checked
-        }
-      })();
+      fetchRecurringTemplate(recurringTemplateId, initialTask, setRecurrence)
     }
   }, [isEditing, recurringTemplateId, initialTask, getAuthHeaders]);
 
