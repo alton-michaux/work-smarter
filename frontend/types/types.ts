@@ -27,6 +27,8 @@ export type OutlineTreeProps = {
   onToggleDone?: (id: number, isDone: boolean) => void;
 };
 
+export type Node = any;
+
 export type RecurrenceState = {
   repeats: boolean;
   frequency: "daily" | "weekly" | "monthly";

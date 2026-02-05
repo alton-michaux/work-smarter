@@ -1,8 +1,6 @@
 import React from 'react';
 import { categoryToType } from '../../lib/dailyLog';
-import { OutlineTreeProps } from 'types/types';
-
-type Node = any;
+import { OutlineTreeProps, Node } from 'types/types';
 
 function OutlineRow({
   node,
