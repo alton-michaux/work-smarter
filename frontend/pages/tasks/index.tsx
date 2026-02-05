@@ -47,9 +47,9 @@ const TasksPage = () => {
     [tasks, updateTaskAndReload]
   );
 
-  const handleDelete = useCallback(async (id: number) => {
+  const handleDelete = useCallback(async (task: any) => {
     if (confirm('Are you sure you want to delete this task?')) {
-      await deleteTask(id);
+      await deleteTask(task);
       // No need to manually refetch here; your context’s deleteTask already refreshes
     }
   }, [deleteTask]);
