@@ -20,7 +20,7 @@ export default function NoteCard({
       : 'border-gray-200';
 
   return (
-    <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+    <div className={border + "w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-3"}>
       <div className="flex items-start justify-between gap-4">
         <button
           type="button"
