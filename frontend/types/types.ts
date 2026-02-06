@@ -138,6 +138,13 @@ export type TrackerProps = {
   collapsedWork?: Task[];
 };
 
+export type DateToggleUIProps = {
+  selectedDate: string;
+  setSelectedDate: (d: string) => void;
+  last7Days: { key: string; label: string }[];
+  compact?: boolean;
+}
+
 export type User = {
   id: number;
   username: string;
