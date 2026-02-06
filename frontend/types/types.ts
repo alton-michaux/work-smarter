@@ -1,5 +1,7 @@
 // types.ts
 
+export type AnyTask = Task & CollapsedMeta;
+
 export type Task = {
   id: number;
   title: string;
@@ -15,6 +17,18 @@ export type Task = {
   recurring_task?: { frequency?: string | null } | null;
   recurring_task_id?: number | string | null;
   user: number;
+};
+
+export type TaskLayoutProps = {
+  sections: {
+    meetings: any[];
+    tasks: any[];
+    notes: any[];
+  };
+  onView: (id: number) => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
+  onToggleDone?: (id: number, isDone: boolean) => void;
 };
 
 export type OutlineTreeProps = {
@@ -81,6 +95,47 @@ export type TasksContextType = {
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
   isLoading: boolean;
   error: string | null;
+};
+
+export type Note = {
+  id: number | string;
+  title?: string;
+  begin_date?: string | null;
+  priority?: string | null;
+  category?: string | null;
+  description?: string;
+  is_done: boolean;
+};
+
+export type NoteProps = {
+  note: Note;
+
+  // optional actions (daily log uses these; weekly tracker can omit)
+  onView?: (id: number) => void;
+  onEdit?: (id: number) => void;
+  onDelete?: (id: number) => void;
+
+  // display tweaks
+  showMeta?: boolean;      // date/priority line
+  variant?: 'default' | 'dashed'; // dashed looks “ongoing”
+};
+
+export type CollapsedMeta = {
+  __collapsed?: boolean;
+  __occurrenceCount?: number;
+  __firstDate?: string | null;
+  __lastDate?: string | null;
+};
+
+export type TrackerProps = {
+  tasks: Task[];     // kept for backwards compatibility even if unused here
+  meetings: Task[];
+  work: Task[];
+  notes
+
+  // OPTIONAL: only used by Weekly Tracker (daily log can ignore)
+  collapsedMeetings?: Task[];
+  collapsedWork?: Task[];
 };
 
 export type User = {

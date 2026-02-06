@@ -1,23 +1,5 @@
-import { Task } from "types/types";
-
-type CollapsedMeta = {
-  __collapsed?: boolean;
-  __occurrenceCount?: number;
-  __firstDate?: string | null;
-  __lastDate?: string | null;
-};
-
-type AnyTask = Task & CollapsedMeta;
-
-type Props = {
-  tasks: Task[];     // kept for backwards compatibility even if unused here
-  meetings: Task[];
-  work: Task[];
-
-  // OPTIONAL: only used by Weekly Tracker (daily log can ignore)
-  collapsedMeetings?: Task[];
-  collapsedWork?: Task[];
-};
+import NoteCard from "components/notes/NoteCard";
+import { AnyTask, TrackerProps } from "types/types";
 
 export default function TaskTable({
   tasks,
@@ -25,7 +7,8 @@ export default function TaskTable({
   work,
   collapsedMeetings,
   collapsedWork,
-}: Props) {
+  notes,
+}: TrackerProps) {
   /**
    * Determines if a task is marked as done.
    * @param t - The task object to check
@@ -162,6 +145,31 @@ export default function TaskTable({
             <div className="px-4 py-3 text-sm text-gray-500">No work items this week.</div>
           )}
         </div>
+      </section>
+      <section className="mt-10">
+        <div className="mb-2">
+          <h2 className="text-xs font-bold tracking-widest text-gray-400">NOTES</h2>
+          <p className="text-xs text-gray-400 mt-1">Ongoing</p>
+        </div>
+
+        {notes.length ? (
+          <div className="rounded border bg-white p-4">
+            <div className="space-y-3">
+              {notes.map((n: any) => (
+                <NoteCard
+                  key={n.id}
+                  note={n}
+                  variant="dashed"
+                  showMeta={false}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500 rounded border bg-white px-4 py-3">
+            No notes this week.
+          </div>
+        )}
       </section>
     </>
   );

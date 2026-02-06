@@ -1,19 +1,9 @@
 import React from 'react';
 import OutlineTree from './OutlineTree';
+import NoteCard from 'components/notes/NoteCard';
+import { TaskLayoutProps } from 'types/types';
 
-type Props = {
-  sections: {
-    meetings: any[];
-    tasks: any[];
-    notes: any[];
-  };
-  onView: (id: number) => void;
-  onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
-  onToggleDone?: (id: number, isDone: boolean) => void;
-};
-
-export function TaskLayout({ sections, onView, onEdit, onDelete, onToggleDone }: Props) {
+export function TaskLayout({ sections, onView, onEdit, onDelete, onToggleDone }: TaskLayoutProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* LEFT: Meetings (1/3) */}
@@ -48,12 +38,27 @@ export function TaskLayout({ sections, onView, onEdit, onDelete, onToggleDone }:
 
       {/* FULL WIDTH: Notes (stays below) */}
       <section className="lg:col-span-12">
-        <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">NOTES</h2>
-        <div className="rounded border bg-white">
+        <div className="mb-2">
+          <h2 className="text-xs font-bold tracking-widest text-gray-500">NOTES</h2>
+          <p className="text-xs text-gray-400 mt-1">Ongoing reminders</p>
+        </div>
+        <div className="rounded border bg-white p-4">
           {sections.notes.length ? (
-            <OutlineTree nodes={sections.notes} onView={onView} onEdit={onEdit} onDelete={onDelete} />
+            <div className="space-y-3">
+              {sections.notes.map((n: any) => (
+                <NoteCard
+                  key={n.id}
+                  note={n}
+                  variant="dashed"
+                  showMeta={false}
+                  onView={onView}
+                  onEdit={onEdit}
+                  onDelete={() => onDelete(n)}
+                />
+              ))}
+            </div>
           ) : (
-            <div className="px-4 py-3 text-sm text-gray-500">No notes.</div>
+            <div className="text-sm text-gray-500">No notes.</div>
           )}
         </div>
       </section>

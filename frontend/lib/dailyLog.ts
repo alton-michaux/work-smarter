@@ -1,5 +1,3 @@
-type BlockType = 'task' | 'meeting' | 'note';
-
 export function categoryToType(category?: string | null) {
   const c = (category ?? '').trim().toLowerCase();
   if (c === 'meetings' || c === 'meeting') return 'meeting';
