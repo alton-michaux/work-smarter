@@ -38,8 +38,10 @@ export function TaskLayout({ sections, onView, onEdit, onDelete, onToggleDone }:
 
       {/* FULL WIDTH: Notes (stays below) */}
       <section className="lg:col-span-12">
-        <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">NOTES</h2>
-
+        <div className="mb-2">
+          <h2 className="text-xs font-bold tracking-widest text-gray-500">NOTES</h2>
+          <p className="text-xs text-gray-400 mt-1">Ongoing reminders</p>
+        </div>
         <div className="rounded border bg-white p-4">
           {sections.notes.length ? (
             <div className="space-y-3">
@@ -47,9 +49,11 @@ export function TaskLayout({ sections, onView, onEdit, onDelete, onToggleDone }:
                 <NoteCard
                   key={n.id}
                   note={n}
+                  variant="dashed"
+                  showMeta={false}
                   onView={onView}
                   onEdit={onEdit}
-                  onDelete={() => onDelete(n)} // keep your existing delete signature
+                  onDelete={() => onDelete(n)}
                 />
               ))}
             </div>

@@ -27,13 +27,29 @@ export default function NoteCard({
           onClick={() => onView?.(id)}
           className="flex items-start gap-2 min-w-0 text-left"
         >
+          {note.is_done && (
+            <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400 my-auto">
+              done
+            </span>
+          )}
           <span className="text-gray-400 mt-0.5">📌</span>
-
           <div className="min-w-0">
-            <div className="text-sm font-medium text-gray-800 truncate" title={title}>
-              {title}
-            </div>
-
+            <h3
+              className={`text-sm font-semibold truncate ${
+                note.is_done ? 'text-gray-500' : 'text-gray-800'
+              }`}
+            >
+              {note.title}
+            </h3>
+            {note.description && (
+              <p
+                className={`mt-1 text-sm leading-snug whitespace-pre-wrap ${
+                  note.is_done ? 'text-gray-400' : 'text-gray-600'
+                }`}
+              >
+                {note.description}
+              </p>
+            )}
             {showMeta && (date || priority) ? (
               <div className="text-xs text-gray-500 mt-1">
                 {priority}
