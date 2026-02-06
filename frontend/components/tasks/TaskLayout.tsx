@@ -1,20 +1,9 @@
 import React from 'react';
 import OutlineTree from './OutlineTree';
 import NoteCard from 'components/notes/NoteCard';
+import { TaskLayoutProps } from 'types/types';
 
-type Props = {
-  sections: {
-    meetings: any[];
-    tasks: any[];
-    notes: any[];
-  };
-  onView: (id: number) => void;
-  onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
-  onToggleDone?: (id: number, isDone: boolean) => void;
-};
-
-export function TaskLayout({ sections, onView, onEdit, onDelete, onToggleDone }: Props) {
+export function TaskLayout({ sections, onView, onEdit, onDelete, onToggleDone }: TaskLayoutProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* LEFT: Meetings (1/3) */}

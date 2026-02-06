@@ -36,6 +36,8 @@ export default function TaskTrackerPage() {
     return c === 'meeting' || c === 'meetings';
   };
 
+  const isNotes = (t: any) => String(t.category ?? '').trim().toLowerCase() === 'notes';
+
   const meetings = useMemo(() => {
     return (tasks ?? [])
       .filter(isMeeting)
@@ -45,6 +47,7 @@ export default function TaskTrackerPage() {
   const work = useMemo(() => {
     return (tasks ?? [])
       .filter((t: any) => !isMeeting(t))
+      .filter((t: any) => !isNotes(t))
       .sort((a: any, b: any) => String(b.begin_date ?? '').localeCompare(String(a.begin_date ?? ''))); // newest first
   }, [tasks]);
 
@@ -56,6 +59,11 @@ export default function TaskTrackerPage() {
   const collapsedWork = useMemo(
     () => collapseRecurringTasks(work, { frequency: "daily" }),
     [work]
+  );
+
+  const notes = useMemo(
+    () => tasks.filter((t: any) => String(t.category ?? '').toLowerCase() === 'notes'),
+    [tasks]
   );
 
   // Don't render until selectedWeek is set (avoids hydration mismatch)
@@ -83,6 +91,7 @@ export default function TaskTrackerPage() {
               tasks={tasks}
               meetings={collapsedMeetings as any}
               work={collapsedWork as any}
+              notes={notes}
             />
           )}
         </div>
