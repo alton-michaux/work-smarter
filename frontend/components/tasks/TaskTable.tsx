@@ -147,9 +147,9 @@ export default function TaskTable({
         </div>
       </section>
       <section className="mt-10">
-        <div className="flex items-baseline justify-between mb-2">
+        <div className="mb-2">
           <h2 className="text-xs font-bold tracking-widest text-gray-400">NOTES</h2>
-          <div className="text-xs text-gray-400">Ongoing</div>
+          <p className="text-xs text-gray-400 mt-1">Ongoing</p>
         </div>
 
         {notes.length ? (

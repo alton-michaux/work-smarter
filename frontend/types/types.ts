@@ -103,6 +103,8 @@ export type Note = {
   begin_date?: string | null;
   priority?: string | null;
   category?: string | null;
+  description?: string;
+  is_done: boolean;
 };
 
 export type NoteProps = {
