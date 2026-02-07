@@ -1,6 +1,6 @@
 import NoteCard from "components/notes/NoteCard";
 import { AnyTask, TrackerProps } from "types/types";
-import { SectionPanel } from "components/ui/trackerSection";
+import { SectionPanel, sectionMaxHeightClass } from "components/ui/trackerSection";
 
 export default function TaskTable({
   tasks,
@@ -28,7 +28,7 @@ export default function TaskTable({
     <>
       {/* MEETINGS */}
       <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`}>
-        <div className="max-h-56 overflow-y-auto overflow-auto">
+        <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
           <div className="rounded-lg border bg-blue-50/40">
             <table className="w-full text-sm table-fixed">
               <thead className="text-[11px] text-gray-600">
@@ -88,7 +88,7 @@ export default function TaskTable({
 
       {/* WORK */}
       <SectionPanel title="WORK" right={`${workToRender.length} total`}>
-          <div className="max-h-64 overflow-y-auto rounded-lg border bg-blue-50/40">
+          <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
             <table className="w-full text-sm table-fixed">
               <thead className="text-[11px] text-gray-600">
                 <tr className="border-b">
@@ -146,7 +146,7 @@ export default function TaskTable({
       
       {/* NOTES */}
       <SectionPanel title="NOTES" right="Ongoing">        
-        <div className="max-h-40 overflow-y-auto rounded-lg bg-blue-50/40">
+        <div className={`${sectionMaxHeightClass(notes.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
           {notes.length ? (
             <div className="space-y-3">
               {notes.map((n: any) => (
