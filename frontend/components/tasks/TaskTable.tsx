@@ -33,9 +33,9 @@ export default function TaskTable({
             <table className="w-full text-sm table-fixed">
               <thead className="text-[11px] text-gray-600">
                 <tr className="border-b">
-                  <th className="px-3 py-2 text-left">Title</th>
-                  <th className="px-3 py-2 text-left w-32">Date</th>
-                  <th className="px-3 py-2 text-left w-28">Priority</th>
+                  <th className="px-3 py-1.5 text-left uppercase tracking-wide">Title</th>
+                  <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">Date</th>
+                  <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">Priority</th>
                 </tr>
               </thead>
 
@@ -51,12 +51,12 @@ export default function TaskTable({
                         : ""
                     }`}
                   >
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-1.5">
                       <div className="min-w-0 flex items-center gap-2">
-                        <span className="text-base leading-none">🗓️</span>
+                        <span className="text-sm leading-tight">🗓️</span>
 
                         <span
-                          className={`min-w-0 truncate font-medium ${
+                          className={`min-w-0 truncate font-medium leading-tight ${
                             isDone(t) ? "text-gray-500 line-through" : "text-gray-900"
                           }`}
                           title={t.title}
@@ -92,10 +92,10 @@ export default function TaskTable({
             <table className="w-full text-sm table-fixed">
               <thead className="text-[11px] text-gray-600">
                 <tr className="border-b">
-                <th className="px-3 py-2 text-left">Task</th>
-                <th className="px-3 py-2 text-left w-32">Date</th>
-                <th className="px-3 py-2 text-left w-36">Category</th>
-                <th className="px-3 py-2 text-left w-28">Priority</th>
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide">Task</th>
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">Date</th>
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-36">Category</th>
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">Priority</th>
               </tr>
             </thead>
 
@@ -107,10 +107,10 @@ export default function TaskTable({
                     isDone(t) ? "bg-green-50" : ""
                   }`}
                 >
-                  <td className="p-3">
+                  <td className="px-3 py-1.5">
                     <div className="min-w-0 flex items-center gap-2">
                       <div
-                        className={`font-medium truncate ${
+                        className={`font-medium truncate leading-tight ${
                           isDone(t) ? "text-gray-500 line-through" : "text-gray-900"
                         }`}
                         title={t.title}
