@@ -28,7 +28,7 @@ export default function TaskTable({
     <>
       {/* MEETINGS */}
       <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`}>
-        <div className="h-56 overflow-y-auto overflow-auto">
+        <div className="max-h-56 overflow-y-auto overflow-auto">
           <div className="rounded-lg border bg-blue-50/40">
             <table className="w-full text-sm table-fixed">
               <thead className="text-[11px] text-gray-600">
@@ -88,7 +88,7 @@ export default function TaskTable({
 
       {/* WORK */}
       <SectionPanel title="WORK" right={`${workToRender.length} total`}>
-          <div className="h-64 overflow-y-auto rounded-lg border bg-blue-50/40">
+          <div className="max-h-64 overflow-y-auto rounded-lg border bg-blue-50/40">
             <table className="w-full text-sm table-fixed">
               <thead className="text-[11px] text-gray-600">
                 <tr className="border-b">
@@ -146,7 +146,7 @@ export default function TaskTable({
       
       {/* NOTES */}
       <SectionPanel title="NOTES" right="Ongoing">        
-        <div className="h-40 overflow-y-auto rounded-lg bg-blue-50/40">
+        <div className="max-h-40 overflow-y-auto rounded-lg bg-blue-50/40">
           {notes.length ? (
             <div className="space-y-3">
               {notes.map((n: any) => (
