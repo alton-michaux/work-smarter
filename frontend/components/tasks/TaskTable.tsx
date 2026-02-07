@@ -1,5 +1,6 @@
 import NoteCard from "components/notes/NoteCard";
 import { AnyTask, TrackerProps } from "types/types";
+import { SectionPanel, sectionMaxHeightClass } from "components/ui/trackerSection";
 
 export default function TaskTable({
   tasks,
@@ -26,83 +27,75 @@ export default function TaskTable({
   return (
     <>
       {/* MEETINGS */}
-      <section className="mb-8">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="text-xs font-bold tracking-widest text-gray-500">MEETINGS</h2>
-          <div className="text-xs text-gray-400">{meetingsToRender.length} total</div>
-        </div>
-
-        <div className="rounded-lg border bg-blue-50/40">
-          <table className="w-full text-sm table-fixed">
-            <thead className="text-xs text-gray-600">
-              <tr className="border-b">
-                <th className="p-3 text-left">Title</th>
-                <th className="p-3 text-left w-32">Date</th>
-                <th className="p-3 text-left w-28">Priority</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {meetingsToRender.map((t: AnyTask) => (
-                <tr
-                  key={t.id}
-                  className={`font-medium border-b last:border-b-0 hover:bg-gray-50 ${
-                    isDone(t)
-                      ? isAutoDoneMeeting(t)
-                        ? "bg-blue-50/60"
-                        : "bg-green-50"
-                      : ""
-                  }`}
-                >
-                  <td className="p-3">
-                    <div className="min-w-0 flex items-center gap-2">
-                      <span className="mr-2">🗓️</span>
-
-                      <span
-                        className={`font-medium truncate ${
-                          isDone(t) ? "text-gray-500 line-through" : "text-gray-900"
-                        }`}
-                        title={t.title}
-                      >
-                        {t.title}
-                      </span>
-
-                      {t.__collapsed ? (
-                        <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
-                          Daily ↻ ({t.__occurrenceCount ?? 1}x)
-                        </span>
-                      ) : null}
-                    </div>
-                  </td>
-
-                  <td className="p-3 text-gray-600">{dateLabel(t)}</td>
-                  <td className="p-3 text-gray-600">{(t as any).priority}</td>
+      <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`}>
+        <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
+          <div className="rounded-lg border bg-blue-50/40">
+            <table className="w-full text-sm table-fixed">
+              <thead className="text-[11px] text-gray-600">
+                <tr className="border-b">
+                  <th className="px-3 py-1.5 text-left uppercase tracking-wide">Title</th>
+                  <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">Date</th>
+                  <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">Priority</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
 
-          {!meetingsToRender.length && (
-            <div className="px-4 py-3 text-sm text-gray-500">No meetings this week.</div>
-          )}
+              <tbody>
+                {meetingsToRender.map((t: AnyTask) => (
+                  <tr
+                    key={t.id}
+                    className={`border-b last:border-b-0 hover:bg-white/60 ${
+                      isDone(t)
+                        ? isAutoDoneMeeting(t)
+                          ? "bg-blue-50/60"
+                          : "bg-green-50"
+                        : ""
+                    }`}
+                  >
+                    <td className="px-3 py-1.5">
+                      <div className="min-w-0 flex items-center gap-2">
+                        <span className="text-sm leading-tight">🗓️</span>
+
+                        <span
+                          className={`min-w-0 truncate font-medium leading-tight ${
+                            isDone(t) ? "text-gray-500 line-through" : "text-gray-900"
+                          }`}
+                          title={t.title}
+                        >
+                          {t.title}
+                        </span>
+
+                        {t.__collapsed ? (
+                          <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
+                            Daily ↻ ({t.__occurrenceCount ?? 1}x)
+                          </span>
+                        ) : null}
+                      </div>
+                    </td>
+
+                    <td className="px-3 py-2 text-gray-600">{dateLabel(t)}</td>
+                    <td className="px-3 py-2 text-gray-600">{(t as any).priority}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {!meetingsToRender.length && (
+              <div className="px-4 py-3 text-sm text-gray-500">No meetings this week.</div>
+            )}
+          </div>
         </div>
-      </section>
+      </SectionPanel>
 
       {/* WORK */}
-      <section className="mb-8">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="text-xs font-bold tracking-widest text-gray-500">WORK</h2>
-          <div className="text-xs text-gray-400">{workToRender.length} total</div>
-        </div>
-
-        <div className="rounded-lg border bg-white">
-          <table className="w-full text-sm table-fixed">
-            <thead className="text-xs text-gray-600">
-              <tr className="border-b bg-gray-50">
-                <th className="p-3 text-left">Task</th>
-                <th className="p-3 text-left w-32">Date</th>
-                <th className="p-3 text-left w-36">Category</th>
-                <th className="p-3 text-left w-28">Priority</th>
+      <SectionPanel title="WORK" right={`${workToRender.length} total`}>
+          <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
+            <table className="w-full text-sm table-fixed">
+              <thead className="text-[11px] text-gray-600">
+                <tr className="border-b">
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide">Task</th>
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">Date</th>
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-36">Category</th>
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">Priority</th>
               </tr>
             </thead>
 
@@ -114,10 +107,10 @@ export default function TaskTable({
                     isDone(t) ? "bg-green-50" : ""
                   }`}
                 >
-                  <td className="p-3">
+                  <td className="px-3 py-1.5">
                     <div className="min-w-0 flex items-center gap-2">
                       <div
-                        className={`font-medium truncate ${
+                        className={`font-medium truncate leading-tight ${
                           isDone(t) ? "text-gray-500 line-through" : "text-gray-900"
                         }`}
                         title={t.title}
@@ -138,39 +131,33 @@ export default function TaskTable({
                   <td className="p-3 text-gray-600">{(t as any).priority ?? "—"}</td>
                 </tr>
               ))}
+
+              {!workToRender.length && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-3 text-sm text-gray-500">
+                    No work items this week.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
-
-          {!workToRender.length && (
-            <div className="px-4 py-3 text-sm text-gray-500">No work items this week.</div>
-          )}
         </div>
-      </section>
-      <section className="mt-10">
-        <div className="mb-2">
-          <h2 className="text-xs font-bold tracking-widest text-gray-400">NOTES</h2>
-          <p className="text-xs text-gray-400 mt-1">Ongoing</p>
-        </div>
-
-        {notes.length ? (
-          <div className="rounded border bg-white p-4">
+      </SectionPanel>
+      
+      {/* NOTES */}
+      <SectionPanel title="NOTES" right="Ongoing">        
+        <div className={`${sectionMaxHeightClass(notes.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
+          {notes.length ? (
             <div className="space-y-3">
               {notes.map((n: any) => (
-                <NoteCard
-                  key={n.id}
-                  note={n}
-                  variant="dashed"
-                  showMeta={false}
-                />
+                <NoteCard key={n.id} note={n} variant="dashed" showMeta={false} />
               ))}
             </div>
-          </div>
-        ) : (
-          <div className="text-sm text-gray-500 rounded border bg-white px-4 py-3">
-            No notes this week.
-          </div>
-        )}
-      </section>
+          ) : (
+            <div className="text-sm text-gray-500 rounded-lg border bg-blue-50/40">No notes this week.</div>
+          )}
+        </div>
+      </SectionPanel>
     </>
   );
 }

@@ -71,38 +71,47 @@ export default function TaskTrackerPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">
-      <div className="w-full max-w-4xl bg-white rounded-lg shadow p-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          Weekly Task Tracker
-        </h1>
+      <div className="w-full max-w-4xl bg-white rounded-lg shadow">
 
-        <WeekSelector
-          selectedWeek={selectedWeek}
-          onWeekChange={setSelectedWeek}
-        />
+        {/* ✅ Sticky header area */}
+        <div className="sticky top-0 z-20 bg-white border-b">
+          <div className="p-8 pb-6">
+            <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+              Weekly Task Tracker
+            </h1>
 
-        <div className="mt-6">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Spinner />
-            </div>
-          ) : (
-            <TaskTable
-              tasks={tasks}
-              meetings={collapsedMeetings as any}
-              work={collapsedWork as any}
-              notes={notes}
+            <WeekSelector
+              selectedWeek={selectedWeek}
+              onWeekChange={setSelectedWeek}
             />
-          )}
+          </div>
         </div>
 
-        <div className="mt-8 flex justify-end">
-          <button
-            onClick={() => router.push('/tasks')}
-            className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition"
-          >
-            ← Back to Tasks
-          </button>
+        {/* ✅ Scrollable content area */}
+        <div className="px-8 pb-8">
+          <div className="mt-6 min-h-0 overflow-hidden">
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Spinner />
+              </div>
+            ) : (
+              <TaskTable
+                tasks={tasks}
+                meetings={collapsedMeetings as any}
+                work={collapsedWork as any}
+                notes={notes}
+              />
+            )}
+          </div>
+
+          <div className="mt-8 flex justify-end">
+            <button
+              onClick={() => router.push('/tasks')}
+              className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition"
+            >
+              ← Back to Tasks
+            </button>
+          </div>
         </div>
       </div>
     </div>

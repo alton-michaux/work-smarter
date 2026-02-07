@@ -14,11 +14,13 @@ function MyApp({ Component, pageProps }) {
         <APIProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-              <ProjectsProvider>
-                <TasksProvider>
-                  <Component {...pageProps} />
-                </TasksProvider>
-              </ProjectsProvider>
+              <main className="flex-1" >
+                <ProjectsProvider>
+                  <TasksProvider>
+                    <Component {...pageProps} />
+                  </TasksProvider>
+                </ProjectsProvider>
+              </main>
             <Footer />
           </div>
         </APIProvider>
