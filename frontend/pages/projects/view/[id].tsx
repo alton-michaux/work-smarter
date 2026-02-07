@@ -57,7 +57,7 @@ const ProjectShowPage = () => {
           remainingOverflow={insights.remainingOverflow}
         />
 
-        <div className="mt-6 space-y-10">
+        <div className="mt-6 mb-6 space-y-10">
           {/* MEETINGS/WORK */}
           <div className="mt-6 space-y-10">
             <ProjectTimelineSection

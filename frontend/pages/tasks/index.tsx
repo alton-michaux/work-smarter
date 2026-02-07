@@ -71,14 +71,14 @@ const TasksPage = () => {
       <div className="w-full max-w-6xl bg-white rounded-lg shadow">
 
         {/* ───────────────── Sticky Header ───────────────── */}
-        <div className="sticky top-0 z-50 bg-white backdrop-blur border-b shadow-sm h-[120px]">
+        <div className="sticky top-0 z-20 bg-white border-b">
           <div className="px-6 py-4">
             <h1 className="text-xl font-semibold text-gray-800 text-center mb-3">
               Daily Log
             </h1>
 
             {selectedDate && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                 {/* LEFT: showing + weekday buttons */}
                 <div className="lg:col-span-8">
                   <div className="text-sm text-gray-600 mb-1">
@@ -86,12 +86,14 @@ const TasksPage = () => {
                     <span className="font-medium text-gray-800">{selectedDate}</span>
                   </div>
 
-                  <DateToggleUI
-                    selectedDate={selectedDate}
-                    setSelectedDate={setSelectedDate}
-                    last7Days={last7Days}
-                    compact
-                  />
+                  <div className="pt-12">
+                    <DateToggleUI
+                      selectedDate={selectedDate}
+                      setSelectedDate={setSelectedDate}
+                      last7Days={last7Days}
+                      compact
+                    />
+                  </div>
                 </div>
 
                 {/* RIGHT: date picker + quick add */}
