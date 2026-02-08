@@ -3,7 +3,6 @@ import { AnyTask, TrackerProps } from "types/types";
 import { SectionPanel, sectionMaxHeightClass } from "components/ui/trackerSection";
 
 export default function TaskTable({
-  tasks,
   meetings,
   work,
   collapsedMeetings,

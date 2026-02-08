@@ -45,8 +45,10 @@ function OutlineRow({
 
   return (
     <li
-      className="border-b px-4 py-3 flex justify-between items-start group"
-      style={{ paddingLeft: 16 + effectiveDepth * 20 }}
+      className={`border-b px-4 flex justify-between items-start group ${
+        depth > 0 ? 'py-1.5' : 'py-3'
+      }`}
+      style={{ paddingLeft: 16 + depth * 20 }}
     >
       {/* LEFT/MIDDLE: checkbox + content */}
       <div className="min-w-0 flex-1 flex items-start gap-3">

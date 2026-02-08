@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { splitIntoSections } from '../lib/dailyLog';
+import { splitIntoSections, categoryToType } from '../lib/dailyLog';
 
 function todayYMD() {
   const d = new Date();
@@ -52,11 +52,19 @@ export function useDailyLog(
   const activeOn = options?.activeOn ?? false;
 
   const dailyTasks = useMemo(() => {
-    // Always filter client-side to selectedDate for the Daily Log UI.
-    // Even when active_on is used, the context can still hold tasks from other fetches.
-    return (tasks || []).filter(
-      (t) => (t.begin_date ?? '').slice(0, 10) === selectedDate
-    );
+    const all = tasks || [];
+
+    // Notes are "ongoing reminders" — keep them regardless of date
+    const notes = all.filter((t) => categoryToType(t.category) === 'note');
+
+    // Everything else is day-scoped
+    const dayScoped = all.filter((t) => {
+      const isNote = categoryToType(t.category) === 'note';
+      if (isNote) return false;
+      return (t.begin_date ?? '').slice(0, 10) === selectedDate;
+    });
+
+    return [...dayScoped, ...notes];
   }, [tasks, selectedDate]);
 
   const sections = useMemo(() => splitIntoSections(dailyTasks), [dailyTasks]);
