@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { categoryToType } from '../../lib/dailyLog';
 import { OutlineTreeProps, OutlineRowProps } from 'types/types';
 import { useTasks } from 'context/TasksContext';
@@ -20,6 +20,25 @@ function OutlineRow({
 
   // relies on API field `parent` (number|null)
   const isSubtask = Boolean(node.parent);
+
+  const childCount = Array.isArray(node.children) ? node.children.length : 0;
+  const doneChildCount = childCount
+    ? node.children.filter((c: any) => Boolean(c.is_done)).length
+    : 0;
+  
+    const checkboxRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!checkboxRef.current) return;
+
+    const shouldIndeterminate =
+      !isSubtask &&
+      childCount > 0 &&
+      doneChildCount > 0 &&
+      doneChildCount < childCount;
+
+    checkboxRef.current.indeterminate = shouldIndeterminate;
+  }, [isSubtask, childCount, doneChildCount]);
 
   const effectiveDepth = Math.max(depth, isSubtask ? 1 : 0);
 
@@ -56,6 +75,7 @@ function OutlineRow({
         <div className="mt-1">
           {type === 'task' ? (
             <input
+              ref={checkboxRef}
               type="checkbox"
               checked={!!node.is_done}
               onChange={(e) => {
@@ -84,12 +104,23 @@ function OutlineRow({
             <span className="flex items-center gap-2">
               <span className="truncate">{node.title}</span>
 
+              {/* Parent progress badge (only if this node has children) */}
+              {!isSubtask && childCount > 0 && (
+                <span
+                  className="text-xs px-2 py-0.5 rounded border text-gray-500"
+                  title="Subtask progress"
+                >
+                  {doneChildCount}/{childCount}
+                </span>
+              )}
+
               {node.is_recurring && (
                 <span className="text-xs opacity-60" title="Recurring task">
                   🔁
                 </span>
               )}
             </span>
+
           </button>
 
           <p className="text-xs text-gray-500 mt-1">
