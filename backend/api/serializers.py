@@ -18,12 +18,17 @@ class TaskSerializer(serializers.ModelSerializer):
     is_recurring = serializers.SerializerMethodField()
     effective_is_done = serializers.SerializerMethodField()
 
-    # ✅ allow parent assignment
     parent = serializers.PrimaryKeyRelatedField(
-        queryset=Task.objects.all(),
         required=False,
         allow_null=True,
+        queryset=Task.objects.none(),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = self.context.get("user")
+        if user and user.is_authenticated:
+            self.fields["parent"].queryset = Task.objects.filter(user=user)
 
     def get_is_recurring(self, obj):
         return obj.recurring_task is not None
@@ -38,45 +43,53 @@ class TaskSerializer(serializers.ModelSerializer):
         return bool(obj.is_done or auto_done)
 
     def validate_parent(self, parent):
-        """
-        Enforce v1 parent/child constraints:
-        - same user
-        - not self
-        - parent cannot itself be a child (depth limit: 1)
-        """
         if parent is None:
             return None
 
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-
-        if user and parent.user_id != user.id:
-            raise serializers.ValidationError("Parent task must belong to the same user.")
-
-        # If updating, prevent self-parenting
+        # prevent self-parenting on update
         if self.instance and parent.id == self.instance.id:
             raise serializers.ValidationError("A task cannot be its own parent.")
 
-        # Depth limit: parent cannot itself have a parent
+        # v1 depth limit: parent cannot itself be a subtask
         if parent.parent_id is not None:
             raise serializers.ValidationError("Subtasks cannot have subtasks (max depth is 1).")
 
         return parent
 
     def validate(self, attrs):
-        """
-        Optional v1 rule: parent and child must share begin_date when both are set.
-        This keeps your daily log semantics simple.
-        """
         parent = attrs.get("parent", getattr(self.instance, "parent", None))
+
+        # figure out what begin_date will be after this write
         begin_date = attrs.get("begin_date", getattr(self.instance, "begin_date", None))
 
-        # If parent is being set AND child begin_date is set, enforce match when parent begin_date exists
-        if parent is not None and begin_date is not None and parent.begin_date is not None:
-            if begin_date != parent.begin_date:
+        if parent is not None:
+            # if child has no begin_date but parent does, copy it (nice UX)
+            if begin_date is None and parent.begin_date is not None:
+                attrs["begin_date"] = parent.begin_date
+                begin_date = parent.begin_date
+
+            # enforce same-date when both exist
+            if begin_date is not None and parent.begin_date is not None and begin_date != parent.begin_date:
                 raise serializers.ValidationError({
                     "begin_date": "Subtask begin_date must match its parent begin_date."
                 })
+
+            # also: if parent has begin_date but child still ends up None, block
+            # (keeps your daily log semantics consistent)
+            if parent.begin_date is not None and begin_date is None:
+                raise serializers.ValidationError({
+                    "begin_date": "Subtask requires a begin_date when parent has a begin_date."
+                })                
+                
+        # if updating a parent that has children, prevent begin_date change
+        if self.instance and getattr(self.instance, "children", None):
+            if self.instance.children.exists():
+                old = self.instance.begin_date
+                new = attrs.get("begin_date", old)
+                if old != new:
+                    raise serializers.ValidationError({
+                        "begin_date": "Cannot change begin_date of a parent task that has subtasks."
+                    })
 
         return attrs
 
@@ -105,7 +118,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "priority",
             "description",
             "created_at",
-            "parent",        # ✅ new
+            "parent",
             "is_subtask",
             "carry_over",
             "recurring_task",
