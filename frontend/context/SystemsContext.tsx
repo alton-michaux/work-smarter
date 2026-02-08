@@ -1,11 +1,5 @@
 import React, { useState, createContext, useContext, ReactNode } from 'react';
-
-type SystemsContextType = {
-  fileChange: (file: File | null) => void;
-  uploadStatus: string | null;
-  selectedFile: File | null;
-  error: string | null;
-};
+import { SystemsContextType } from 'types/types';
 
 const SystemsContext = createContext<SystemsContextType | undefined>(undefined);
 

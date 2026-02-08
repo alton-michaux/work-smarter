@@ -1,30 +1,5 @@
 import React from 'react';
-
-type TaskLike = {
-  id: number | string;
-  title: string;
-  begin_date?: string | null;
-  priority?: string | null;
-  is_done?: boolean;
-};
-
-type Grouped<T> = {
-  groups: Record<string, T[]>;
-  sortedDays: string[];
-};
-
-type Props<T extends TaskLike> = {
-  title: string; // "MEETINGS" | "WORK"
-  summaryRight?: React.ReactNode; // e.g. "12 total • 7 done • 5 open"
-  emptyText: string;
-
-  iconFor: (t: T) => React.ReactNode; // 🗓️ or ☐/☑
-  metaFor?: (t: T) => React.ReactNode; // optional second line
-  titleClassFor?: (t: T) => string; // e.g. line-through for done
-
-  grouped: Grouped<T>;
-  onItemClick?: (t: T) => void;
-};
+import { ProjectTimelineProps, TaskLike } from 'types/types';
 
 export default function ProjectTimelineSection<T extends TaskLike>({
   title,
@@ -35,7 +10,7 @@ export default function ProjectTimelineSection<T extends TaskLike>({
   metaFor,
   titleClassFor,
   onItemClick,
-}: Props<T>) {
+}: ProjectTimelineProps<T>) {
   return (
     <section>
       <div className="flex items-baseline justify-between mb-3">

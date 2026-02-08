@@ -1,22 +1,9 @@
 // context/AuthContext.tsx
 import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { User } from 'types/types';
+import { User, AuthContextType } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-type AuthContextType = {
-  user: User | null;
-  loggedIn: boolean;
-  isLoading: boolean;
-  error: string | null;
-  setLoggedIn: (v: boolean) => void;
-  register: (form: { email: string; password1: string; password2: string }) => Promise<void>;
-  login: (form: { username: string; password: string }) => Promise<void>;
-  logout: () => Promise<void>;
-  getUser: () => Promise<void>;
-  getAuthHeaders: () => Record<string, string>;
-};
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
