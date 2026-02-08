@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Task, Filters, TasksContextType } from 'types/types'
+import { Task, Filters, TasksContextType, CreateTaskPayload } from 'types/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -211,6 +211,35 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const addSubtask = async (payload: CreateTaskPayload) => {
+    if (!loggedIn) return;
+
+    try {
+      const res = await fetch(`${API_URL}/tasks/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          // ✅ force these so backend doesn't complain + keep semantics clear
+          recurring_task: null,
+          ...payload,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to create subtask");
+      }
+
+      await fetchTasks();
+    } catch (err: any) {
+      setError(err.message || "Failed to add subtask");
+      throw err;
+    }
+  };
+
   const updateTaskAndReload = async (task: Task) => {
     if (!loggedIn) return;
     await fetch(`${API_URL}/tasks/${task.id}/`, {
@@ -267,6 +296,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         tasks,
         setTasks,
         addTask,
+        addSubtask,
         updateTaskAndReload,
         deleteTask,
         fetchTasks,
