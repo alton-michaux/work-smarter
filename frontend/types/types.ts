@@ -35,7 +35,7 @@ export type Task = {
 
   recurring_task?: number | null;
   recurring_task_id?: number | string | null;
-  
+
   user: number;
 };
 
@@ -81,6 +81,7 @@ export type TasksContextType = {
   tasks: Task[];
   setTasks: (tasks: Task[]) => void;
   addTask: (task: Omit<Task, 'id'>) => Promise<void>;
+  addSubtask: (payload: CreateTaskPayload) => Promise<void>;
   updateTaskAndReload: (task: Task) => Promise<void>;
   deleteTask: (task: Task) => Promise<void>;
   fetchTasks: () => Promise<void>;
