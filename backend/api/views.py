@@ -143,6 +143,11 @@ class ExportTasksCSV(APIView):
 class TaskViewSet(viewsets.ModelViewSet):
     pagination_class = TaskCursorPagination
     serializer_class = TaskSerializer
+    
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["user"] = self.request.user
+        return ctx
 
     def get_queryset(self):
         user = self.request.user
@@ -206,15 +211,8 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def create(self, validated_data):
-        request = self.context.get("request")
-        validated_data["user"] = request.user
-        validated_data.pop("is_subtask", None)
-        return super().create(validated_data)
-
-    def update(self, instance, validated_data):
-        validated_data.pop("is_subtask", None)
-        return super().update(instance, validated_data)
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
         
     def destroy(self, request, *args, **kwargs):
         task = self.get_object()
@@ -237,12 +235,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         # default behavior: delete just this task row
         return super().destroy(request, *args, **kwargs)
-    
-    def get_serializer_context(self):
-        ctx = super().get_serializer_context()
-        ctx["user"] = self.request.user
-        return ctx
-        
+            
 class RecurringTaskViewSet(viewsets.ModelViewSet):
     serializer_class = RecurringTaskSerializer
 

@@ -9,14 +9,17 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 class TaskSerializer(serializers.ModelSerializer):
+    print(">>> LOADED TaskSerializer from api.serializers.tasks (or whatever file)")
+
+    begin_date = serializers.DateField(required=False, allow_null=True, default=None)
+    end_date = serializers.DateField(required=False, allow_null=True, default=None)
+
     recurring_task = serializers.PrimaryKeyRelatedField(
         queryset=RecurringTask.objects.all(),
         required=False,
         allow_null=True,
     )
     recurring_task_id = serializers.IntegerField(source="recurring_task.id", read_only=True)
-    is_recurring = serializers.SerializerMethodField()
-    effective_is_done = serializers.SerializerMethodField()
 
     parent = serializers.PrimaryKeyRelatedField(
         required=False,
@@ -24,9 +27,12 @@ class TaskSerializer(serializers.ModelSerializer):
         queryset=Task.objects.none(),
     )
 
+    is_recurring = serializers.SerializerMethodField()
+    effective_is_done = serializers.SerializerMethodField()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        user = self.context.get("user")
+        user = self.context.get("user") or getattr(self.context.get("request"), "user", None)
         if user and user.is_authenticated:
             self.fields["parent"].queryset = Task.objects.filter(user=user)
 
@@ -46,11 +52,9 @@ class TaskSerializer(serializers.ModelSerializer):
         if parent is None:
             return None
 
-        # prevent self-parenting on update
         if self.instance and parent.id == self.instance.id:
             raise serializers.ValidationError("A task cannot be its own parent.")
 
-        # v1 depth limit: parent cannot itself be a subtask
         if parent.parent_id is not None:
             raise serializers.ValidationError("Subtasks cannot have subtasks (max depth is 1).")
 
@@ -58,49 +62,36 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         parent = attrs.get("parent", getattr(self.instance, "parent", None))
-
-        # figure out what begin_date will be after this write
         begin_date = attrs.get("begin_date", getattr(self.instance, "begin_date", None))
 
         if parent is not None:
-            # if child has no begin_date but parent does, copy it (nice UX)
+            # auto-copy begin_date from parent if omitted
             if begin_date is None and parent.begin_date is not None:
                 attrs["begin_date"] = parent.begin_date
                 begin_date = parent.begin_date
 
-            # enforce same-date when both exist
+            # enforce same-date
             if begin_date is not None and parent.begin_date is not None and begin_date != parent.begin_date:
                 raise serializers.ValidationError({
                     "begin_date": "Subtask begin_date must match its parent begin_date."
                 })
 
-            # also: if parent has begin_date but child still ends up None, block
-            # (keeps your daily log semantics consistent)
+            # if parent has begin_date, child must end up with one
             if parent.begin_date is not None and begin_date is None:
                 raise serializers.ValidationError({
                     "begin_date": "Subtask requires a begin_date when parent has a begin_date."
-                })                
-                
-        # if updating a parent that has children, prevent begin_date change
-        if self.instance and getattr(self.instance, "children", None):
-            if self.instance.children.exists():
-                old = self.instance.begin_date
-                new = attrs.get("begin_date", old)
-                if old != new:
-                    raise serializers.ValidationError({
-                        "begin_date": "Cannot change begin_date of a parent task that has subtasks."
-                    })
+                })
 
         return attrs
 
     def create(self, validated_data):
         request = self.context.get("request")
-        validated_data["user"] = request.user  # ✅ enforce ownership
-        validated_data.pop("is_subtask", None) # ✅ ignore client; derived from parent
+        validated_data["user"] = request.user
+        validated_data.pop("is_subtask", None)  # derived
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        validated_data.pop("is_subtask", None) # ✅ ignore client
+        validated_data.pop("is_subtask", None)  # derived
         return super().update(instance, validated_data)
 
     class Meta:
@@ -126,9 +117,11 @@ class TaskSerializer(serializers.ModelSerializer):
             "is_recurring",
         ]
         extra_kwargs = {
-            "user": {"read_only": True},          # ✅ don’t accept user from client
-            "is_subtask": {"read_only": True},    # ✅ derived, not user-controlled
+            "user": {"read_only": True},
+            "is_subtask": {"read_only": True},
             "recurring_task": {"required": False, "allow_null": True},
+            "begin_date": {"required": False, "allow_null": True},
+            "end_date": {"required": False, "allow_null": True},
         }
         
 class RecurringTaskSerializer(serializers.ModelSerializer):
