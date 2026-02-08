@@ -1,6 +1,6 @@
 import React from 'react';
 import { categoryToType } from '../../lib/dailyLog';
-import { OutlineTreeProps, Node } from 'types/types';
+import { OutlineTreeProps, OutlineRowProps } from 'types/types';
 
 function OutlineRow({
   node,
@@ -9,14 +9,7 @@ function OutlineRow({
   onEdit,
   onDelete,
   onToggleDone,
-}: {
-  node: Node;
-  depth: number;
-  onView: (id: number) => void;
-  onEdit: (id: number) => void;
-  onDelete: (task: any) => void;
-  onToggleDone?: (id: number, isDone: boolean) => void;
-}) {
+}: OutlineRowProps ) {
   const type = categoryToType(node.category);
 
   return (

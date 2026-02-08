@@ -11,7 +11,6 @@ const TasksPage = () => {
   const {
     tasks,
     deleteTask,
-    updateTaskAndReload,
     isLoading,
     error,
     fetchTasksByDateRange,

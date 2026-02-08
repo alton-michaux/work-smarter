@@ -168,6 +168,15 @@ export type Filters = {
   active_on?: string;
 };
 
+export type OutlineRowProps = {
+  node: Node;
+  depth: number;
+  onView: (id: number) => void;
+  onEdit: (id: number) => void;
+  onDelete: (task: any) => void;
+  onToggleDone?: (id: number, isDone: boolean) => void;
+}
+
 export type OutlineTreeProps = {
   nodes: Node[];
   depth?: number;
