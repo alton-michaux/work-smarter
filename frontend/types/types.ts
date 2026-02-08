@@ -26,12 +26,36 @@ export type Task = {
   category: string;
   carry_over?: boolean;
   is_subtask?: boolean;
+  
+  parent?: number | null;
+
   project?: number;
   begin_date: string;
   end_date: string;
-  recurring_task?: { frequency?: string | null } | null;
+
+  recurring_task?: number | null;
   recurring_task_id?: number | string | null;
+  
   user: number;
+};
+
+export type CreateTaskPayload = {
+  title: string;
+  begin_date?: string | null;
+  category?: string | null;
+  project?: number | null;
+
+  // ✅ subtasks
+  parent?: number | null;
+
+  // ✅ keep explicit so DRF won't complain
+  recurring_task?: number | null;
+
+  // optional fields you may want to send sometimes
+  description?: string;
+  priority?: string;
+  is_done?: boolean;
+  carry_over?: boolean;
 };
 
 export type TaskLayoutProps = {
