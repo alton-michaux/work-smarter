@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { categoryToType } from '../../lib/dailyLog';
 import { OutlineTreeProps, OutlineRowProps } from 'types/types';
+import { useTasks } from 'context/TasksContext';
 
 function OutlineRow({
   node,
@@ -9,13 +10,43 @@ function OutlineRow({
   onEdit,
   onDelete,
   onToggleDone,
-}: OutlineRowProps ) {
+  onAddSubtask,
+}: OutlineRowProps) {
   const type = categoryToType(node.category);
+
+  const [showSubtask, setShowSubtask] = useState(false);
+  const [subtaskTitle, setSubtaskTitle] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // relies on API field `parent` (number|null)
+  const isSubtask = Boolean(node.parent);
+
+  const effectiveDepth = Math.max(depth, isSubtask ? 1 : 0);
+
+  const submitSubtask = async () => {
+    const title = subtaskTitle.trim();
+    if (!title || !onAddSubtask) return;
+
+    setSaving(true);
+    try {
+      await onAddSubtask({
+        parentId: Number(node.id),
+        title,
+        beginDate: node.begin_date ?? null,
+        category: node.category ?? null,
+        project: node.project ?? null,
+      });
+      setSubtaskTitle('');
+      setShowSubtask(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <li
       className="border-b px-4 py-3 flex justify-between items-start group"
-      style={{ paddingLeft: 16 + depth * 20 }}
+      style={{ paddingLeft: 16 + effectiveDepth * 20 }}
     >
       {/* LEFT/MIDDLE: checkbox + content */}
       <div className="min-w-0 flex-1 flex items-start gap-3">
@@ -38,7 +69,7 @@ function OutlineRow({
           )}
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <button
             type="button"
             onClick={(e) => {
@@ -46,16 +77,13 @@ function OutlineRow({
               onView(Number(node.id));
             }}
             className="text-lg font-semibold text-blue-600 hover:underline text-left block max-w-full truncate"
-            title={node.title}  // tooltip on hover
+            title={node.title}
           >
             <span className="flex items-center gap-2">
               <span className="truncate">{node.title}</span>
 
               {node.is_recurring && (
-                <span
-                  className="text-xs opacity-60"
-                  title="Recurring task"
-                >
+                <span className="text-xs opacity-60" title="Recurring task">
                   🔁
                 </span>
               )}
@@ -65,15 +93,61 @@ function OutlineRow({
           <p className="text-xs text-gray-500 mt-1">
             {(node.priority ?? '').toUpperCase()} • {node.begin_date ?? '—'}
           </p>
+
+          {/* Inline Add Subtask UI */}
+          {!isSubtask && type === 'task' && showSubtask && (
+            <div className="mt-2 pl-7">
+              <div className="flex items-center gap-2">
+                <input
+                  className="w-full rounded border px-2 py-1 text-sm"
+                  placeholder="New subtask..."
+                  value={subtaskTitle}
+                  onChange={(e) => setSubtaskTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setShowSubtask(false);
+                    if (e.key === 'Enter') submitSubtask();
+                  }}
+                  disabled={saving}
+                  autoFocus
+                />
+                <button
+                  className="rounded border px-2 py-1 text-sm"
+                  disabled={saving || !subtaskTitle.trim() || !onAddSubtask}
+                  onClick={submitSubtask}
+                >
+                  Add
+                </button>
+              </div>
+              <div className="mt-1 text-xs text-gray-400">
+                Enter to save • Esc to cancel
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* RIGHT: actions */}
       <div className="flex-shrink-0 group-hover:flex space-x-3">
-        <button onClick={() => onEdit(Number(node.id))} className="text-sm text-yellow-600 hover:text-yellow-800">
+        {/* Add Subtask action (only for non-subtasks and only tasks) */}
+        {!isSubtask && type === 'task' && (
+          <button
+            onClick={() => setShowSubtask((v) => !v)}
+            className="text-sm text-gray-500 hover:text-gray-800"
+          >
+            + Subtask
+          </button>
+        )}
+
+        <button
+          onClick={() => onEdit(Number(node.id))}
+          className="text-sm text-yellow-600 hover:text-yellow-800"
+        >
           Edit
         </button>
-        <button onClick={() => onDelete(node)} className="text-sm text-red-600 hover:text-red-800">
+        <button
+          onClick={() => onDelete(node)}
+          className="text-sm text-red-600 hover:text-red-800"
+        >
           Delete
         </button>
       </div>
@@ -88,7 +162,36 @@ export default function OutlineTree({
   onEdit,
   onDelete,
   onToggleDone,
+  onAddSubtask, // optional override
 }: OutlineTreeProps) {
+  const { addSubtask } = useTasks();
+
+  // Hoisted handler: if parent passes one, use it; otherwise use context addSubtask
+  const handleAddSubtask =
+    onAddSubtask ??
+    (async ({
+      parentId,
+      title,
+      beginDate,
+      category,
+      project,
+    }: {
+      parentId: number;
+      title: string;
+      beginDate?: string | null;
+      category?: string | null;
+      project?: number | null;
+    }) => {
+      await addSubtask({
+        title,
+        parent: parentId,
+        begin_date: beginDate ?? null,
+        category: category ?? null,
+        project: project ?? null,
+        recurring_task: null,
+      });
+    });
+
   return (
     <ul>
       {nodes.map((n) => (
@@ -100,7 +203,9 @@ export default function OutlineTree({
             onEdit={onEdit}
             onDelete={onDelete}
             onToggleDone={onToggleDone}
+            onAddSubtask={handleAddSubtask}
           />
+
           {n.children?.length ? (
             <OutlineTree
               nodes={n.children}
@@ -109,6 +214,7 @@ export default function OutlineTree({
               onEdit={onEdit}
               onDelete={onDelete}
               onToggleDone={onToggleDone}
+              onAddSubtask={handleAddSubtask}
             />
           ) : null}
         </React.Fragment>

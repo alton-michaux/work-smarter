@@ -52,11 +52,11 @@ export function useDailyLog(
   const activeOn = options?.activeOn ?? false;
 
   const dailyTasks = useMemo(() => {
-    activeOn
-      ? tasks = tasks // ✅ trust backend when using active_on
-      : tasks = tasks.filter(t => (t.begin_date ?? '').slice(0, 10) === selectedDate);
-
-      return tasks
+    // Always filter client-side to selectedDate for the Daily Log UI.
+    // Even when active_on is used, the context can still hold tasks from other fetches.
+    return (tasks || []).filter(
+      (t) => (t.begin_date ?? '').slice(0, 10) === selectedDate
+    );
   }, [tasks, selectedDate]);
 
   const sections = useMemo(() => splitIntoSections(dailyTasks), [dailyTasks]);

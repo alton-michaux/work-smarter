@@ -200,6 +200,8 @@ export type OutlineRowProps = {
   onEdit: (id: number) => void;
   onDelete: (task: any) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
+  
+  onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
 }
 
 export type OutlineTreeProps = {
@@ -210,6 +212,8 @@ export type OutlineTreeProps = {
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
+  
+  onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
 };
 
 //--------UI---------//
