@@ -1,8 +1,4 @@
-import { Task } from "types/types";
-
-type Options = {
-  frequency?: "daily" | "weekly" | "monthly";
-};
+import { Task, WeeklyOptions } from "types/types";
 
 function toISODate(d: any): string | null {
   if (!d) return null;
@@ -33,7 +29,7 @@ function isConsecutiveDaily(dates: string[]): boolean {
  */
 export function collapseRecurringTasks<T extends Task>(
   tasks: T[],
-  options: Options = { frequency: "daily" }
+  options: WeeklyOptions = { frequency: "daily" }
 ): (T & {
   __collapsed?: boolean;
   __occurrenceCount?: number;

@@ -1,20 +1,9 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Project, NewProject } from 'types/types';
+import { Project, NewProject, ProjectsContextType } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-type ProjectsContextType = {
-  projects: Project[];  
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
-  addProject: (project: Omit<NewProject, 'id'>) => Promise<void>;
-  updateProject: (project: Project) => Promise<void>;
-  deleteProject: (id: number) => Promise<void>;
-  fetchProjects: () => Promise<void>;
-  isLoading: boolean;
-  error: string | null;
-};
 
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined);
 

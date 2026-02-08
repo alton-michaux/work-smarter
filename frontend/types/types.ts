@@ -1,5 +1,20 @@
 // types.ts
 
+//---------LOCAL-----//
+
+type Grouped<T> = {
+  groups: Record<string, T[]>;
+  sortedDays: string[];
+};
+
+type Action = {
+  label: string;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary';
+};
+
+//------TASK---------//
+
 export type AnyTask = Task & CollapsedMeta;
 
 export type Task = {
@@ -31,56 +46,11 @@ export type TaskLayoutProps = {
   onToggleDone?: (id: number, isDone: boolean) => void;
 };
 
-export type OutlineTreeProps = {
-  nodes: Node[];
-  depth?: number;
-
-  onView: (id: number) => void;
-  onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
-  onToggleDone?: (id: number, isDone: boolean) => void;
-};
-
-export type Node = any;
-
-export type RecurrenceState = {
-  repeats: boolean;
-  frequency: "daily" | "weekly" | "monthly";
-  day_of_week: number; // 0=Mon .. 6=Sun
-  start_date: string;  // YYYY-MM-DD
-};
-
-export type Project = {
-  created: Date;
-  id: number;
-  name: string;
-  tasks?: Task[];
-  user?: number | User;
-};
-
-export type NewProject = {
-  name: string;
-  user: number;
-};
-
-export type ProjectOption = { id: number; name: string };
-
 export type TaskFormProps = {
   initialTask: any;
   onSubmit: (task: any) => void;
   submitLabel: string;
   projects?: ProjectOption[];
-};
-
-export type Filters = {
-  search?: string;
-  project?: number;
-  is_done?: boolean;
-  priority?: string;
-  ordering?: string;
-  begin_date?: string;
-  end_date?: string;
-  active_on?: string;
 };
 
 export type TasksContextType = {
@@ -96,6 +66,44 @@ export type TasksContextType = {
   isLoading: boolean;
   error: string | null;
 };
+
+export type TaskLike = {
+  id: number | string;
+  title: string;
+  begin_date?: string | null;
+  priority?: string | null;
+  is_done?: boolean;
+};
+
+//------PROJECT---------//
+
+export type Project = {
+  created: Date;
+  id: number;
+  name: string;
+  tasks?: Task[];
+  user?: number | User;
+};
+
+export type NewProject = {
+  name: string;
+  user: number;
+};
+
+export type ProjectsContextType = {
+  projects: Project[];  
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  addProject: (project: Omit<NewProject, 'id'>) => Promise<void>;
+  updateProject: (project: Project) => Promise<void>;
+  deleteProject: (id: number) => Promise<void>;
+  fetchProjects: () => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+};
+
+export type ProjectOption = { id: number; name: string };
+
+//------NOTE---------//
 
 export type Note = {
   id: number | string;
@@ -120,11 +128,62 @@ export type NoteProps = {
   variant?: 'default' | 'dashed'; // dashed looks “ongoing”
 };
 
+//------UTILITY---------//
+
+export type Node = any;
+
+export type SystemsContextType = {
+  fileChange: (file: File | null) => void;
+  uploadStatus: string | null;
+  selectedFile: File | null;
+  error: string | null;
+};
+
+export type RecurrenceState = {
+  repeats: boolean;
+  frequency: "daily" | "weekly" | "monthly";
+  day_of_week: number; // 0=Mon .. 6=Sun
+  start_date: string;  // YYYY-MM-DD
+};
+
 export type CollapsedMeta = {
   __collapsed?: boolean;
   __occurrenceCount?: number;
   __firstDate?: string | null;
   __lastDate?: string | null;
+};
+
+export type WeeklyOptions = {
+  frequency?: "daily" | "weekly" | "monthly";
+};
+
+export type Filters = {
+  search?: string;
+  project?: number;
+  is_done?: boolean;
+  priority?: string;
+  ordering?: string;
+  begin_date?: string;
+  end_date?: string;
+  active_on?: string;
+};
+
+export type OutlineTreeProps = {
+  nodes: Node[];
+  depth?: number;
+
+  onView: (id: number) => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
+  onToggleDone?: (id: number, isDone: boolean) => void;
+};
+
+//--------UI---------//
+
+export type EmptyStateProps = {
+  title: string;
+  message?: string;
+  actions?: Action[];
 };
 
 export type TrackerProps = {
@@ -138,12 +197,49 @@ export type TrackerProps = {
   collapsedWork?: Task[];
 };
 
+export type QuickAddProps = {
+  selectedDate: string;
+};
+
 export type DateToggleUIProps = {
   selectedDate: string;
   setSelectedDate: (d: string) => void;
   last7Days: { key: string; label: string }[];
   compact?: boolean;
 }
+
+export type WeekSelectorProps = {
+  selectedWeek: string;
+  onWeekChange: (newWeek: string) => void;
+};
+
+export type ProjectSummaryProps = {
+  totalCount: number;
+  doneCount: number;
+  activeStart: string;
+  activeEnd: string;
+  lastActivity: string;
+
+  remainingPreview: TaskLike[];
+  remainingCount: number;
+  remainingOverflow: number;
+  remainingLimit?: number;
+};
+
+export type ProjectTimelineProps<T extends TaskLike> = {
+  title: string; // "MEETINGS" | "WORK"
+  summaryRight?: React.ReactNode; // e.g. "12 total • 7 done • 5 open"
+  emptyText: string;
+
+  iconFor: (t: T) => React.ReactNode; // 🗓️ or ☐/☑
+  metaFor?: (t: T) => React.ReactNode; // optional second line
+  titleClassFor?: (t: T) => string; // e.g. line-through for done
+
+  grouped: Grouped<T>;
+  onItemClick?: (t: T) => void;
+};
+
+//------AUTH/API---------//
 
 export type User = {
   id: number;
@@ -154,6 +250,28 @@ export type User = {
 export type AuthTokens = {
   access: string;
   refresh: string;
+};
+
+export type AuthContextType = {
+  user: User | null;
+  loggedIn: boolean;
+  isLoading: boolean;
+  error: string | null;
+  setLoggedIn: (v: boolean) => void;
+  register: (form: { email: string; password1: string; password2: string }) => Promise<void>;
+  login: (form: { username: string; password: string }) => Promise<void>;
+  logout: () => Promise<void>;
+  getUser: () => Promise<void>;
+  getAuthHeaders: () => Record<string, string>;
+};
+
+export type APIContextType = {
+  getAuthHeaders: () => Record<string, string>;
+  getAuthHeadersForForm: () => Record<string, string>;
+  fileUpload: (selectedFile: File | null) => Promise<Response | void>;
+  uploadStatus: string | null;
+  isLoading: boolean;
+  error: string | null;
 };
 
 export type RegisterPayload = {

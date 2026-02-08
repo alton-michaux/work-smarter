@@ -1,25 +1,5 @@
 import React from 'react';
-
-type TaskLike = {
-  id: number | string;
-  title: string;
-  begin_date?: string | null;
-  priority?: string | null;
-  is_done?: boolean;
-};
-
-type Props = {
-  totalCount: number;
-  doneCount: number;
-  activeStart: string;
-  activeEnd: string;
-  lastActivity: string;
-
-  remainingPreview: TaskLike[];
-  remainingCount: number;
-  remainingOverflow: number;
-  remainingLimit?: number;
-};
+import { ProjectSummaryProps } from 'types/types';
 
 export default function ProjectSummaryCards({
   totalCount,
@@ -30,7 +10,7 @@ export default function ProjectSummaryCards({
   remainingPreview,
   remainingCount,
   remainingOverflow,
-}: Props) {
+}: ProjectSummaryProps) {
   const progressPct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
 
   return (

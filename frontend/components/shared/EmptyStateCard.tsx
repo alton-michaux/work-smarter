@@ -1,18 +1,7 @@
 import React from 'react';
+import { EmptyStateProps } from 'types/types';
 
-type Action = {
-  label: string;
-  onClick: () => void;
-  variant?: 'primary' | 'secondary';
-};
-
-type Props = {
-  title: string;
-  message?: string;
-  actions?: Action[];
-};
-
-export default function EmptyStateCard({ title, message, actions = [] }: Props) {
+export default function EmptyStateCard({ title, message, actions = [] }: EmptyStateProps) {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-lg w-full text-center">
