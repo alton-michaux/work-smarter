@@ -63,7 +63,16 @@ class Task(models.Model):
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     description = models.TextField(blank=True)
     created_at = models.DateField(auto_now_add=True)
+    
+    parent = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        related_name='children',
+        on_delete=models.SET_NULL,
+    )
     is_subtask = models.BooleanField(default=False)
+    
     carry_over = models.BooleanField(default=True)
     recurring_task = models.ForeignKey(
         RecurringTask,
@@ -82,6 +91,7 @@ class Task(models.Model):
         ]
     
     def save(self, *args, **kwargs):
+        self.is_subtask = self.parent_id is not None
         if self.is_done and self.end_date is None and self.begin_date is not None:
             self.end_date = self.begin_date
         elif self.is_done and self.end_date is None:
