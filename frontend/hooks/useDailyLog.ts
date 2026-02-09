@@ -54,18 +54,24 @@ export function useDailyLog(
   const dailyTasks = useMemo(() => {
     const all = tasks || [];
 
-    // Notes are "ongoing reminders" — keep them regardless of date
-    const notes = all.filter((t) => categoryToType(t.category) === 'note');
+    const notes = all.filter((t) => categoryToType(t.category) === "note");
 
-    // Everything else is day-scoped
+    // ✅ If backend is returning "active on day" tasks,
+    // don't re-filter by begin_date or you'll delete carry-overs.
+    if (activeOn) {
+      const nonNotes = all.filter((t) => categoryToType(t.category) !== "note");
+      return [...nonNotes, ...notes];
+    }
+
+    // Otherwise, classic "day-scoped"
     const dayScoped = all.filter((t) => {
-      const isNote = categoryToType(t.category) === 'note';
+      const isNote = categoryToType(t.category) === "note";
       if (isNote) return false;
-      return (t.begin_date ?? '').slice(0, 10) === selectedDate;
+      return (t.begin_date ?? "").slice(0, 10) === selectedDate;
     });
 
     return [...dayScoped, ...notes];
-  }, [tasks, selectedDate]);
+  }, [tasks, selectedDate, activeOn]);
 
   const sections = useMemo(() => splitIntoSections(dailyTasks), [dailyTasks]);
 

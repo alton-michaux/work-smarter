@@ -114,7 +114,7 @@ class ExportTasksCSV(APIView):
             "priority",
             "parent_id",
             "created_at",
-            "completed_at",
+            "end_date",
             "notes",
         ]
         writer.writerow(header)
@@ -122,7 +122,7 @@ class ExportTasksCSV(APIView):
         for task in qs:
             status = "done" if task.is_done else "todo"
             project_name = task.project.name if task.project_id else ""
-            completed_at = task.end_date.isoformat() if task.is_done and task.end_date else ""
+            end_date = task.end_date.isoformat() if task.is_done and task.end_date else ""
 
             writer.writerow([
                 str(task.id),
@@ -134,7 +134,7 @@ class ExportTasksCSV(APIView):
                 task.priority or "",
                 "",  # parent_id (not supported yet in your schema)
                 task.created_at.isoformat() if task.created_at else "",
-                completed_at,
+                end_date,
                 task.description or "",
             ])
 
@@ -161,6 +161,10 @@ class TaskViewSet(viewsets.ModelViewSet):
                 start_of_week = datetime.strptime(begin_date_str, "%Y-%m-%d").date()
                 end_of_week = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
+                logger.warning(
+                    f"[TaskViewSet] params={dict(self.request.query_params)} "
+                    f"start_of_week={start_of_week} end_of_week={end_of_week}"
+                )
                 # ✅ Generate occurrences for THIS user and THIS range
                 ensure_recurring_tasks_in_range(start_of_week, end_of_week, user=user)
 
@@ -176,14 +180,28 @@ class TaskViewSet(viewsets.ModelViewSet):
 
                         filtered_queryset = queryset.filter(
                             (
-                                # Non-recurring tasks: active on this day (carry-over allowed)
-                                Q(recurring_task__isnull=True, begin_date__lte=day) &
-                                (Q(end_date__isnull=True) | Q(end_date__gte=day))
+                                # Non-recurring tasks:
+                                # - unfinished tasks remain active across days
+                                Q(recurring_task__isnull=True, is_done=False, begin_date__lte=day)
+                                & (Q(end_date__isnull=True) | Q(end_date__gte=day))
                             )
                             |
                             (
-                                # Recurring occurrences: only the occurrence for this day
-                                Q(recurring_task__isnull=False, begin_date=day)
+                                # Non-recurring tasks:
+                                # - finished tasks appear ONLY on completion day
+                                Q(recurring_task__isnull=True, is_done=True, end_date=day)
+                            )
+                            |
+                            (
+                                # Recurring occurrences:
+                                # - unfinished occurrence shows on its day
+                                Q(recurring_task__isnull=False, is_done=False, begin_date=day)
+                            )
+                            |
+                            (
+                                # Recurring occurrences:
+                                # - finished occurrence appears only on completion day
+                                Q(recurring_task__isnull=False, is_done=True, end_date=day)
                             )
                         )
 
@@ -213,6 +231,22 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+        
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        was_done = instance.is_done
+
+        obj = serializer.save()
+
+        # if just marked done, stamp end_date as "completion date"
+        if (not was_done) and obj.is_done and obj.end_date is None:
+            obj.end_date = timezone.localdate()
+            obj.save(update_fields=["end_date"])
+
+        # if un-done, clear the completion date
+        if was_done and (not obj.is_done):
+            obj.end_date = None
+            obj.save(update_fields=["end_date"])
         
     def destroy(self, request, *args, **kwargs):
         task = self.get_object()
