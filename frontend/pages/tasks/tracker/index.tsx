@@ -6,6 +6,7 @@ import WeekSelector from '../../../components/ui/WeekSelector';
 import TaskTable from '../../../components/tasks/TaskTable';
 import Spinner from 'components/shared/Spinner';
 import { collapseRecurringTasks } from "../../../lib/collapseDailyRecurring";
+import { buildSubtaskProgressByParentId } from "lib/subtaskProgress";
 
 export default function TaskTrackerPage() {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
@@ -66,6 +67,11 @@ export default function TaskTrackerPage() {
     [tasks]
   );
 
+  const progressByParentId = useMemo(
+    () => buildSubtaskProgressByParentId(tasks),
+    [tasks]
+  );
+
   // Don't render until selectedWeek is set (avoids hydration mismatch)
   if (!selectedWeek) return null;
 
@@ -100,6 +106,7 @@ export default function TaskTrackerPage() {
                 meetings={collapsedMeetings as any}
                 work={collapsedWork as any}
                 notes={notes}
+                subtaskProgressByParentId={progressByParentId}
               />
             )}
           </div>

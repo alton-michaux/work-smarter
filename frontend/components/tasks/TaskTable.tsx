@@ -2,12 +2,15 @@ import NoteCard from "components/notes/NoteCard";
 import { AnyTask, TrackerProps } from "types/types";
 import { SectionPanel, sectionMaxHeightClass } from "components/ui/trackerSection";
 
+type SubtaskProgress = { done: number; total: number };
+
 export default function TaskTable({
   meetings,
   work,
   collapsedMeetings,
   collapsedWork,
   notes,
+  subtaskProgressByParentId,
 }: TrackerProps) {
   /**
    * Determines if a task is marked as done.
@@ -18,23 +21,51 @@ export default function TaskTable({
   const isAutoDoneMeeting = (t: any) => t.effective_is_done && !t.is_done;
 
   // ✅ Use collapsed arrays if provided; otherwise use original arrays
-  const meetingsToRender = (collapsedMeetings ?? meetings) as AnyTask[];
-  const workToRender = (collapsedWork ?? work) as AnyTask[];
+  const meetingsBase = (collapsedMeetings ?? meetings) as AnyTask[];
+  const workBase = (collapsedWork ?? work) as AnyTask[];
+
+  // ✅ Option 1: hide subtasks in weekly view (show badge on parents only)
+  const meetingsToRender = meetingsBase.filter((t: any) => !t.parent);
+  const workToRender = workBase.filter((t: any) => !t.parent);
 
   const dateLabel = (t: any) => String(t.begin_date ?? "").slice(0, 10);
+
+  const progressBadge = (t: AnyTask) => {
+    const prog = subtaskProgressByParentId?.[Number(t.id)];
+    if (!prog || prog.total <= 0) return null;
+
+    return (
+      <span
+        className="text-[11px] px-2 py-0.5 rounded border text-gray-500 whitespace-nowrap"
+        title="Subtask progress"
+      >
+        {prog.done}/{prog.total}
+      </span>
+    );
+  };
 
   return (
     <>
       {/* MEETINGS */}
       <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`}>
-        <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
+        <div
+          className={`${sectionMaxHeightClass(
+            meetingsToRender.length
+          )} overflow-auto rounded-lg border bg-blue-50/40`}
+        >
           <div className="rounded-lg border bg-blue-50/40">
             <table className="w-full text-sm table-fixed">
               <thead className="text-[11px] text-gray-600">
                 <tr className="border-b">
-                  <th className="px-3 py-1.5 text-left uppercase tracking-wide">Title</th>
-                  <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">Date</th>
-                  <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">Priority</th>
+                  <th className="px-3 py-1.5 text-left uppercase tracking-wide">
+                    Title
+                  </th>
+                  <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">
+                    Date
+                  </th>
+                  <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">
+                    Priority
+                  </th>
                 </tr>
               </thead>
 
@@ -56,12 +87,17 @@ export default function TaskTable({
 
                         <span
                           className={`min-w-0 truncate font-medium leading-tight ${
-                            isDone(t) ? "text-gray-500 line-through" : "text-gray-900"
+                            isDone(t)
+                              ? "text-gray-500 line-through"
+                              : "text-gray-900"
                           }`}
                           title={t.title}
                         >
                           {t.title}
                         </span>
+
+                        {/* Weekly: show subtask progress badge on parent rows */}
+                        {progressBadge(t)}
 
                         {t.__collapsed ? (
                           <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
@@ -71,15 +107,21 @@ export default function TaskTable({
                       </div>
                     </td>
 
-                    <td className="px-3 py-2 text-gray-600">{dateLabel(t)}</td>
-                    <td className="px-3 py-2 text-gray-600">{(t as any).priority}</td>
+                    <td className="px-3 py-2 text-gray-600">
+                      {dateLabel(t)}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600">
+                      {(t as any).priority}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
 
             {!meetingsToRender.length && (
-              <div className="px-4 py-3 text-sm text-gray-500">No meetings this week.</div>
+              <div className="px-4 py-3 text-sm text-gray-500">
+                No meetings this week.
+              </div>
             )}
           </div>
         </div>
@@ -87,14 +129,26 @@ export default function TaskTable({
 
       {/* WORK */}
       <SectionPanel title="WORK" right={`${workToRender.length} total`}>
-          <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
-            <table className="w-full text-sm table-fixed">
-              <thead className="text-[11px] text-gray-600">
-                <tr className="border-b">
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide">Task</th>
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">Date</th>
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-36">Category</th>
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">Priority</th>
+        <div
+          className={`${sectionMaxHeightClass(
+            workToRender.length
+          )} overflow-auto rounded-lg border bg-blue-50/40`}
+        >
+          <table className="w-full text-sm table-fixed">
+            <thead className="text-[11px] text-gray-600">
+              <tr className="border-b">
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide">
+                  Task
+                </th>
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">
+                  Date
+                </th>
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-36">
+                  Category
+                </th>
+                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">
+                  Priority
+                </th>
               </tr>
             </thead>
 
@@ -110,12 +164,17 @@ export default function TaskTable({
                     <div className="min-w-0 flex items-center gap-2">
                       <div
                         className={`font-medium truncate leading-tight ${
-                          isDone(t) ? "text-gray-500 line-through" : "text-gray-900"
+                          isDone(t)
+                            ? "text-gray-500 line-through"
+                            : "text-gray-900"
                         }`}
                         title={t.title}
                       >
                         {t.title}
                       </div>
+
+                      {/* Weekly: show subtask progress badge on parent rows */}
+                      {progressBadge(t)}
 
                       {t.__collapsed ? (
                         <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
@@ -126,8 +185,12 @@ export default function TaskTable({
                   </td>
 
                   <td className="p-3 text-gray-600">{dateLabel(t)}</td>
-                  <td className="p-3 text-gray-600">{(t as any).category ?? "—"}</td>
-                  <td className="p-3 text-gray-600">{(t as any).priority ?? "—"}</td>
+                  <td className="p-3 text-gray-600">
+                    {(t as any).category ?? "—"}
+                  </td>
+                  <td className="p-3 text-gray-600">
+                    {(t as any).priority ?? "—"}
+                  </td>
                 </tr>
               ))}
 
@@ -142,10 +205,14 @@ export default function TaskTable({
           </table>
         </div>
       </SectionPanel>
-      
+
       {/* NOTES */}
-      <SectionPanel title="NOTES" right="Ongoing">        
-        <div className={`${sectionMaxHeightClass(notes.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
+      <SectionPanel title="NOTES" right="Ongoing">
+        <div
+          className={`${sectionMaxHeightClass(
+            notes.length
+          )} overflow-auto rounded-lg border bg-blue-50/40`}
+        >
           {notes.length ? (
             <div className="space-y-3">
               {notes.map((n: any) => (
@@ -153,7 +220,7 @@ export default function TaskTable({
               ))}
             </div>
           ) : (
-            <div className="text-sm text-gray-500 rounded-lg border bg-blue-50/40">No notes this week.</div>
+            <div className="px-4 py-3 text-sm text-gray-500">No notes.</div>
           )}
         </div>
       </SectionPanel>
