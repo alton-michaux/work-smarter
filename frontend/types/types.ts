@@ -100,6 +100,11 @@ export type TaskLike = {
   is_done?: boolean;
 };
 
+export type SubtaskProgress = {
+  done: number;
+  total: number;
+};
+
 //------PROJECT---------//
 
 export type Project = {

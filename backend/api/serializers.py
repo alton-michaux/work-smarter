@@ -9,8 +9,6 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 class TaskSerializer(serializers.ModelSerializer):
-    print(">>> LOADED TaskSerializer from api.serializers.tasks (or whatever file)")
-
     begin_date = serializers.DateField(required=False, allow_null=True, default=None)
     end_date = serializers.DateField(required=False, allow_null=True, default=None)
 
