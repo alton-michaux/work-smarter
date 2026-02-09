@@ -1,9 +1,4 @@
-import type { Task } from "types/types";
-
-export type SubtaskProgress = {
-  done: number;
-  total: number;
-};
+import type { Task, SubtaskProgress } from "types/types";
 
 export function buildSubtaskProgressByParentId(tasks: Task[]): Record<number, SubtaskProgress> {
   const progress: Record<number, SubtaskProgress> = {};
