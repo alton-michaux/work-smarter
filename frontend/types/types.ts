@@ -212,7 +212,7 @@ export type OutlineTreeProps = {
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
-  
+
   onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
 };
 
@@ -233,6 +233,8 @@ export type TrackerProps = {
   // OPTIONAL: only used by Weekly Tracker (daily log can ignore)
   collapsedMeetings?: Task[];
   collapsedWork?: Task[];
+
+  subtaskProgressByParentId?: Record<number, { done: number; total: number }>;
 };
 
 export type QuickAddProps = {
