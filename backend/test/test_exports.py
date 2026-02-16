@@ -64,7 +64,6 @@ def test_export_csv_returns_csv_headers(auth_client, export_tasks_csv_url):
       "recurring_task",
       "created_at",
       "completed_at",
-      "end_date",
       "notes",
     ]
     assert header == expected_header
@@ -117,7 +116,7 @@ def test_export_csv_only_includes_requesting_users_tasks(
 
 
 @pytest.mark.django_db
-def test_export_csv_includes_subtask_parent_id_when_present(
+def test_export_csv_includes_subtask_parent_when_present(
     auth_client,
     export_tasks_csv_url,
     create_task,
@@ -135,11 +134,11 @@ def test_export_csv_includes_subtask_parent_id_when_present(
     rows = _read_csv_rows(resp)
     header = rows[0]
     title_idx = header.index("title")
-    parent_id_idx = header.index("parent_id")
+    parent_idx = header.index("parent")
 
     # Find the exported row for "Child"
     child_rows = [r for r in rows[1:] if len(r) > title_idx and r[title_idx] == "Child"]
     assert child_rows, "Expected Child task to be in CSV export"
 
     # parent_id should match the parent's id (as a string in CSV)
-    assert child_rows[0][parent_id_idx] == str(parent.id)
+    assert child_rows[0][parent_idx] == str(parent)
