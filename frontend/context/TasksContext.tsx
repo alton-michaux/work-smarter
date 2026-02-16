@@ -252,15 +252,26 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const updateTaskAndReload = async (task: Task) => {
     if (!loggedIn) return;
-    await fetch(`${API_URL}/tasks/${task.id}/`, {
-      method: 'PUT',
+
+    const res = await fetch(`${API_URL}/tasks/${task.id}/`, {
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...getAuthHeaders(),
       },
       body: JSON.stringify(task),
     });
-    await fetchTasks();
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to update task: ${text}`);
+    }
+
+    const updated = await res.json();
+
+    setTasks((prev) =>
+      prev.map((t: any) => (Number(t.id) === Number(updated.id) ? { ...t, ...updated } : t))
+    );
   };
 
   const deleteTask = async (taskOrId: any) => {
