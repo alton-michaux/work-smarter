@@ -204,7 +204,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(`Failed to create task: ${text}`);
       }
 
-      await fetchTasks();
+      const day = (taskPayload.begin_date ?? "").slice(0, 10);
+      if (day) {
+        await fetchTasksByDateRange(day, day, day);
+      } else {
+        await fetchTasks();
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to add task');
       throw err;
@@ -233,7 +238,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(text || "Failed to create subtask");
       }
 
-      await fetchTasks();
+      const day = (payload.begin_date ?? "").slice(0, 10);
+      if (day) {
+        await fetchTasksByDateRange(day, day, day);
+      } else {
+        await fetchTasks();
+      }
     } catch (err: any) {
       setError(err.message || "Failed to add subtask");
       throw err;
@@ -287,7 +297,24 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(`Failed to delete task: ${text}`);
     }
 
-    await fetchTasks();
+    setTasks((prev) => {
+      // If we deleted a whole recurring series, remove all occurrences we have in memory
+      const recurringId =
+        typeof taskOrId === "object"
+          ? (taskOrId?.recurring_task_id ??
+            (typeof taskOrId?.recurring_task === "number"
+              ? taskOrId.recurring_task
+              : taskOrId?.recurring_task?.id) ??
+            null)
+          : null;
+
+      if (isRecurring && recurringId) {
+        return prev.filter((t: any) => (t.recurring_task_id ?? t.recurring_task) !== recurringId);
+      }
+
+      // Otherwise delete just the one row
+      return prev.filter((t: any) => Number(t.id) !== Number(id));
+    });
   };
 
   return (
