@@ -106,15 +106,17 @@ class ExportTasksCSV(APIView):
 
         header = [
             "id",
-            "date",
+            "begin_date",
             "project",
             "category",
             "title",
             "status",
+            "is_done",
             "priority",
-            "parent_id",
+            "parent",
+            "recurring_task",
             "created_at",
-            "end_date",
+            "completed_at",
             "notes",
         ]
         writer.writerow(header)
@@ -131,8 +133,10 @@ class ExportTasksCSV(APIView):
                 task.category,
                 task.title or "",
                 status,
+                task.is_done,
                 task.priority or "",
-                "",  # parent_id (not supported yet in your schema)
+                task.parent_id,  
+                task.recurring_task_id,
                 task.created_at.isoformat() if task.created_at else "",
                 end_date,
                 task.description or "",
