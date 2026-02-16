@@ -209,20 +209,27 @@ class TaskViewSet(viewsets.ModelViewSet):
                     except ValueError as e:
                         logger.warning(f"Invalid active_on format: {e}")
                 else:
-                    # Weekly
+                    # Weekly (tracker)
                     queryset = queryset.filter(
-                        Q(end_date__isnull=True, begin_date__range=(start_of_week, end_of_week))
-                        |
-                        Q(begin_date__range=(start_of_week, end_of_week), end_date__range=(start_of_week, end_of_week))
-                        |
                         (
-                            Q(recurring_task__isnull=True, end_date__isnull=True, is_done=False, begin_date__lte=end_of_week)
-                            |
-                            Q(recurring_task__isnull=False, end_date__isnull=True, is_done=False, begin_date__range=(start_of_week, end_of_week))
+                            # Non-recurring tasks:
+                            # - show if still active this week (not done, began on/before end of week)
+                            # - OR show if completed this week (end_date in week)
+                            Q(recurring_task__isnull=True) &
+                            Q(begin_date__lte=end_of_week) &
+                            (
+                                Q(is_done=False) |
+                                Q(end_date__range=(start_of_week, end_of_week))
+                            )
                         )
                         |
-                        Q(begin_date__isnull=True, end_date__range=(start_of_week, end_of_week))
+                        (
+                            # Recurring occurrences are day-scoped rows, so only include occurrences in the week
+                            Q(recurring_task__isnull=False) &
+                            Q(begin_date__range=(start_of_week, end_of_week))
+                        )
                     )
+                    return queryset
 
             except ValueError as e:
                 logger.warning(f"Invalid date format in get_queryset: {e}")

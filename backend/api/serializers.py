@@ -86,10 +86,27 @@ class TaskSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         validated_data["user"] = request.user
         validated_data.pop("is_subtask", None)  # derived
+
+        # If created as done, stamp end_date if missing
+        if validated_data.get("is_done") and not validated_data.get("end_date"):
+            validated_data["end_date"] = timezone.localdate()
+
         return super().create(validated_data)
+
 
     def update(self, instance, validated_data):
         validated_data.pop("is_subtask", None)  # derived
+
+        next_done = validated_data.get("is_done", instance.is_done)
+
+        # Transition: not done → done
+        if next_done and not instance.is_done:
+            validated_data.setdefault("end_date", timezone.localdate())
+
+        # Transition: done → not done
+        if not next_done and instance.is_done:
+            validated_data["end_date"] = None
+
         return super().update(instance, validated_data)
 
     class Meta:
