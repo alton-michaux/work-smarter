@@ -1,26 +1,27 @@
-import { useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { useAuth } from '../context/AuthContext';
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+import { useAuth } from "../context/AuthContext"; // adjust path
 
-function Logout() {
-    // const router = useRouter();
-    const { setLoggedIn, logout, error } = useAuth();
+export default function LogoutPage() {
+  const router = useRouter();
+  const { logout } = useAuth();
 
-    // useEffect(() => {
-    //     const logout_user = async () => {
-    //         logout()
-    //     };
-    //     logout_user();
-    // }, [setLoggedIn, router]);
+  useEffect(() => {
+    // run once on client
+    (async () => {
+      try {
+        await logout(); // should clear tokens + user state
+      } finally {
+        router.replace("/"); // hard redirect away from the dead-end page
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    return (
-        <div>
-            <p>Logging out...</p>
-            {error && (
-                <p className="text-red-600 text-sm font-medium">{error}</p>
-            )}
-        </div>
-    );
+  return (
+    <div style={{ padding: 24 }}>
+      <h1>Work Smarter</h1>
+      <p>Logging out…</p>
+    </div>
+  );
 }
-
-export default Logout;
