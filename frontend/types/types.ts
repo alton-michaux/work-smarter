@@ -1,5 +1,22 @@
 // types.ts
 
+//---------LOCAL-----//
+
+type Grouped<T> = {
+  groups: Record<string, T[]>;
+  sortedDays: string[];
+};
+
+type Action = {
+  label: string;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary';
+};
+
+//------TASK---------//
+
+export type AnyTask = Task & CollapsedMeta;
+
 export type Task = {
   id: number;
   title: string;
@@ -9,11 +26,86 @@ export type Task = {
   category: string;
   carry_over?: boolean;
   is_subtask?: boolean;
+  
+  parent?: number | null;
+
   project?: number;
   begin_date: string;
   end_date: string;
+
+  recurring_task?: { frequency?: string | null } | null;
+  recurring_task_id?: number | string | null;
+
   user: number;
 };
+
+export type CreateTaskPayload = {
+  title: string;
+  begin_date?: string | null;
+  category?: string | null;
+  project?: number | null;
+
+  // ✅ subtasks
+  parent?: number | null;
+
+  // ✅ keep explicit so DRF won't complain
+  recurring_task?: number | null;
+
+  // optional fields you may want to send sometimes
+  description?: string;
+  priority?: string;
+  is_done?: boolean;
+  carry_over?: boolean;
+};
+
+export type TaskLayoutProps = {
+  sections: {
+    meetings: any[];
+    tasks: any[];
+    notes: any[];
+  };
+  onView: (id: number) => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
+  onToggleDone?: (id: number, isDone: boolean) => void;
+};
+
+export type TaskFormProps = {
+  initialTask: any;
+  onSubmit: (task: any) => void;
+  submitLabel: string;
+  projects?: ProjectOption[];
+};
+
+export type TasksContextType = {
+  tasks: Task[];
+  setTasks: (tasks: Task[]) => void;
+  addTask: (task: Omit<Task, 'id'>) => Promise<void>;
+  addSubtask: (payload: CreateTaskPayload) => Promise<void>;
+  updateTaskAndReload: (task: Task) => Promise<void>;
+  deleteTask: (task: Task) => Promise<void>;
+  fetchTasks: () => Promise<void>;
+  fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
+  fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
+  toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+};
+
+export type TaskLike = {
+  id: number | string;
+  title: string;
+  begin_date?: string | null;
+  priority?: string | null;
+  is_done?: boolean;
+};
+
+export type SubtaskProgress = {
+  done: number;
+  total: number;
+};
+
+//------PROJECT---------//
 
 export type Project = {
   created: Date;
@@ -28,6 +120,172 @@ export type NewProject = {
   user: number;
 };
 
+export type ProjectsContextType = {
+  projects: Project[];  
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  addProject: (project: Omit<NewProject, 'id'>) => Promise<void>;
+  updateProject: (project: Project) => Promise<void>;
+  deleteProject: (id: number) => Promise<void>;
+  fetchProjects: () => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+};
+
+export type ProjectOption = { id: number; name: string };
+
+//------NOTE---------//
+
+export type Note = {
+  id: number | string;
+  title?: string;
+  begin_date?: string | null;
+  priority?: string | null;
+  category?: string | null;
+  description?: string;
+  is_done: boolean;
+};
+
+export type NoteProps = {
+  note: Note;
+
+  // optional actions (daily log uses these; weekly tracker can omit)
+  onView?: (id: number) => void;
+  onEdit?: (id: number) => void;
+  onDelete?: (id: number) => void;
+
+  // display tweaks
+  showMeta?: boolean;      // date/priority line
+  variant?: 'default' | 'dashed'; // dashed looks “ongoing”
+};
+
+//------UTILITY---------//
+
+export type Node = any;
+
+export type SystemsContextType = {
+  fileChange: (file: File | null) => void;
+  uploadStatus: string | null;
+  selectedFile: File | null;
+  error: string | null;
+};
+
+export type RecurrenceState = {
+  repeats: boolean;
+  frequency: "daily" | "weekly" | "monthly";
+  day_of_week: number; // 0=Mon .. 6=Sun
+  start_date: string;  // YYYY-MM-DD
+};
+
+export type CollapsedMeta = {
+  __collapsed?: boolean;
+  __occurrenceCount?: number;
+  __firstDate?: string | null;
+  __lastDate?: string | null;
+};
+
+export type WeeklyOptions = {
+  frequency?: "daily" | "weekly" | "monthly";
+};
+
+export type Filters = {
+  search?: string;
+  project?: number;
+  is_done?: boolean;
+  priority?: string;
+  ordering?: string;
+  begin_date?: string;
+  end_date?: string;
+  active_on?: string;
+};
+
+export type OutlineRowProps = {
+  node: Node;
+  depth: number;
+  onView: (id: number) => void;
+  onEdit: (id: number) => void;
+  onDelete: (task: any) => void;
+  onToggleDone?: (id: number, isDone: boolean) => void;
+  
+  onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
+}
+
+export type OutlineTreeProps = {
+  nodes: Node[];
+  depth?: number;
+
+  onView: (id: number) => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
+  onToggleDone?: (id: number, isDone: boolean) => void;
+
+  onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
+};
+
+//--------UI---------//
+
+export type EmptyStateProps = {
+  title: string;
+  message?: string;
+  actions?: Action[];
+};
+
+export type TrackerProps = {
+  tasks: Task[];     // kept for backwards compatibility even if unused here
+  meetings: Task[];
+  work: Task[];
+  notes
+
+  // OPTIONAL: only used by Weekly Tracker (daily log can ignore)
+  collapsedMeetings?: Task[];
+  collapsedWork?: Task[];
+
+  subtaskProgressByParentId?: Record<number, { done: number; total: number }>;
+};
+
+export type QuickAddProps = {
+  selectedDate: string;
+};
+
+export type DateToggleUIProps = {
+  selectedDate: string;
+  setSelectedDate: (d: string) => void;
+  last7Days: { key: string; label: string }[];
+  compact?: boolean;
+}
+
+export type WeekSelectorProps = {
+  selectedWeek: string;
+  onWeekChange: (newWeek: string) => void;
+};
+
+export type ProjectSummaryProps = {
+  totalCount: number;
+  doneCount: number;
+  activeStart: string;
+  activeEnd: string;
+  lastActivity: string;
+
+  remainingPreview: TaskLike[];
+  remainingCount: number;
+  remainingOverflow: number;
+  remainingLimit?: number;
+};
+
+export type ProjectTimelineProps<T extends TaskLike> = {
+  title: string; // "MEETINGS" | "WORK"
+  summaryRight?: React.ReactNode; // e.g. "12 total • 7 done • 5 open"
+  emptyText: string;
+
+  iconFor: (t: T) => React.ReactNode; // 🗓️ or ☐/☑
+  metaFor?: (t: T) => React.ReactNode; // optional second line
+  titleClassFor?: (t: T) => string; // e.g. line-through for done
+
+  grouped: Grouped<T>;
+  onItemClick?: (t: T) => void;
+};
+
+//------AUTH/API---------//
+
 export type User = {
   id: number;
   username: string;
@@ -37,6 +295,28 @@ export type User = {
 export type AuthTokens = {
   access: string;
   refresh: string;
+};
+
+export type AuthContextType = {
+  user: User | null;
+  loggedIn: boolean;
+  isLoading: boolean;
+  error: string | null;
+  setLoggedIn: (v: boolean) => void;
+  register: (form: { email: string; password1: string; password2: string }) => Promise<void>;
+  login: (form: { username: string; password: string }) => Promise<void>;
+  logout: () => Promise<void>;
+  getUser: () => Promise<void>;
+  getAuthHeaders: () => Record<string, string>;
+};
+
+export type APIContextType = {
+  getAuthHeaders: () => Record<string, string>;
+  getAuthHeadersForForm: () => Record<string, string>;
+  fileUpload: (selectedFile: File | null) => Promise<Response | void>;
+  uploadStatus: string | null;
+  isLoading: boolean;
+  error: string | null;
 };
 
 export type RegisterPayload = {

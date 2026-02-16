@@ -1,14 +1,6 @@
 // context/APIContext.tsx
 import React, { useState, createContext, useContext, ReactNode } from 'react';
-
-type APIContextType = {
-  getAuthHeaders: () => Record<string, string>;
-  getAuthHeadersForForm: () => Record<string, string>;
-  fileUpload: (selectedFile: File | null) => Promise<Response | void>;
-  uploadStatus: string | null;
-  isLoading: boolean;
-  error: string | null;
-};
+import { APIContextType } from 'types/types';
 
 const APIContext = createContext<APIContextType | undefined>(undefined);
 

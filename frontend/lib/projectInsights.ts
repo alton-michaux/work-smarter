@@ -1,14 +1,3 @@
-// lib/projectInsights.ts
-
-export type TaskLike = {
-  id: number | string;
-  title: string;
-  begin_date?: string | null;
-  category?: string | null;
-  priority?: string | null;
-  is_done?: boolean;
-};
-
 export function taskDay(t: any) {
   return (t.begin_date ?? '').slice(0, 10);
 }

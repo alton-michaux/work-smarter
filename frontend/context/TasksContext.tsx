@@ -1,33 +1,9 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Task } from 'types/types'
+import { Task, Filters, TasksContextType, CreateTaskPayload } from 'types/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-type Filters = {
-  search?: string;
-  project?: number;
-  is_done?: boolean;
-  priority?: string;
-  ordering?: string;
-  begin_date?: string;
-  end_date?: string;
-  active_on?: string;
-};
-
-type TasksContextType = {
-  tasks: Task[];
-  setTasks: (tasks: Task[]) => void;
-  addTask: (task: Omit<Task, 'id'>) => Promise<void>;
-  updateTaskAndReload: (task: Task) => Promise<void>;
-  deleteTask: (id: number) => Promise<void>;
-  fetchTasks: () => Promise<void>;
-  fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
-  toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
-  isLoading: boolean;
-  error: string | null;
-};
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
@@ -105,6 +81,34 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   }, [loggedIn, getAuthHeaders]);
+
+  const fetchRecurringTemplate = async (recurring_task_id: number, initialTask: any, setRecurrence: any) => {
+    if (!loggedIn) return;
+    setError(null)
+    try {
+      const res = await fetch(`${API_URL}/recurring-tasks/${recurring_task_id}/`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+      });
+
+      if (!res.ok) return; // silently skip; repeats remains checked
+
+      const rt = await res.json();
+
+      setRecurrence((prev) => ({
+        ...prev,
+        repeats: true,
+        frequency: rt.frequency ?? prev.frequency,
+        day_of_week: rt.day_of_week ?? prev.day_of_week,
+        start_date: rt.start_date ?? initialTask?.begin_date ?? prev.start_date,
+      }));
+    } catch (err: any) {
+      setError(err.message || 'unknown error');
+      console.error(err);
+    }
+  }
 
   const toggleTaskDone = async (taskId: number, nextDone: boolean) => {
     if (!loggedIn) return;
@@ -200,39 +204,128 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(`Failed to create task: ${text}`);
       }
 
-      await fetchTasks();
+      const day = (taskPayload.begin_date ?? "").slice(0, 10);
+      if (day) {
+        await fetchTasksByDateRange(day, day, day);
+      } else {
+        await fetchTasks();
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to add task');
       throw err;
     }
   };
 
+  const addSubtask = async (payload: CreateTaskPayload) => {
+    if (!loggedIn) return;
+
+    try {
+      const res = await fetch(`${API_URL}/tasks/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          // ✅ force these so backend doesn't complain + keep semantics clear
+          recurring_task: null,
+          ...payload,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to create subtask");
+      }
+
+      const day = (payload.begin_date ?? "").slice(0, 10);
+      if (day) {
+        await fetchTasksByDateRange(day, day, day);
+      } else {
+        await fetchTasks();
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to add subtask");
+      throw err;
+    }
+  };
+
   const updateTaskAndReload = async (task: Task) => {
     if (!loggedIn) return;
-    await fetch(`${API_URL}/tasks/${task.id}/`, {
-      method: 'PUT',
+
+    const res = await fetch(`${API_URL}/tasks/${task.id}/`, {
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...getAuthHeaders(),
       },
       body: JSON.stringify(task),
     });
-    await fetchTasks();
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to update task: ${text}`);
+    }
+
+    const updated = await res.json();
+
+    setTasks((prev) =>
+      prev.map((t: any) => (Number(t.id) === Number(updated.id) ? { ...t, ...updated } : t))
+    );
   };
 
-  const deleteTask = async (id: number) => {
+  const deleteTask = async (taskOrId: any) => {
     if (!loggedIn) return;
 
-    const numericId = Number(id);
-    
-    const res = await fetch(`${API_URL}/tasks/${numericId}/`, { 
-      method: "DELETE", 
-      headers: getAuthHeaders() 
+    const id =
+      typeof taskOrId === "number"
+        ? taskOrId
+        : (taskOrId?.id ?? taskOrId?.task?.id ?? taskOrId?.pk);
+
+    if (!id) {
+      // fail loudly with context so we find the call site fast
+      console.error("deleteTask called without an id. Argument was:", taskOrId);
+      throw new Error("Failed to delete task: missing task id");
+    }
+
+    const isRecurring =
+      typeof taskOrId === "object" &&
+      Boolean(taskOrId?.recurring_task_id || taskOrId?.recurring_task);
+
+    const url = isRecurring
+      ? `${API_URL}/tasks/${id}/?delete_series=1`
+      : `${API_URL}/tasks/${id}/`;
+
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        ...getAuthHeaders(),
+      },
     });
 
-    if (!res.ok) throw new Error("Delete failed");
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to delete task: ${text}`);
+    }
 
-    setTasks(prev => prev.filter(t => t.id !== numericId));
+    setTasks((prev) => {
+      // If we deleted a whole recurring series, remove all occurrences we have in memory
+      const recurringId =
+        typeof taskOrId === "object"
+          ? (taskOrId?.recurring_task_id ??
+            (typeof taskOrId?.recurring_task === "number"
+              ? taskOrId.recurring_task
+              : taskOrId?.recurring_task?.id) ??
+            null)
+          : null;
+
+      if (isRecurring && recurringId) {
+        return prev.filter((t: any) => (t.recurring_task_id ?? t.recurring_task) !== recurringId);
+      }
+
+      // Otherwise delete just the one row
+      return prev.filter((t: any) => Number(t.id) !== Number(id));
+    });
   };
 
   return (
@@ -241,10 +334,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         tasks,
         setTasks,
         addTask,
+        addSubtask,
         updateTaskAndReload,
         deleteTask,
         fetchTasks,
         fetchTasksByDateRange,
+        fetchRecurringTemplate,
         toggleTaskDone,
         isLoading,
         error,

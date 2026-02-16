@@ -1,9 +1,6 @@
-type Props = {
-  selectedWeek: string;
-  onWeekChange: (newWeek: string) => void;
-};
+import { WeekSelectorProps } from "types/types";
 
-export default function WeekSelector({ selectedWeek, onWeekChange }: Props) {
+export default function WeekSelector({ selectedWeek, onWeekChange }: WeekSelectorProps) {
   const changeWeek = (offset: number) => {
     const current = new Date(selectedWeek);
     current.setDate(current.getDate() + offset * 7);

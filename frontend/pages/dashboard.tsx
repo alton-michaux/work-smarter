@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import withAuth from '../utils/withAuth';
+import withAuth from '../lib/withAuth';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import { useTasks } from '../context/TasksContext';

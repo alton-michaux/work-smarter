@@ -1,5 +1,3 @@
-type BlockType = 'task' | 'meeting' | 'note';
-
 export function categoryToType(category?: string | null) {
   const c = (category ?? '').trim().toLowerCase();
   if (c === 'meetings' || c === 'meeting') return 'meeting';
@@ -7,8 +5,8 @@ export function categoryToType(category?: string | null) {
   return 'task'; // default
 }
 
-export function buildTree<T extends { id: any; parent_id?: any | null }>(rows: T[]) {
-  const byId = new Map<any, T & { children: any[] }>();
+export function buildTree<T extends { id: any; parent?: any | null; parent_id?: any | null }>(rows: T[]) {
+  const byId = new Map<any, (T & { children: any[] })>();
   const roots: Array<T & { children: any[] }> = [];
 
   // init
@@ -17,8 +15,11 @@ export function buildTree<T extends { id: any; parent_id?: any | null }>(rows: T
   // link
   for (const r of rows) {
     const node = byId.get(r.id)!;
-    const parentId = r.parent_id ?? null;
-    if (parentId && byId.has(parentId)) {
+
+    // Prefer API field `parent`, but support legacy `parent_id` too
+    const parentId = (r as any).parent ?? (r as any).parent_id ?? null;
+
+    if (parentId != null && byId.has(parentId)) {
       byId.get(parentId)!.children.push(node);
     } else {
       roots.push(node);

@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
+import { QuickAddProps } from 'types/types';
 
-type Props = {
-  selectedDate: string;
-};
-
-export default function QuickAddBar({ selectedDate }: Props) {
+export default function QuickAddBar({ selectedDate }: QuickAddProps) {
   const router = useRouter();
   const [text, setText] = useState('');
 

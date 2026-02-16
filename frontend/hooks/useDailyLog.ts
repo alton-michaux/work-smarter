@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { splitIntoSections } from '../lib/dailyLog';
+import { splitIntoSections, categoryToType } from '../lib/dailyLog';
 
 function todayYMD() {
   const d = new Date();
@@ -52,12 +52,26 @@ export function useDailyLog(
   const activeOn = options?.activeOn ?? false;
 
   const dailyTasks = useMemo(() => {
-    activeOn
-      ? tasks = tasks // ✅ trust backend when using active_on
-      : tasks = tasks.filter(t => (t.begin_date ?? '').slice(0, 10) === selectedDate);
+    const all = tasks || [];
 
-      return tasks
-  }, [tasks, selectedDate]);
+    const notes = all.filter((t) => categoryToType(t.category) === "note");
+
+    // ✅ If backend is returning "active on day" tasks,
+    // don't re-filter by begin_date or you'll delete carry-overs.
+    if (activeOn) {
+      const nonNotes = all.filter((t) => categoryToType(t.category) !== "note");
+      return [...nonNotes, ...notes];
+    }
+
+    // Otherwise, classic "day-scoped"
+    const dayScoped = all.filter((t) => {
+      const isNote = categoryToType(t.category) === "note";
+      if (isNote) return false;
+      return (t.begin_date ?? "").slice(0, 10) === selectedDate;
+    });
+
+    return [...dayScoped, ...notes];
+  }, [tasks, selectedDate, activeOn]);
 
   const sections = useMemo(() => splitIntoSections(dailyTasks), [dailyTasks]);
 
