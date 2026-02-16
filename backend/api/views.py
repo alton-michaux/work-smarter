@@ -213,20 +213,29 @@ class TaskViewSet(viewsets.ModelViewSet):
                     queryset = queryset.filter(
                         (
                             # Non-recurring tasks:
-                            # - show if still active this week (not done, began on/before end of week)
+                            # - show if still active during this week (not done)
                             # - OR show if completed this week (end_date in week)
                             Q(recurring_task__isnull=True) &
                             Q(begin_date__lte=end_of_week) &
                             (
-                                Q(is_done=False) |
+                                # active/ongoing
+                                (Q(is_done=False) & (Q(end_date__isnull=True) | Q(end_date__gte=start_of_week)))
+                                |
+                                # completed within this week
                                 Q(end_date__range=(start_of_week, end_of_week))
                             )
                         )
                         |
                         (
-                            # Recurring occurrences are day-scoped rows, so only include occurrences in the week
+                            # Recurring occurrences: only include occurrences whose begin_date is in this week
                             Q(recurring_task__isnull=False) &
                             Q(begin_date__range=(start_of_week, end_of_week))
+                        )
+                        |
+                        (
+                            # Preserve your legacy edge-case: begin_date missing but end_date in week
+                            Q(begin_date__isnull=True) &
+                            Q(end_date__range=(start_of_week, end_of_week))
                         )
                     )
                     return queryset
