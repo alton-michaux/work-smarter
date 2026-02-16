@@ -60,8 +60,8 @@ def test_export_csv_returns_csv_headers(auth_client, export_tasks_csv_url):
       "status",
       "is_done",
       "priority",
-      "parent",
-      "recurring_task",
+      "parent_id",
+      "recurring_task_id",
       "created_at",
       "completed_at",
       "notes",
@@ -134,11 +134,11 @@ def test_export_csv_includes_subtask_parent_when_present(
     rows = _read_csv_rows(resp)
     header = rows[0]
     title_idx = header.index("title")
-    parent_idx = header.index("parent")
+    parent_idx = header.index("parent_id")
 
     # Find the exported row for "Child"
     child_rows = [r for r in rows[1:] if len(r) > title_idx and r[title_idx] == "Child"]
     assert child_rows, "Expected Child task to be in CSV export"
 
     # parent_id should match the parent's id (as a string in CSV)
-    assert child_rows[0][parent_idx] == str(parent)
+    assert child_rows[0][parent_idx] == str(parent.id)
