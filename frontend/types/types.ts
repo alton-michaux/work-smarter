@@ -166,6 +166,7 @@ export type SystemsContextType = {
   fileChange: (file: File | null) => void;
   uploadStatus: string | null;
   selectedFile: File | null;
+  exportCsv: () => Promise<void>;
   error: string | null;
 };
 

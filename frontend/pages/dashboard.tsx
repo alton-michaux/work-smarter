@@ -10,7 +10,7 @@ import { useSystem } from 'context/SystemsContext';
 function Dashboard() {
     const router = useRouter();
     const { logout, loggedIn } = useAuth();
-    const { fileChange, selectedFile } = useSystem();
+    const { fileChange, selectedFile, exportCsv } = useSystem();
     const { fileUpload, uploadStatus } = useAPI();
     const { fetchTasks } = useTasks();
     const { fetchProjects } = useProjects(); 
@@ -23,6 +23,10 @@ function Dashboard() {
     const handleUpload = async () => {
         fileUpload(selectedFile)
     };
+
+    const handleDownload = async () => {
+        exportCsv()
+    }
 
     const handleLogout = async () => {
         logout()
@@ -96,15 +100,22 @@ function Dashboard() {
                 />
 
                 <button
-                onClick={handleUpload}
-                disabled={!selectedFile}
-                className={`mt-4 w-full py-2 rounded text-white font-medium transition ${
-                    selectedFile
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-blue-300 cursor-not-allowed'
-                }`}
+                    onClick={handleUpload}
+                    disabled={!selectedFile}
+                    className={`mt-4 w-full py-2 rounded text-white font-medium transition ${
+                        selectedFile
+                        ? 'bg-blue-600 hover:bg-blue-700'
+                        : 'bg-blue-300 cursor-not-allowed'
+                    }`}
                 >
                 Upload File
+                </button>
+
+                <button
+                    onClick={handleDownload}
+                    className="w-full bg-blue-600 text-white px-4 py-3 rounded hover:bg-blue-700 transition"
+                >
+                Export CSV
                 </button>
 
                 {uploadStatus && (
