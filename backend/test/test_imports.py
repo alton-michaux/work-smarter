@@ -63,3 +63,47 @@ def test_import_csv_rejects_unknown_parent_row_id(auth_client, import_tasks_csv_
     assert resp.status_code == 400
     assert resp.data["created"] == 0
     # assert Task.objects.count() == 0
+    
+@pytest.mark.django_db
+def test_import_csv_skips_existing_row(import_tasks_csv_url, auth_client, create_task, get_user, create_csv_file):
+    # existing task
+    alice = get_user
+    create_task(
+        title="Same Task",
+        begin_date="2026-02-03",
+        user=alice,
+        category="Dev",
+    )
+
+    csv = """title,begin_date,category,description,is_done
+Same Task,2026-02-03,Dev,hello,false
+"""
+    url = import_tasks_csv_url
+    resp = auth_client.post(url, {"file": create_csv_file(csv)}, format="multipart")
+
+    assert resp.status_code in (200, 207)
+    data = resp.json()
+    assert data["created"] == 0
+    assert data["skipped"] == 1
+
+    assert Task.objects.filter(user=alice, title="Same Task", begin_date="2026-02-03").count() == 1
+
+
+@pytest.mark.django_db
+def test_import_csv_skips_duplicate_rows_within_same_file(import_tasks_csv_url, auth_client, get_user, create_csv_file):
+    alice = get_user
+
+    csv = """title,begin_date,category
+Dup Task,2026-02-03,Dev
+Dup Task,2026-02-03,Dev
+"""
+    url = import_tasks_csv_url
+    resp = auth_client.post(url, {"file": create_csv_file(csv)}, format="multipart")
+
+    assert resp.status_code in (200, 207)
+    data = resp.json()
+    assert data["created"] == 1
+    assert data["skipped"] == 1
+
+    assert Task.objects.filter(user=alice, title="Dup Task", begin_date="2026-02-03").count() == 1
+

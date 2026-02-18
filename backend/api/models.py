@@ -99,3 +99,8 @@ class Task(models.Model):
         elif not self.is_done and self.end_date:
             self.end_date = None
         super().save(*args, **kwargs)
+        
+    models.UniqueConstraint(
+        fields=["user", "title", "begin_date", "project", "parent"],
+        name="uniq_task_user_title_begin_project_parent",
+    )
