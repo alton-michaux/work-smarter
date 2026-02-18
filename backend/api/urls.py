@@ -18,8 +18,8 @@ router.register(r'user', UserViewSet, basename='user')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('import/', ImportTasksTXTView.as_view(), name='import-tasks'),
-    path("api/import/csv/", ImportTasksCSVView.as_view(), name="import-tasks-csv"),
+    path('import/txt/', ImportTasksTXTView.as_view(), name='import-tasks'),
+    path('import/csv/', ImportTasksCSVView.as_view(), name="import-tasks-csv"),
     path('export/csv/', ExportTasksCSV.as_view(), name='export-tasks-csv'),
     # JWT endpoints
     path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
