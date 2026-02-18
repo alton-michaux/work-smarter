@@ -32,14 +32,6 @@ def task_detail_url(task_id: int) -> str:
 def import_tasks_csv_url():
     return reverse("import-tasks-csv")
 
-@pytest.fixture
-def create_csv_file():
-    def make_csv_file(content: str, name="tasks.csv"):
-        file = io.BytesIO(content.encode("utf-8"))
-        file.name = name
-        return file
-    return make_csv_file
-
 # --- User Fixtures ---
 
 @pytest.fixture
@@ -198,3 +190,12 @@ def create_file():
         file.name = "tasks.txt"
         return file
     return make_file
+
+@pytest.fixture
+def create_csv_file():
+    def make_csv_file(content: str, name="tasks.csv"):
+        file = io.BytesIO(content.encode("utf-8"))
+        file.name = name
+        return file
+    return make_csv_file
+

@@ -1,8 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from api.views.views import ProjectViewSet, TaskViewSet, UserViewSet, RecurringTaskViewSet
-from api.views.upload.views_import_csv import ImportTasksCSVView, ImportTasksTXTView
-from api.views.download.views_export_csv import ExportTasksCSV
+from api.views.upload.views_import import ImportTasksCSVView, ImportTasksTXTView
+from api.views.download.views_export import ExportTasksCSV
 
 # JWT views
 from rest_framework_simplejwt.views import (

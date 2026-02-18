@@ -57,53 +57,70 @@ class ImportTasksCSVView(APIView):
         if not reader.fieldnames:
             return Response({"detail": "CSV has no headers."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Normalize header names (optional but helpful)
-        headers = [h.strip() for h in reader.fieldnames if h]
-        # DictReader already uses original fieldnames; we’ll just access keys defensively.
+        # Normalize headers once (strip whitespace + remove UTF-8 BOM if present)
+        reader.fieldnames = [(h or "").strip().lstrip("\ufeff") for h in reader.fieldnames]
 
         rows = list(reader)
         if not rows:
             return Response({"detail": "CSV has no data rows."}, status=status.HTTP_400_BAD_REQUEST)
 
+        def norm_row(r: dict) -> dict:
+            out = {}
+            for k, v in r.items():
+                if k is None:
+                    continue
+                kk = k.strip()
+                vv = v.strip() if isinstance(v, str) else v
+                out[kk] = vv
+            return out
+
         errors = []
         cleaned = []
         user = request.user
 
-        # --- pass 1: validate + normalize ---
-        for idx, r in enumerate(rows, start=2):  # header is line 1
-            def get(key):
-                # tolerate whitespace in headers
-                for k in r.keys():
-                    if k and k.strip() == key:
-                        return r.get(k)
-                return None
+        errors = []
+        cleaned = []
+        user = request.user
 
-            title = (get("title") or "").strip()
+        skipped_duplicate_in_file = 0
+        seen = set()
+
+        for idx, raw_row in enumerate(rows, start=2):  # header is line 1
+            r = norm_row(raw_row)
+
+            title = (r.get("title") or "").strip()
             if not title:
                 errors.append({"line": idx, "field": "title", "error": "Title is required."})
                 continue
 
-            priority = (get("priority") or "medium").strip().lower() or "medium"
+            priority = (r.get("priority") or "medium").strip().lower() or "medium"
             if priority not in VALID_PRIORITIES:
                 errors.append({"line": idx, "field": "priority", "error": f"Invalid priority '{priority}'."})
                 continue
 
             try:
-                begin_date = _parse_date(get("begin_date"))
-                end_date = _parse_date(get("end_date"))
+                begin_date = _parse_date(r.get("begin_date"))
+                end_date = _parse_date(r.get("end_date"))
             except ValueError as e:
                 errors.append({"line": idx, "field": "date", "error": str(e)})
                 continue
 
-            is_done = _parse_bool(get("is_done"), default=False)
-            carry_over = _parse_bool(get("carry_over"), default=True)
+            is_done = _parse_bool(r.get("is_done"), default=False)
+            carry_over = _parse_bool(r.get("carry_over"), default=True)
 
-            project_name = (get("project") or "").strip()
-            category = (get("category") or "").strip() or None
-            description = (get("description") or "").strip()
+            project_name = (r.get("project") or "").strip() or None
+            category = (r.get("category") or "").strip() or None
+            description = (r.get("description") or "").strip()
 
-            row_id = (get("row_id") or "").strip() or None
-            parent_row_id = (get("parent_row_id") or "").strip() or None
+            row_id = (r.get("row_id") or "").strip() or None
+            parent_row_id = (r.get("parent_row_id") or "").strip() or None
+
+            # Dedupe within the file (matches your tests)
+            sig = (title, begin_date, category)
+            if sig in seen:
+                skipped_duplicate_in_file += 1
+                continue
+            seen.add(sig)
 
             cleaned.append({
                 "line": idx,
@@ -113,7 +130,7 @@ class ImportTasksCSVView(APIView):
                 "is_done": is_done,
                 "carry_over": carry_over,
                 "priority": priority,
-                "project_name": project_name or None,
+                "project_name": project_name,
                 "category": category,
                 "description": description,
                 "row_id": row_id,
@@ -141,7 +158,22 @@ class ImportTasksCSVView(APIView):
         row_id_to_task = {}
         created_tasks = []
 
+        created_count = 0
+        skipped_count = 0
+
+        skipped_existing = 0
+
         for item in cleaned:
+            # Skip if task already exists (matches your test)
+            if Task.objects.filter(
+                user=user,
+                title=item["title"],
+                begin_date=item["begin_date"],
+                category=item["category"],
+            ).exists():
+                skipped_existing += 1
+                continue
+
             project = resolve_project(item["project_name"])
 
             t = Task.objects.create(
@@ -155,13 +187,12 @@ class ImportTasksCSVView(APIView):
                 category=item["category"],
                 priority=item["priority"],
                 carry_over=item["carry_over"],
-                parent=None,              # set later
-                recurring_task=None,      # v1: ignore
+                parent=None,
+                recurring_task=None,
             )
             created_tasks.append(t)
 
             if item["row_id"]:
-                # duplicate row_id? treat as error
                 if item["row_id"] in row_id_to_task:
                     return Response(
                         {
@@ -188,16 +219,25 @@ class ImportTasksCSVView(APIView):
                 t.parent = parent_task
                 t.save()  # triggers is_subtask sync via task model
 
-        return Response(
-            {
-                "created": len(created_tasks),
-                "errors": [],
-            },
-            status=status.HTTP_201_CREATED
-        )
+        payload = {
+            "created": len(created_tasks),
+            "skipped_existing": skipped_existing,
+            "skipped_duplicate_in_file": skipped_duplicate_in_file,
+            "skipped": skipped_existing + skipped_duplicate_in_file,
+            "errors": [],
+        }
+
+        status_code = status.HTTP_201_CREATED if (
+            payload["created"] > 0
+            and payload["skipped_existing"] == 0
+            and payload["skipped_duplicate_in_file"] == 0
+        ) else status.HTTP_200_OK
+
+        return Response(payload, status=status_code)
         
       except Exception as e:
-        logger.warning(f"Error in CSV Import: {e}")
+        logger.exception("Error in CSV Import")
+        return Response({"detail": "Unexpected error during import."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
 class ImportTasksTXTView(APIView):
