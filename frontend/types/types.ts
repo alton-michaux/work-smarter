@@ -313,6 +313,8 @@ export type AuthContextType = {
 
 export type APIContextType = {
   getAuthHeaders: () => Record<string, string>;
+  getImportCsvSpec: () => Promise<void>;
+  importTasksCsv: (file: File, dryRun: boolean) => Promise<void>
   getAuthHeadersForForm: () => Record<string, string>;
   fileUpload: (selectedFile: File | null) => Promise<Response | void>;
   uploadStatus: string | null;

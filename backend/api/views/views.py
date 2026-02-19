@@ -4,11 +4,13 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.pagination import CursorPagination
 from django.db.models import Q
 from datetime import date, datetime
+from django.utils import timezone
 from api.models import Resume, Project, Task, RecurringTask
 from api.serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range
 from django.contrib.auth import get_user_model
 from loguru import logger
+from django.db.models import Count, Min, Max
 
 class TaskCursorPagination(CursorPagination):
     ordering = "-begin_date"
@@ -34,20 +36,28 @@ class TaskViewSet(viewsets.ModelViewSet):
                 start_of_week = datetime.strptime(begin_date_str, "%Y-%m-%d").date()
                 end_of_week = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
-                logger.warning(
-                    f"[TaskViewSet] params={dict(self.request.query_params)} "
-                    f"start_of_week={start_of_week} end_of_week={end_of_week}"
-                )
                 # ✅ Generate occurrences for THIS user and THIS range
                 ensure_recurring_tasks_in_range(start_of_week, end_of_week, user=user)
 
                 active_on_str = self.request.query_params.get("active_on")
-
+                logger.warning(
+                    f"[TaskViewSet] params={dict(self.request.query_params)} "
+                    f"start_of_week={start_of_week} end_of_week={end_of_week}"
+                    f"active_on={active_on_str} "
+                )
+                
                 if active_on_str:
                     try:
                         # Daily
                         day = datetime.strptime(active_on_str, "%Y-%m-%d").date()
 
+                        today = timezone.localdate()
+
+                        if day > today:
+                            # For future days: DO NOT pull carry-over backlog.
+                            # Only return tasks that actually belong to that day.
+                            return queryset.filter(begin_date=day)
+                        
                         # generate recurring occurrences for that specific day
                         ensure_recurring_tasks_in_range(day, day, user=user)
 
@@ -76,6 +86,18 @@ class TaskViewSet(viewsets.ModelViewSet):
                                 # - finished occurrence appears only on completion day
                                 Q(recurring_task__isnull=False, is_done=True, end_date=day)
                             )
+                        )
+
+                        agg = filtered_queryset.aggregate(
+                            c=Count("id"),
+                            min_begin=Min("begin_date"),
+                            max_begin=Max("begin_date"),
+                        )
+
+                        logger.warning(
+                            f"[TaskViewSet] RESULT count={agg['c']} "
+                            f"min_begin={agg['min_begin']} max_begin={agg['max_begin']} "
+                            f"active_on={active_on_str if 'active_on_str' in locals() else None}"
                         )
 
                         return filtered_queryset
