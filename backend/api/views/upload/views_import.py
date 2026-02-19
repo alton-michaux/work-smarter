@@ -181,6 +181,8 @@ class ImportTasksCSVView(APIView):
 
                 payload = {
                     "created": created,
+                    "total_rows": len(rows),
+                    "processed_rows": len(cleaned),
                     "skipped_existing": skipped_existing,
                     "skipped_duplicate_in_file": skipped_duplicate_in_file,
                     "skipped": skipped_existing + skipped_duplicate_in_file,
@@ -289,6 +291,8 @@ class ImportTasksCSVView(APIView):
 
             payload = {
                 "created": len(created_by_row),
+                "total_rows": len(rows),
+                "processed_rows": len(cleaned),
                 "skipped_existing": skipped_existing,
                 "skipped_duplicate_in_file": skipped_duplicate_in_file,
                 "skipped": skipped_existing + skipped_duplicate_in_file,
