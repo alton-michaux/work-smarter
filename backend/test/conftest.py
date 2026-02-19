@@ -32,6 +32,10 @@ def task_detail_url(task_id: int) -> str:
 def import_tasks_csv_url():
     return reverse("import-tasks-csv")
 
+@pytest.fixture
+def import_tasks_csv_spec_url():
+    return reverse("import-tasks-csv-spec")
+
 # --- User Fixtures ---
 
 @pytest.fixture
