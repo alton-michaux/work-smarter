@@ -32,16 +32,19 @@ function Dashboard() {
         logout()
     };
 
-    const handleTasks = async (e) => {
+    const handleTaskRouting = async (e) => {
         e.preventDefault();
-        // fetchTasks()
         router.push('/tasks')
     }
 
-    const handleProjects = async (e) => {
+    const handleProjectRouting = async (e) => {
         e.preventDefault();
-        // fetchProjects()
         router.push('/projects')
+    }
+
+    const handleImportRouting = async (e) => {
+        e.preventDefault();
+        router.push('/import')
     }
 
     useEffect(() => {
@@ -62,7 +65,7 @@ function Dashboard() {
             <ul className="grid gap-4 mb-8">
                 <li>
                 <button
-                    onClick={handleProjects}
+                    onClick={handleProjectRouting}
                     className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
                 >
                     Projects
@@ -70,10 +73,18 @@ function Dashboard() {
                 </li>
                 <li>
                 <button
-                    onClick={handleTasks}
+                    onClick={handleTaskRouting}
                     className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
                 >
                     Tasks
+                </button>
+                </li>
+                <li>
+                <button
+                    onClick={handleImportRouting}
+                    className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+                >
+                    Imports
                 </button>
                 </li>
             </ul>
@@ -81,16 +92,13 @@ function Dashboard() {
             {/* File Upload Section */}
             <div className="border-t pt-6">
                 <label
-                htmlFor="file-upload"
+                htmlFor="csv-download"
                 className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                Upload a <code>.txt</code> file
+                Export your task log as a <code>.csv</code> file
                 </label>
                 <input
-                id="file-upload"
-                type="file"
-                accept=".txt"
-                onChange={handleFileChange}
+                id="csv-download"
                 className="block w-full text-sm text-gray-700
                     file:mr-4 file:py-2 file:px-4
                     file:rounded file:border-0
@@ -99,7 +107,7 @@ function Dashboard() {
                     hover:file:bg-green-100"
                 />
 
-                <button
+                {/* <button
                     onClick={handleUpload}
                     disabled={!selectedFile}
                     className={`mt-4 w-full py-2 rounded text-white font-medium transition ${
@@ -109,7 +117,7 @@ function Dashboard() {
                     }`}
                 >
                 Upload File
-                </button>
+                </button> */}
 
                 <button
                     onClick={handleDownload}
@@ -118,9 +126,9 @@ function Dashboard() {
                 Export CSV
                 </button>
 
-                {uploadStatus && (
+                {/* {uploadStatus && (
                 <p className="mt-2 text-sm text-gray-600 text-center">{uploadStatus}</p>
-                )}
+                )} */}
             </div>
 
             {/* Logout Button */}
