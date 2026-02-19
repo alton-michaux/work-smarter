@@ -82,7 +82,7 @@ def test_export_csv_only_includes_requesting_users_tasks(
 
     # Create tasks for "other" user
     other_project = create_project(name="OtherProject", user=other)
-    create_task(title="NOT YOURS", user=other, project=other_project, category="Dev")
+    create_task(title="NOT YOURS", user=other, project=other_project, category="Task")
 
     # Create tasks for the authed user (the one logged in via get_token/auth_client)
     # We need the actual authed user object. Easiest: create one and login as them,
@@ -96,7 +96,7 @@ def test_export_csv_only_includes_requesting_users_tasks(
 
     alice_project = create_project(name="AliceProject", user=alice)
     create_task(title="Task A", user=alice, project=alice_project, category="Meetings")
-    create_task(title="Task B", user=alice, project=alice_project, category="Dev")
+    create_task(title="Task B", user=alice, project=alice_project, category="Task")
 
     resp = auth_client.get(export_tasks_csv_url)
     assert resp.status_code == 200
@@ -125,8 +125,8 @@ def test_export_csv_includes_subtask_parent_when_present(
     User = get_user_model()
     alice = User.objects.get(username="alice")
 
-    parent = create_task(title="Parent", user=alice, category="Dev")
-    child = create_task(title="Child", user=alice, parent=parent, category="Dev")
+    parent = create_task(title="Parent", user=alice, category="Task")
+    child = create_task(title="Child", user=alice, parent=parent, category="Task")
 
     resp = auth_client.get(export_tasks_csv_url)
     assert resp.status_code == 200

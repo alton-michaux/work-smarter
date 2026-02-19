@@ -183,7 +183,7 @@ def create_file():
     def make_file(content=None):
         file_content = content or """
         Week of: 2024-03-11
-        Dev:
+        Task:
         - [ ] Auto-generated task
         """
         file = io.BytesIO(file_content.encode("utf-8"))
