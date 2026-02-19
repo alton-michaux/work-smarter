@@ -120,6 +120,8 @@ def test_import_csv_dry_run_does_not_create_tasks(auth_client, import_tasks_csv_
 
     assert data["dry_run"] is True
     assert data["created"] == 2        # would be created
+    assert data["total_rows"] == 2
+    assert data["processed_rows"] == 2
     assert data["errors"] == []
     assert Task.objects.count() == 0   # actually created: zero
 
