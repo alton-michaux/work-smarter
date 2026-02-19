@@ -4,8 +4,8 @@ from api.models import Task, Project
 @pytest.mark.django_db
 def test_import_csv_creates_tasks(auth_client, import_tasks_csv_url, create_csv_file):
     csv_content = """row_id,title,begin_date,is_done,project,category,priority,description,carry_over,parent_row_id
-1,Parent,2026-02-10,false,Vamos,Dev,high,,true,
-2,Child,2026-02-10,false,Vamos,Dev,medium,,true,1
+1,Parent,2026-02-10,false,Vamos,Task,high,,true,
+2,Child,2026-02-10,false,Vamos,Task,medium,,true,1
 """
     f = create_csv_file(csv_content)
     resp = auth_client.post(import_tasks_csv_url, {"file": f}, format="multipart")
@@ -72,11 +72,11 @@ def test_import_csv_skips_existing_row(import_tasks_csv_url, auth_client, create
         title="Same Task",
         begin_date="2026-02-03",
         user=alice,
-        category="Dev",
+        category="Task",
     )
 
     csv = """title,begin_date,category,description,is_done
-Same Task,2026-02-03,Dev,hello,false
+Same Task,2026-02-03,Task,hello,false
 """
     url = import_tasks_csv_url
     resp = auth_client.post(url, {"file": create_csv_file(csv)}, format="multipart")
@@ -94,8 +94,8 @@ def test_import_csv_skips_duplicate_rows_within_same_file(import_tasks_csv_url, 
     alice = get_user
 
     csv = """title,begin_date,category
-Dup Task,2026-02-03,Dev
-Dup Task,2026-02-03,Dev
+Dup Task,2026-02-03,Task
+Dup Task,2026-02-03,Task
 """
     url = import_tasks_csv_url
     resp = auth_client.post(url, {"file": create_csv_file(csv)}, format="multipart")
@@ -110,8 +110,8 @@ Dup Task,2026-02-03,Dev
 @pytest.mark.django_db
 def test_import_csv_dry_run_does_not_create_tasks(auth_client, import_tasks_csv_url, create_csv_file):
     csv_content = """row_id,title,begin_date,is_done,project,category,priority,description,carry_over,parent_row_id
-1,Parent,2026-02-10,false,Vamos,Dev,high,,true,
-2,Child,2026-02-10,false,Vamos,Dev,medium,,true,1
+1,Parent,2026-02-10,false,Vamos,Task,high,,true,
+2,Child,2026-02-10,false,Vamos,Task,medium,,true,1
 """
     resp = auth_client.post(f"{import_tasks_csv_url}?dry_run=true", {"file": create_csv_file(csv_content)}, format="multipart")
     assert resp.status_code == 200
