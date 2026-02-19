@@ -51,7 +51,7 @@ class ExportTasksCSV(APIView):
               str(task.id),
               task.begin_date.isoformat() if task.begin_date else "",
               project_name,
-              task.category,
+              task.category or "",
               task.title or "",
               status,
               task.is_done,
