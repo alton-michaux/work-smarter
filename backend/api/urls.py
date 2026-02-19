@@ -18,7 +18,7 @@ router.register(r'user', UserViewSet, basename='user')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('import/txt/', ImportTasksTXTView.as_view(), name='import-tasks'),
+    path('import/txt/', ImportTasksTXTView.as_view(), name='import-tasks-txt'),
     path('import/csv/', ImportTasksCSVView.as_view(), name="import-tasks-csv"),
     path('export/csv/', ExportTasksCSV.as_view(), name='export-tasks-csv'),
     # JWT endpoints
