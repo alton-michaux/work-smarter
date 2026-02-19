@@ -29,7 +29,7 @@ export default function TaskTrackerPage() {
     const key = `${selectedWeek}__${end}`;
     if (lastRangeRef.current === key) return;
     lastRangeRef.current = key;
-    fetchTasksByDateRange(selectedWeek, end);
+    fetchTasksByDateRange(selectedWeek, end, null);
   }, [selectedWeek, fetchTasksByDateRange]);
 
   const isMeeting = (t: any) => {
