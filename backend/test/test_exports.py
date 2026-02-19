@@ -52,19 +52,17 @@ def test_export_csv_returns_csv_headers(auth_client, export_tasks_csv_url):
     # Keep this in sync with whatever your export view writes.
     # If your view exports different columns, update expected_header.
     expected_header = [
-      "id",
-      "begin_date",
-      "project",
-      "category",
-      "title",
-      "status",
-      "is_done",
-      "priority",
-      "parent_id",
-      "recurring_task_id",
-      "created_at",
-      "completed_at",
-      "notes",
+        "row_id",
+        "title",
+        "begin_date",
+        "end_date",
+        "is_done",
+        "project",
+        "category",
+        "priority",
+        "description",
+        "carry_over",
+        "parent_row_id",
     ]
     assert header == expected_header
 
@@ -134,7 +132,7 @@ def test_export_csv_includes_subtask_parent_when_present(
     rows = _read_csv_rows(resp)
     header = rows[0]
     title_idx = header.index("title")
-    parent_idx = header.index("parent_id")
+    parent_idx = header.index("parent_row_id")
 
     # Find the exported row for "Child"
     child_rows = [r for r in rows[1:] if len(r) > title_idx and r[title_idx] == "Child"]

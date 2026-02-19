@@ -1,69 +1,85 @@
 import csv
-from rest_framework import status
 from rest_framework.views import APIView
 from django.http import HttpResponse
-from api.models import Task
-from api.serializers import TaskSerializer
+from rest_framework import status
 from loguru import logger
 
+from api.models import Task
+
+
 class ExportTasksCSV(APIView):
-  def get(self, request):
-    try:
-      # Optional: filter by date range passed as query params
-      # ?start=2026-01-01&end=2026-01-31
-      qs = Task.objects.filter(user=request.user).select_related("project").order_by("begin_date", "id")
+    """
+    Exports tasks to a CSV that is *immediately re-importable* by ImportTasksCSVView.
 
-      start = request.query_params.get("start")
-      end = request.query_params.get("end")
-      if start:
-          qs = qs.filter(begin_date__gte=start)
-      if end:
-          qs = qs.filter(begin_date__lte=end)
+    Output headers match the import endpoint:
+      row_id,title,begin_date,end_date,is_done,project,category,priority,description,carry_over,parent_row_id
+    """
 
-      response = HttpResponse(content_type="text/csv")
-      response["Content-Disposition"] = 'attachment; filename="tasks.csv"'
+    def get(self, request):
+        try:
+            qs = (
+                Task.objects
+                .filter(user=request.user)
+                .select_related("project")
+                .order_by("begin_date", "id")
+            )
 
-      writer = csv.writer(response)
+            # Optional date range filter: ?start=YYYY-MM-DD&end=YYYY-MM-DD
+            start = request.query_params.get("start")
+            end = request.query_params.get("end")
+            if start:
+                qs = qs.filter(begin_date__gte=start)
+            if end:
+                qs = qs.filter(begin_date__lte=end)
 
-      header = [
-          "id",
-          "begin_date",
-          "project",
-          "category",
-          "title",
-          "status",
-          "is_done",
-          "priority",
-          "parent_id",
-          "recurring_task_id",
-          "created_at",
-          "completed_at",
-          "notes",
-      ]
-      writer.writerow(header)
+            response = HttpResponse(content_type="text/csv")
+            response["Content-Disposition"] = 'attachment; filename="tasks.csv"'
 
-      for task in qs:
-          status = "done" if task.is_done else "todo"
-          project_name = task.project.name if task.project_id else ""
-          end_date = task.end_date.isoformat() if task.is_done and task.end_date else ""
+            writer = csv.writer(response)
 
-          writer.writerow([
-              str(task.id),
-              task.begin_date.isoformat() if task.begin_date else "",
-              project_name,
-              task.category or "",
-              task.title or "",
-              status,
-              task.is_done,
-              task.priority or "",
-              task.parent_id,  
-              task.recurring_task_id,
-              task.created_at.isoformat() if task.created_at else "",
-              end_date,
-              task.description or "",
-          ])
-          
-      return response
-    
-    except Exception as e:          
-        logger.warning(f"Error in CSV Export: {e}")
+            # ✅ Import-compatible header
+            header = [
+                "row_id",
+                "title",
+                "begin_date",
+                "end_date",
+                "is_done",
+                "project",
+                "category",
+                "priority",
+                "description",
+                "carry_over",
+                "parent_row_id",
+            ]
+            writer.writerow(header)
+
+            # Always returns a downloadable CSV, even if qs is empty (headers only)
+            for task in qs:
+                project_name = task.project.name if task.project_id else ""
+                begin_date = task.begin_date.isoformat() if task.begin_date else ""
+                end_date = task.end_date.isoformat() if task.end_date else ""
+
+                writer.writerow([
+                    str(task.id),                          # row_id
+                    task.title or "",
+                    begin_date,
+                    end_date,
+                    "true" if task.is_done else "false",   # import parser accepts true/false
+                    project_name,
+                    task.category or "",
+                    task.priority or "",
+                    task.description or "",
+                    "true" if task.carry_over else "false",
+                    str(task.parent_id) if task.parent_id else "",  # parent_row_id
+                ])
+
+            return response
+
+        except Exception as e:
+            logger.exception(f"Error in CSV Export: {e}")
+            # Still return JSON error (not CSV) if something truly breaks
+            from rest_framework.response import Response
+            return Response(
+                {"detail": "Unexpected error during export."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
