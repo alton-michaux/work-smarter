@@ -40,11 +40,6 @@ class TaskViewSet(viewsets.ModelViewSet):
                 ensure_recurring_tasks_in_range(start_of_week, end_of_week, user=user)
 
                 active_on_str = self.request.query_params.get("active_on")
-                logger.warning(
-                    f"[TaskViewSet] params={dict(self.request.query_params)} "
-                    f"start_of_week={start_of_week} end_of_week={end_of_week}"
-                    f"active_on={active_on_str} "
-                )
                 
                 if active_on_str:
                     try:
@@ -52,7 +47,11 @@ class TaskViewSet(viewsets.ModelViewSet):
                         day = datetime.strptime(active_on_str, "%Y-%m-%d").date()
 
                         today = timezone.localdate()
-
+                        logger.warning(
+                            f"DAY: {day} "
+                            f"TODAY: {today} "
+                            f"GREATER?: {day > today} "
+                        )
                         if day > today:
                             # For future days: DO NOT pull carry-over backlog.
                             # Only return tasks that actually belong to that day.
