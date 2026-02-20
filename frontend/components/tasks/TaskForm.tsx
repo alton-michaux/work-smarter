@@ -169,9 +169,9 @@ export default function TaskForm({
           className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
         >
           <option value="">— Select —</option>
-          <option value="Task">Task</option>
-          <option value="Meetings">Meeting</option>
-          <option value="Notes">Note</option>
+          <option value="task">Task</option>
+          <option value="meeting">Meeting</option>
+          <option value="note">Note</option>
         </select>
         {errors.category ? <p className="text-sm text-red-600 mt-1">{errors.category}</p> : null}
       </div>
