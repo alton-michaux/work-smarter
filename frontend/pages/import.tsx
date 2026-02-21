@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { useAPI } from "../context/APIContext";
+import { ResultPanel } from "../components/ui/importSummary"
 
 export default function ImportPage() {
   const router = useRouter();
@@ -40,7 +41,6 @@ export default function ImportPage() {
       const data = await importTasksCsv(file, dryRun);
       setResult(data);
     } catch (e: any) {
-      // axios style error
       const msg =
         e?.response?.data?.detail ||
         (e?.response?.data ? JSON.stringify(e.response.data) : null) ||
@@ -80,12 +80,14 @@ export default function ImportPage() {
             <button
               onClick={() => router.push("/dashboard")}
               className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              type="button"
             >
               Dashboard
             </button>
             <button
               onClick={() => router.back()}
               className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              type="button"
             >
               ← Back
             </button>
@@ -199,21 +201,12 @@ export default function ImportPage() {
                 )}
 
                 {/* Result */}
-                {result && (
-                  <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3">
-                    <div className="text-sm font-semibold text-gray-900">
-                      Result
-                    </div>
-                    <pre className="mt-1 text-sm text-gray-800 whitespace-pre-wrap break-words">
-                      {JSON.stringify(result, null, 2)}
-                    </pre>
-                  </div>
-                )}
+                {result && <ResultPanel result={result} />}
               </div>
             </div>
           </div>
 
-          {/* Right: spec / guidance */}
+          {/* Right: spec */}
           <div className="lg:col-span-5">
             <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
               <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -224,7 +217,7 @@ export default function ImportPage() {
 
               <div className="p-6">
                 <p className="text-sm text-gray-600 mb-4">
-                  Your CSV should include the following headers (order is usually flexible unless your backend says otherwise).
+                  Your CSV should include the following headers.
                 </p>
 
                 <div className="rounded-md border border-gray-200 overflow-hidden">
@@ -249,11 +242,11 @@ export default function ImportPage() {
               </div>
             </div>
 
-            {/* Optional: quick link */}
             <div className="mt-6">
               <button
                 onClick={() => router.push("/tasks")}
                 className="w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                type="button"
               >
                 View Tasks
               </button>
