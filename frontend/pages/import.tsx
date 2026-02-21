@@ -190,13 +190,8 @@ export default function ImportPage() {
 
                 {/* Error */}
                 {error && (
-                  <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3">
-                    <div className="text-sm font-semibold text-red-800">
-                      Import error
-                    </div>
-                    <pre className="mt-1 text-sm text-red-800 whitespace-pre-wrap break-words">
-                      {error}
-                    </pre>
+                  <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    {error}
                   </div>
                 )}
 
