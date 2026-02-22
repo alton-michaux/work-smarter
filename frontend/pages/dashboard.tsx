@@ -164,7 +164,7 @@ function Dashboard() {
           {/* Footer row */}
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
             <div className="text-xs text-gray-500">
-              Tip: exports use your current session.
+              Tip: An export with no data can be used as an import template.
             </div>
 
             <button

@@ -2,13 +2,11 @@ import { useProjects } from "../../context/ProjectsContext";
 import { useRouter } from "next/router";
 import Spinner from "components/shared/Spinner";
 
-const ProjectsPage = () => {
+export default function ProjectsPage() {
   const { projects, deleteProject, isLoading } = useProjects();
   const router = useRouter();
 
-  const results = Array.isArray(projects)
-    ? projects
-    : (projects as any)?.results ?? [];
+  const results = Array.isArray(projects) ? projects : (projects as any)?.results ?? [];
 
   const handleProjectClick = (id: number) => {
     router.push(`/projects/view/${id}`);
@@ -25,123 +23,132 @@ const ProjectsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-5xl mx-auto px-6 py-12">
+    <div className="min-h-screen bg-gray-100 py-12">
+      <div className="max-w-5xl mx-auto px-6">
         {/* Header */}
         <div className="mb-10 flex items-start justify-between gap-6">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Projects</h1>
             <p className="mt-2 text-sm text-gray-600">
-              Create, review, and manage your workspaces.
+              Your workspace. Open a project to view meetings, tasks, and activity.
             </p>
           </div>
 
-          <button
-            onClick={() => router.push("/projects/create")}
-            className="shrink-0 rounded-md bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 transition"
-          >
-            + New Project
-          </button>
-        </div>
-
-        {/* Main panel */}
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <div className="text-xs uppercase tracking-wide text-gray-500">
-              Workspace
-            </div>
-            <div className="text-xs text-gray-500">
-              {isLoading ? "Loading…" : `${results.length} total`}
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">
-            {isLoading ? (
-              <div className="flex justify-center py-10">
-                <Spinner />
-              </div>
-            ) : results.length === 0 ? (
-              <div className="rounded-md border border-dashed border-gray-200 bg-gray-50 px-6 py-10 text-center">
-                <div className="text-sm font-medium text-gray-900">
-                  No projects found
-                </div>
-                <div className="mt-1 text-sm text-gray-600">
-                  Create a project to start organizing your tasks.
-                </div>
-                <button
-                  onClick={() => router.push("/projects/create")}
-                  className="mt-4 inline-flex items-center justify-center rounded-md bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 transition"
-                >
-                  + New Project
-                </button>
-              </div>
-            ) : (
-              <div className="rounded-md border border-gray-200 overflow-hidden">
-                {/* “Table” header row */}
-                <div className="grid grid-cols-12 gap-4 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600">
-                  <div className="col-span-8">Name</div>
-                  <div className="col-span-4 text-right">Actions</div>
-                </div>
-
-                {/* Rows */}
-                <ul className="divide-y divide-gray-200">
-                  {results.map((project: any) => (
-                    <li
-                      key={project.id}
-                      className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-gray-50 transition"
-                    >
-                      <div className="col-span-8 min-w-0">
-                        <button
-                          onClick={() => handleProjectClick(project.id)}
-                          className="text-sm font-medium text-gray-900 hover:text-blue-700 transition truncate text-left"
-                          title={project.name}
-                        >
-                          {project.name}
-                        </button>
-                      </div>
-
-                      <div className="col-span-4 flex justify-end gap-3">
-                        <button
-                          onClick={() => handleEdit(project.id)}
-                          className="text-sm text-gray-600 hover:text-gray-900 transition"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(project.id)}
-                          className="text-sm text-red-600 hover:text-red-800 transition"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* Footer row */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+          <div className="flex gap-3">
             <button
-              onClick={() => router.back()}
-              className="text-sm text-gray-500 hover:text-gray-700 transition"
+              onClick={() => router.push("/projects/create")}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+              type="button"
             >
-              ← Back
+              + New Project
             </button>
 
             <button
               onClick={() => router.push("/dashboard")}
-              className="text-sm text-gray-500 hover:text-gray-700 transition"
+              className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              type="button"
             >
               Dashboard
             </button>
           </div>
         </div>
+
+        {/* Body */}
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
+            <div className="text-xs uppercase tracking-wide text-gray-500">
+              Workspace
+            </div>
+            <div className="text-xs text-gray-500">
+              {results.length} total
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="flex justify-center py-10">
+              <Spinner />
+            </div>
+          ) : results.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <div className="text-sm font-semibold text-gray-900">
+                No projects yet
+              </div>
+              <div className="mt-1 text-sm text-gray-600">
+                Create your first project to start tracking meetings and work.
+              </div>
+              <div className="mt-5">
+                <button
+                  onClick={() => router.push("/projects/create")}
+                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+                  type="button"
+                >
+                  + Create Project
+                </button>
+              </div>
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {results.map((project: any) => (
+                <li key={project.id} className="px-6 py-4">
+                  <div className="flex items-center justify-between gap-4">
+                    {/* Clickable main area */}
+                    <button
+                      onClick={() => handleProjectClick(project.id)}
+                      className="min-w-0 flex-1 text-left rounded-md px-3 py-2 hover:bg-gray-50 transition"
+                      type="button"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-9 w-9 rounded-md bg-blue-50 flex items-center justify-center text-blue-700 text-sm font-semibold">
+                          {String(project.name ?? "P").trim().slice(0, 1).toUpperCase()}
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-gray-900 truncate">
+                            {project.name}
+                          </div>
+                          <div className="mt-0.5 text-xs text-gray-500">
+                            Open project
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Actions */}
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        onClick={() => handleEdit(project.id)}
+                        className="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition"
+                        type="button"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(project.id)}
+                        className="rounded-md border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 transition"
+                        type="button"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Footer nav */}
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={() => router.back()}
+            className="text-sm text-gray-600 hover:text-gray-900 hover:underline transition"
+            type="button"
+          >
+            ← Back
+          </button>
+        </div>
       </div>
     </div>
   );
-};
-
-export default ProjectsPage;
+}
