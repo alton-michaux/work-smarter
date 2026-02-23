@@ -8,27 +8,38 @@ export const DateToggleUI = ({
 }: DateToggleUIProps) => {
   if (!selectedDate) return null;
 
-  const btnBase = compact
-    ? "px-3 py-2 text-sm"
-    : "px-4 py-3 text-sm";
+  const sizeClasses = compact
+    ? "h-9 px-3 text-sm"
+    : "h-11 px-4 text-sm";
 
   return (
-    <div className="flex gap-2 overflow-x-auto justify-between">
-      {last7Days.map((d) => (
-        <button
-          key={d.key}
-          onClick={() => setSelectedDate(d.key)}
-          className={`${btnBase} rounded border whitespace-nowrap ${
-            d.key === selectedDate
-              ? "bg-blue-600 text-white border-blue-600"
-              : "hover:bg-gray-50"
-          }`}
-          title={d.key}
-          type="button"
-        >
-          {d.label}
-        </button>
-      ))}
+    <div className="rounded-lg border border-gray-200 bg-white p-2">
+      <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200">
+        {last7Days.map((d) => {
+          const isActive = d.key === selectedDate;
+
+          return (
+            <button
+              key={d.key}
+              type="button"
+              onClick={() => setSelectedDate(d.key)}
+              title={d.key}
+              className={[
+                "flex items-center justify-center",
+                sizeClasses,
+                "min-w-[72px]",
+                "rounded-md font-medium",
+                "transition-colors duration-150",
+                isActive
+                  ? "bg-blue-600 text-white ring-1 ring-blue-600"
+                  : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200",
+              ].join(" ")}
+            >
+              {d.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
