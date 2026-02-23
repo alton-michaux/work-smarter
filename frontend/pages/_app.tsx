@@ -14,7 +14,7 @@ function MyApp({ Component, pageProps }) {
         <SystemsProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-              <main className="flex-1" >
+              <main className="flex-1 min-h-0" >
                 <ProjectsProvider>
                   <TasksProvider>
                     <Component {...pageProps} />

@@ -46,14 +46,13 @@ const ProjectShowPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12">
-      <div className="max-w-5xl mx-auto px-6">
-        {/* ───────────────── Header ───────────────── */}
-        <div className="mb-10 flex items-start justify-between gap-6">
+    <div className="min-h-screen bg-gray-100">
+      {/* IMPORTANT: flex column + min-h-screen keeps footer reachable */}
+      <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col min-h-screen">
+        {/* ───────────────── Header (shrink-0) ───────────────── */}
+        <div className="mb-8 flex items-start justify-between gap-6 shrink-0">
           <div className="min-w-0">
-            <div className="text-xs uppercase tracking-wide text-gray-500">
-              Project
-            </div>
+            <div className="text-xs uppercase tracking-wide text-gray-500">Project</div>
             <h1 className="mt-1 text-2xl font-semibold text-gray-900 truncate">
               {project.name}
             </h1>
@@ -89,12 +88,10 @@ const ProjectShowPage = () => {
           </div>
         </div>
 
-        {/* ───────────────── Summary Panel ───────────────── */}
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+        {/* ───────────────── Summary Panel (shrink-0) ───────────────── */}
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm shrink-0">
           <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-            <div className="text-xs uppercase tracking-wide text-gray-500">
-              Overview
-            </div>
+            <div className="text-xs uppercase tracking-wide text-gray-500">Overview</div>
           </div>
 
           <div className="p-6">
@@ -111,20 +108,18 @@ const ProjectShowPage = () => {
           </div>
         </div>
 
-        {/* ───────────────── Timeline Sections ───────────────── */}
-        <div className="mt-8 space-y-8">
+        {/* ───────────────── Timelines (flex-1, scroll lives inside panels) ───────────────── */}
+        {/* min-h-0 is the magic spell that makes overflow work inside flex/grid */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 min-h-0">
           {/* Meetings */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
-              <div className="text-xs uppercase tracking-wide text-gray-500">
-                Meetings
-              </div>
-              <div className="text-xs text-gray-500">
-                {insights.meetings.length} total
-              </div>
+          <div className="lg:col-span-5 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col min-h-0">
+            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between shrink-0">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Meetings</div>
+              <div className="text-xs text-gray-500">{insights.meetings.length} total</div>
             </div>
 
-            <div className="p-6">
+            {/* This is the actual scroll container */}
+            <div className="flex-1 overflow-auto [scrollbar-gutter:stable] p-6 min-h-0">
               <ProjectTimelineSection
                 title="MEETINGS"
                 summaryRight={`${insights.meetings.length} total`}
@@ -138,17 +133,16 @@ const ProjectShowPage = () => {
           </div>
 
           {/* Work */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
-              <div className="text-xs uppercase tracking-wide text-gray-500">
-                Work
-              </div>
+          <div className="lg:col-span-7 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col min-h-0">
+            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between shrink-0">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Work</div>
               <div className="text-xs text-gray-500">
                 {insights.workTotal} total • {insights.workDone} done • {insights.workOpen} open
               </div>
             </div>
 
-            <div className="p-6">
+            {/* This is the actual scroll container */}
+            <div className="flex-1 overflow-auto [scrollbar-gutter:stable] p-6 min-h-0">
               <ProjectTimelineSection
                 title="WORK"
                 summaryRight={`${insights.workTotal} total • ${insights.workDone} done • ${insights.workOpen} open`}
@@ -170,8 +164,8 @@ const ProjectShowPage = () => {
           </div>
         </div>
 
-        {/* Bottom nav (optional) */}
-        <div className="mt-8 flex justify-end">
+        {/* ───────────────── Footer nav (shrink-0) ───────────────── */}
+        <div className="mt-8 flex justify-end shrink-0">
           <button
             onClick={() => router.push("/projects")}
             className="text-sm text-gray-600 hover:text-gray-900 hover:underline transition"
