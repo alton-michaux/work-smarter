@@ -1,10 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { categoryToType } from "../../lib/dailyLog";
-import { OutlineTreeProps, OutlineRowProps } from "types/types";
-import { useTasks } from "context/TasksContext";
-
-// Small helper: safe uppercase label
-const upper = (v: any) => (typeof v === "string" ? v.toUpperCase() : "");
+import React, { useState, useEffect, useRef } from 'react';
+import { categoryToType } from '../../lib/dailyLog';
+import { OutlineTreeProps, OutlineRowProps } from 'types/types';
+import { useTasks } from 'context/TasksContext';
 
 function OutlineRow({
   node,
@@ -18,10 +15,9 @@ function OutlineRow({
   const type = categoryToType(node.category);
 
   const [showSubtask, setShowSubtask] = useState(false);
-  const [subtaskTitle, setSubtaskTitle] = useState("");
+  const [subtaskTitle, setSubtaskTitle] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // relies on API field `parent` (number|null)
   const isSubtask = Boolean(node.parent);
 
   const childCount = Array.isArray(node.children) ? node.children.length : 0;
@@ -43,7 +39,7 @@ function OutlineRow({
     checkboxRef.current.indeterminate = shouldIndeterminate;
   }, [isSubtask, childCount, doneChildCount]);
 
-  const indentPx = useMemo(() => 16 + depth * 18, [depth]);
+  const effectiveDepth = Math.max(depth, isSubtask ? 1 : 0);
 
   const submitSubtask = async () => {
     const title = subtaskTitle.trim();
@@ -58,164 +54,152 @@ function OutlineRow({
         category: node.category ?? null,
         project: node.project ?? null,
       });
-      setSubtaskTitle("");
+      setSubtaskTitle('');
       setShowSubtask(false);
     } finally {
       setSaving(false);
     }
   };
 
-  const metaLeft = useMemo(() => {
-    const p = upper(node.priority ?? "");
-    const d = node.begin_date ?? "—";
-    if (p) return `${p} • ${d}`;
-    return d;
-  }, [node.priority, node.begin_date]);
-
-  const showProgress = !isSubtask && childCount > 0;
+  const isDone = Boolean(node.is_done);
 
   return (
     <li
       className={[
         "group relative",
         "border-b border-gray-100 last:border-b-0",
-        "hover:bg-gray-50/60",
+        "px-4",
+        "py-2.5",
+        "hover:bg-gray-50/70",
         "transition-colors",
+        "flex items-start justify-between gap-4",
+        "focus-within:bg-gray-50/70",
       ].join(" ")}
-      style={{ paddingLeft: indentPx }}
+      style={{ paddingLeft: 16 + effectiveDepth * 18 }}
     >
-      {/* subtle left rail for nesting */}
-      {depth > 0 ? (
-        <div
-          className="absolute left-0 top-0 bottom-0 w-px bg-gray-100"
-          style={{ marginLeft: indentPx - 10 }}
-        />
-      ) : null}
+      {/* LEFT: checkbox/icon + content */}
+      <div className="min-w-0 flex-1 flex items-start gap-3">
+        <div className="pt-0.5">
+          {type === 'task' ? (
+            <input
+              ref={checkboxRef}
+              type="checkbox"
+              checked={!!node.is_done}
+              onChange={(e) => onToggleDone?.(Number(node.id), e.target.checked)}
+              onClick={(e) => e.stopPropagation()}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-200"
+            />
+          ) : (
+            <span className="text-base leading-none">
+              {type === 'meeting' ? '🗓️' : '•'}
+            </span>
+          )}
+        </div>
 
-      <div className="flex items-start justify-between gap-4 px-4 py-2.5">
-        {/* LEFT: checkbox/icon + content */}
-        <div className="min-w-0 flex-1 flex items-start gap-3">
-          {/* checkbox/icon */}
-          <div className="mt-0.5 flex-shrink-0">
-            {type === "task" ? (
-              <input
-                ref={checkboxRef}
-                type="checkbox"
-                checked={!!node.is_done}
-                onChange={(e) => onToggleDone?.(Number(node.id), e.target.checked)}
-                onClick={(e) => e.stopPropagation()}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-            ) : (
-              <span className="text-base leading-none text-gray-500">
-                {type === "meeting" ? "🗓️" : "•"}
-              </span>
-            )}
+        <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              onView(Number(node.id));
+            }}
+            className={[
+              "block w-full text-left",
+              "font-medium",
+              "truncate",
+              isDone ? "text-gray-500 line-through" : "text-gray-900",
+              "hover:text-blue-700",
+              "focus:outline-none focus:ring-2 focus:ring-blue-200 rounded-sm",
+            ].join(" ")}
+            title={node.title}
+          >
+            <span className="inline-flex items-center gap-2 min-w-0">
+              <span className="truncate">{node.title}</span>
+
+              {!isSubtask && childCount > 0 && (
+                <span
+                  className="shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-gray-200 bg-white text-gray-600"
+                  title="Subtask progress"
+                >
+                  {doneChildCount}/{childCount}
+                </span>
+              )}
+
+              {node.is_recurring && (
+                <span className="shrink-0 text-[11px] text-gray-400" title="Recurring">
+                  🔁
+                </span>
+              )}
+            </span>
+          </button>
+
+          <div className="mt-1 text-xs text-gray-500">
+            <span className="uppercase tracking-wide">
+              {(node.priority ?? '—').toString()}
+            </span>
+            <span className="mx-2 text-gray-300">•</span>
+            <span>{node.begin_date ?? '—'}</span>
           </div>
 
-          {/* title + meta */}
-          <div className="min-w-0 flex-1">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                onView(Number(node.id));
-              }}
-              className={[
-                "w-full text-left",
-                "text-sm font-medium",
-                node.is_done ? "text-gray-500 line-through" : "text-gray-900",
-                "hover:underline hover:decoration-gray-300",
-                "truncate",
-              ].join(" ")}
-              title={node.title}
-            >
-              <span className="inline-flex items-center gap-2 min-w-0">
-                <span className="truncate">{node.title}</span>
-
-                {showProgress ? (
-                  <span
-                    className="flex-shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-gray-200 bg-white text-gray-600"
-                    title="Subtask progress"
-                  >
-                    {doneChildCount}/{childCount}
-                  </span>
-                ) : null}
-
-                {node.is_recurring ? (
-                  <span
-                    className="flex-shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-600"
-                    title="Recurring"
-                  >
-                    ↻
-                  </span>
-                ) : null}
-              </span>
-            </button>
-
-            <div className="mt-0.5 text-xs text-gray-500">{metaLeft}</div>
-
-            {/* Inline Add Subtask UI */}
-            {!isSubtask && type === "task" && showSubtask ? (
-              <div className="mt-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="New subtask…"
-                    value={subtaskTitle}
-                    onChange={(e) => setSubtaskTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") setShowSubtask(false);
-                      if (e.key === "Enter") submitSubtask();
-                    }}
-                    disabled={saving}
-                    autoFocus
-                  />
-                  <button
-                    className={[
-                      "rounded-md border px-3 py-1.5 text-sm",
-                      "border-gray-200 bg-white hover:bg-gray-50",
-                      "disabled:opacity-50 disabled:cursor-not-allowed",
-                    ].join(" ")}
-                    disabled={saving || !subtaskTitle.trim() || !onAddSubtask}
-                    onClick={submitSubtask}
-                  >
-                    Add
-                  </button>
-                </div>
-                <div className="mt-1 text-xs text-gray-400">
-                  Enter to save • Esc to cancel
-                </div>
+          {/* Inline Add Subtask */}
+          {!isSubtask && type === 'task' && showSubtask && (
+            <div className="mt-2 pl-7">
+              <div className="flex items-center gap-2">
+                <input
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="New subtask…"
+                  value={subtaskTitle}
+                  onChange={(e) => setSubtaskTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setShowSubtask(false);
+                    if (e.key === 'Enter') submitSubtask();
+                  }}
+                  disabled={saving}
+                  autoFocus
+                />
+                <button
+                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+                  disabled={saving || !subtaskTitle.trim() || !onAddSubtask}
+                  onClick={submitSubtask}
+                  type="button"
+                >
+                  Add
+                </button>
               </div>
-            ) : null}
-          </div>
+              <div className="mt-1 text-xs text-gray-400">
+                Enter to save • Esc to cancel
+              </div>
+            </div>
+          )}
         </div>
+      </div>
 
-        {/* RIGHT: actions (don’t shove layout around) */}
-        <div className="flex-shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {!isSubtask && type === "task" ? (
-            <button
-              onClick={() => setShowSubtask((v) => !v)}
-              className="text-xs font-medium text-gray-600 hover:text-gray-900 px-2 py-1 rounded hover:bg-white"
-            >
-              + Subtask
-            </button>
-          ) : null}
-
+      {/* RIGHT: actions (hidden until hover/focus) */}
+      <div className="shrink-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+        {!isSubtask && type === 'task' && (
           <button
-            onClick={() => onEdit(Number(node.id))}
-            className="text-xs font-medium text-gray-600 hover:text-gray-900 px-2 py-1 rounded hover:bg-white"
+            onClick={() => setShowSubtask((v) => !v)}
+            className="text-sm text-gray-500 hover:text-gray-900"
+            type="button"
           >
-            Edit
+            + Subtask
           </button>
+        )}
 
-          <button
-            onClick={() => onDelete(node)}
-            className="text-xs font-medium text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-white"
-          >
-            Delete
-          </button>
-        </div>
+        <button
+          onClick={() => onEdit(Number(node.id))}
+          className="text-sm text-amber-700 hover:text-amber-900"
+          type="button"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => onDelete(node)}
+          className="text-sm text-red-600 hover:text-red-800"
+          type="button"
+        >
+          Delete
+        </button>
       </div>
     </li>
   );
@@ -228,11 +212,10 @@ export default function OutlineTree({
   onEdit,
   onDelete,
   onToggleDone,
-  onAddSubtask, // optional override
+  onAddSubtask,
 }: OutlineTreeProps) {
   const { addSubtask } = useTasks();
 
-  // If parent passes one, use it; otherwise use context addSubtask
   const handleAddSubtask =
     onAddSubtask ??
     (async ({
