@@ -9,7 +9,7 @@ export default function Navbar() {
       <div className="space-x-5">
         {
           loggedIn ? (
-            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
           ) : (
             <Link href="/login" legacyBehavior>
               <a className="text-gray-700 hover:text-green-600">Login</a>
