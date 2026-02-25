@@ -166,6 +166,7 @@ export type SystemsContextType = {
   fileChange: (file: File | null) => void;
   uploadStatus: string | null;
   selectedFile: File | null;
+  exportCsv: () => Promise<void>;
   error: string | null;
 };
 
@@ -312,6 +313,8 @@ export type AuthContextType = {
 
 export type APIContextType = {
   getAuthHeaders: () => Record<string, string>;
+  getImportCsvSpec: () => Promise<void>;
+  importTasksCsv: (file: File, dryRun: boolean) => Promise<void>
   getAuthHeadersForForm: () => Record<string, string>;
   fileUpload: (selectedFile: File | null) => Promise<Response | void>;
   uploadStatus: string | null;

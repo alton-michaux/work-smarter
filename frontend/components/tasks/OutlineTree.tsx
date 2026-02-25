@@ -18,15 +18,14 @@ function OutlineRow({
   const [subtaskTitle, setSubtaskTitle] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // relies on API field `parent` (number|null)
   const isSubtask = Boolean(node.parent);
 
   const childCount = Array.isArray(node.children) ? node.children.length : 0;
   const doneChildCount = childCount
     ? node.children.filter((c: any) => Boolean(c.is_done)).length
     : 0;
-  
-    const checkboxRef = useRef<HTMLInputElement | null>(null);
+
+  const checkboxRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!checkboxRef.current) return;
@@ -62,30 +61,36 @@ function OutlineRow({
     }
   };
 
+  const isDone = Boolean(node.is_done);
+
   return (
     <li
-      className={`border-b px-4 flex justify-between items-start group ${
-        depth > 0 ? 'py-1.5' : 'py-3'
-      }`}
-      style={{ paddingLeft: 16 + depth * 20 }}
+      className={[
+        "group relative",
+        "border-b border-gray-100 last:border-b-0",
+        "px-4",
+        "py-2.5",
+        "hover:bg-gray-50/70",
+        "transition-colors",
+        "flex items-start justify-between gap-4",
+        "focus-within:bg-gray-50/70",
+      ].join(" ")}
+      style={{ paddingLeft: 16 + effectiveDepth * 18 }}
     >
-      {/* LEFT/MIDDLE: checkbox + content */}
+      {/* LEFT: checkbox/icon + content */}
       <div className="min-w-0 flex-1 flex items-start gap-3">
-        {/* checkbox/icon MUST NOT be inside any <button> */}
-        <div className="mt-1">
+        <div className="pt-0.5">
           {type === 'task' ? (
             <input
               ref={checkboxRef}
               type="checkbox"
               checked={!!node.is_done}
-              onChange={(e) => {
-                onToggleDone?.(Number(node.id), e.target.checked);
-              }}
+              onChange={(e) => onToggleDone?.(Number(node.id), e.target.checked)}
               onClick={(e) => e.stopPropagation()}
-              className="h-4 w-4"
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-200"
             />
           ) : (
-            <span className="text-lg leading-none">
+            <span className="text-base leading-none">
               {type === 'meeting' ? '🗓️' : '•'}
             </span>
           )}
@@ -98,16 +103,22 @@ function OutlineRow({
               e.preventDefault();
               onView(Number(node.id));
             }}
-            className="text-lg font-semibold text-blue-600 hover:underline text-left block max-w-full truncate"
+            className={[
+              "block w-full text-left",
+              "font-medium",
+              "truncate",
+              isDone ? "text-gray-500 line-through" : "text-gray-900",
+              "hover:text-blue-700",
+              "focus:outline-none focus:ring-2 focus:ring-blue-200 rounded-sm",
+            ].join(" ")}
             title={node.title}
           >
-            <span className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-2 min-w-0">
               <span className="truncate">{node.title}</span>
 
-              {/* Parent progress badge (only if this node has children) */}
               {!isSubtask && childCount > 0 && (
                 <span
-                  className="text-xs px-2 py-0.5 rounded border text-gray-500"
+                  className="shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-gray-200 bg-white text-gray-600"
                   title="Subtask progress"
                 >
                   {doneChildCount}/{childCount}
@@ -115,25 +126,28 @@ function OutlineRow({
               )}
 
               {node.is_recurring && (
-                <span className="text-xs opacity-60" title="Recurring task">
+                <span className="shrink-0 text-[11px] text-gray-400" title="Recurring">
                   🔁
                 </span>
               )}
             </span>
-
           </button>
 
-          <p className="text-xs text-gray-500 mt-1">
-            {(node.priority ?? '').toUpperCase()} • {node.begin_date ?? '—'}
-          </p>
+          <div className="mt-1 text-xs text-gray-500">
+            <span className="uppercase tracking-wide">
+              {(node.priority ?? '—').toString()}
+            </span>
+            <span className="mx-2 text-gray-300">•</span>
+            <span>{node.begin_date ?? '—'}</span>
+          </div>
 
-          {/* Inline Add Subtask UI */}
+          {/* Inline Add Subtask */}
           {!isSubtask && type === 'task' && showSubtask && (
             <div className="mt-2 pl-7">
               <div className="flex items-center gap-2">
                 <input
-                  className="w-full rounded border px-2 py-1 text-sm"
-                  placeholder="New subtask..."
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="New subtask…"
                   value={subtaskTitle}
                   onChange={(e) => setSubtaskTitle(e.target.value)}
                   onKeyDown={(e) => {
@@ -144,9 +158,10 @@ function OutlineRow({
                   autoFocus
                 />
                 <button
-                  className="rounded border px-2 py-1 text-sm"
+                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
                   disabled={saving || !subtaskTitle.trim() || !onAddSubtask}
                   onClick={submitSubtask}
+                  type="button"
                 >
                   Add
                 </button>
@@ -159,13 +174,13 @@ function OutlineRow({
         </div>
       </div>
 
-      {/* RIGHT: actions */}
-      <div className="flex-shrink-0 group-hover:flex space-x-3">
-        {/* Add Subtask action (only for non-subtasks and only tasks) */}
+      {/* RIGHT: actions (hidden until hover/focus) */}
+      <div className="shrink-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
         {!isSubtask && type === 'task' && (
           <button
             onClick={() => setShowSubtask((v) => !v)}
-            className="text-sm text-gray-500 hover:text-gray-800"
+            className="text-sm text-gray-500 hover:text-gray-900"
+            type="button"
           >
             + Subtask
           </button>
@@ -173,13 +188,15 @@ function OutlineRow({
 
         <button
           onClick={() => onEdit(Number(node.id))}
-          className="text-sm text-yellow-600 hover:text-yellow-800"
+          className="text-sm text-amber-700 hover:text-amber-900"
+          type="button"
         >
           Edit
         </button>
         <button
           onClick={() => onDelete(node)}
           className="text-sm text-red-600 hover:text-red-800"
+          type="button"
         >
           Delete
         </button>
@@ -195,11 +212,10 @@ export default function OutlineTree({
   onEdit,
   onDelete,
   onToggleDone,
-  onAddSubtask, // optional override
+  onAddSubtask,
 }: OutlineTreeProps) {
   const { addSubtask } = useTasks();
 
-  // Hoisted handler: if parent passes one, use it; otherwise use context addSubtask
   const handleAddSubtask =
     onAddSubtask ??
     (async ({
@@ -226,7 +242,7 @@ export default function OutlineTree({
     });
 
   return (
-    <ul>
+    <ul className={depth === 0 ? "divide-y divide-transparent" : ""}>
       {nodes.map((n) => (
         <React.Fragment key={n.id}>
           <OutlineRow

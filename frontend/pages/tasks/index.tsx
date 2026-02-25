@@ -63,29 +63,50 @@ const TasksPage = () => {
     if (!selectedDate) return;
     fetchTasksByDateRange(selectedDate, selectedDate, selectedDate);
     setProjects(projects);
-  }, [selectedDate]);
+  }, [selectedDate]); // keeping your existing behavior
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center px-4">
-      <div className="w-full max-w-6xl bg-white rounded-lg shadow">
+    <div className="min-h-screen bg-gray-50 px-4 py-8">
+      <div className="mx-auto w-full max-w-6xl">
+        {/* Keep overflow visible so sticky works reliably */}
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          {/* ───────────────── Sticky Header ───────────────── */}
+          <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm isolate">
+            <div className="px-6 py-4">
+              {/* Title row */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h1 className="text-lg font-semibold text-gray-900">
+                    Daily Log
+                  </h1>
+                  {selectedDate && (
+                    <p className="mt-1 text-sm text-gray-600">
+                      Showing{' '}
+                      <span className="font-medium text-gray-900">
+                        {selectedDate}
+                      </span>
+                    </p>
+                  )}
+                </div>
 
-        {/* ───────────────── Sticky Header ───────────────── */}
-        <div className="sticky top-0 z-20 bg-white border-b">
-          <div className="px-6 py-4">
-            <h1 className="text-xl font-semibold text-gray-800 text-center mb-3">
-              Daily Log
-            </h1>
-
-            {selectedDate && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                {/* LEFT: showing + weekday buttons */}
-                <div className="lg:col-span-8">
-                  <div className="text-sm text-gray-600 mb-1">
-                    Showing:{' '}
-                    <span className="font-medium text-gray-800">{selectedDate}</span>
+                {/* Date picker */}
+                {selectedDate && (
+                  <div className="shrink-0">
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="w-[160px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    />
                   </div>
+                )}
+              </div>
 
-                  <div className="pt-12">
+              {/* Controls row */}
+              {selectedDate && (
+                <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                  {/* Weekday toggle */}
+                  <div className="lg:col-span-7">
                     <DateToggleUI
                       selectedDate={selectedDate}
                       setSelectedDate={setSelectedDate}
@@ -93,65 +114,60 @@ const TasksPage = () => {
                       compact
                     />
                   </div>
-                </div>
 
-                {/* RIGHT: date picker + quick add */}
-                <div className="lg:col-span-4 flex flex-col gap-3">
-                  <div className="flex justify-end">
-                    <input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="border rounded px-2 py-1 text-sm"
-                    />
+                  {/* Quick add */}
+                  <div className="lg:col-span-5">
+                    <QuickAddBar selectedDate={selectedDate} />
                   </div>
-
-                  <QuickAddBar selectedDate={selectedDate} />
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* ───────────────── Content ───────────────── */}
+          {/* This creates breathing room under the sticky header without hacks */}
+          <div className="px-6 py-6 pt-10">
+            {error && (
+              <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
               </div>
             )}
-          </div>
-        </div>
-        <div className="h-[120px]" />
-        {/* ───────────────── Scrollable Content ───────────────── */}
-        <div className="px-6 py-6">
-          {/* Errors */}
-          {error && (
-            <div className="mb-4 text-sm text-red-600">{error}</div>
-          )}
 
-          {/* Empty / Loading / Content */}
-          {!selectedDate ? (
-            <p className="text-gray-600 text-center">Loading…</p>
-          ) : !isLoading && dailyTasks.length === 0 ? (
-            <p className="text-gray-600 text-center">
-              No entries for {selectedDate}.
-            </p>
-          ) : (
-            <TaskLayout
-              sections={sections}
-              onView={handleTaskClick}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onToggleDone={handleToggleDone}
-            />
-          )}
+            {!selectedDate ? (
+              <p className="text-gray-600 text-center">Loading…</p>
+            ) : !isLoading && dailyTasks.length === 0 ? (
+              <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-8 text-center">
+                <p className="text-sm text-gray-700">
+                  No entries for{' '}
+                  <span className="font-medium">{selectedDate}</span>.
+                </p>
+              </div>
+            ) : (
+              <TaskLayout
+                sections={sections}
+                onView={handleTaskClick}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggleDone={handleToggleDone}
+              />
+            )}
 
-          {/* Bottom Navigation */}
-          <div className="mt-10 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <button
-              onClick={() => router.push('/tasks/tracker')}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-            >
-              View Weekly Tracker
-            </button>
+            {/* Bottom Navigation */}
+            <div className="mt-10 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <button
+                onClick={() => router.push('/tasks/tracker')}
+                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+              >
+                View Weekly Tracker
+              </button>
 
-            <button
-              onClick={() => router.back()}
-              className="text-sm text-gray-600 hover:underline"
-            >
-              ← Back
-            </button>
+              <button
+                onClick={() => router.back()}
+                className="text-sm text-gray-600 hover:text-gray-900 hover:underline"
+              >
+                ← Back
+              </button>
+            </div>
           </div>
         </div>
       </div>

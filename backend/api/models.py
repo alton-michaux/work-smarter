@@ -53,12 +53,18 @@ class Task(models.Model):
         ('medium', 'Medium'),
         ('low', 'Low'),
     ]
+    
+    CATEGORY_CHOICES = [
+        ('task', 'Task'),
+        ('meeting', 'Meeting'),
+        ('note', 'Note'),
+    ]
 
     begin_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     title = models.TextField()
-    category = models.TextField(null=True)
+    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='task', null=True)
     is_done = models.BooleanField(default=False)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     description = models.TextField(blank=True)
@@ -99,3 +105,8 @@ class Task(models.Model):
         elif not self.is_done and self.end_date:
             self.end_date = None
         super().save(*args, **kwargs)
+        
+    models.UniqueConstraint(
+        fields=["user", "title", "begin_date", "project", "parent"],
+        name="uniq_task_user_title_begin_project_parent",
+    )
