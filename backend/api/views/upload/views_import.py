@@ -13,7 +13,7 @@ from rest_framework.exceptions import ParseError
 
 VALID_PRIORITIES = {"urgent", "high", "medium", "low"}
 
-VALID_CATEGORIES = {"task", "meeting", "note"}
+# VALID_CATEGORIES = {"task", "meeting", "note"}
 
 def _parse_date(s: str | None):
     if not s:
@@ -113,13 +113,13 @@ class ImportTasksCSVView(APIView):
                     continue
                 
                 category = (r.get("category") or "").strip().lower() or None
-                if category and category not in VALID_CATEGORIES:
-                    errors.append({
-                        "line": idx,
-                        "field": "category",
-                        "error": f"Invalid category '{category}'. Allowed: {sorted(VALID_CATEGORIES)}",
-                    })
-                    continue
+                # if category and category not in VALID_CATEGORIES:
+                #     errors.append({
+                #         "line": idx,
+                #         "field": "category",
+                #         "error": f"Invalid category '{category}'. Allowed: {sorted(VALID_CATEGORIES)}",
+                #     })
+                #     continue
 
                 try:
                     begin_date = _parse_date(r.get("begin_date"))
