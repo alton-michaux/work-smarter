@@ -13,6 +13,11 @@ type Action = {
   variant?: 'primary' | 'secondary';
 };
 
+type TaskIdLike =
+  | number
+  | Task
+  | { id?: number; task?: { id?: number }; pk?: number };
+
 //------TASK---------//
 
 export type AnyTask = Task & CollapsedMeta;
@@ -83,7 +88,7 @@ export type TasksContextType = {
   addTask: (task: Omit<Task, 'id'>) => Promise<void>;
   addSubtask: (payload: CreateTaskPayload) => Promise<void>;
   updateTaskAndReload: (task: Task) => Promise<void>;
-  deleteTask: (task: Task) => Promise<void>;
+  deleteTask: (taskOrId: TaskIdLike, options?: DeleteTaskOptions) => Promise<void>;
   fetchTasks: () => Promise<void>;
   fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
   fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
@@ -91,6 +96,8 @@ export type TasksContextType = {
   isLoading: boolean;
   error: string | null;
 };
+
+export type DeleteTaskOptions = { deleteSeries?: boolean };
 
 export type TaskLike = {
   id: number | string;

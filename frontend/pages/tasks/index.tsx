@@ -20,6 +20,8 @@ const TasksPage = () => {
   const router = useRouter();
   const queryDate =
     typeof router.query.date === 'string' ? router.query.date : null;
+  
+  const isRecurring = (t: any) => Boolean(t?.recurring_task_id || t?.recurring_task?.id);
 
   const { projects, setProjects } = useProjects();
 
@@ -47,14 +49,31 @@ const TasksPage = () => {
     [tasks, toggleTaskDone]
   );
 
-  const handleDelete = useCallback(
-    async (task: any) => {
-      if (confirm('Are you sure you want to delete this task?')) {
-        await deleteTask(task);
+  async function handleDelete(task: any) {
+    const id = typeof task === "number" ? task : task?.id;
+    if (!id) throw new Error("Missing task id");
+
+    if (isRecurring(task)) {
+      const choice = window.prompt(
+        'Type "1" to delete this occurrence, or "2" to delete the entire series.'
+      );
+
+      if (choice === "2") {
+        await deleteTask(id, { deleteSeries: true });
+        return;
       }
-    },
-    [deleteTask]
-  );
+
+      if (choice === "1") {
+        await deleteTask(id, { deleteSeries: false });
+        return;
+      }
+
+      // cancel / invalid input
+      return;
+    }
+
+    await deleteTask(id);
+  }
 
   const { selectedDate, setSelectedDate, last7Days, dailyTasks, sections } =
     useDailyLog(tasks, queryDate, { activeOn: true });
