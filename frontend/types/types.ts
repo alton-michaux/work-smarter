@@ -112,6 +112,15 @@ export type SubtaskProgress = {
   total: number;
 };
 
+export type RecurringDeleteModalProps = {
+  open: boolean;
+  onClose: () => void;
+  onDeleteOccurrence: () => void | Promise<void>;
+  onDeleteSeries: () => void | Promise<void>;
+  title?: string;
+  body?: string;
+};
+
 //------PROJECT---------//
 
 export type Project = {
@@ -227,6 +236,13 @@ export type OutlineTreeProps = {
   onToggleDone?: (id: number, isDone: boolean) => void;
 
   onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
+};
+
+export type PanelProps = {
+  title: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
 };
 
 //--------UI---------//
