@@ -299,6 +299,14 @@ export type MarkdownEditProps = {
   helpText?: string;
 };
 
+export type Variant = "primary" | "secondary" | "ghost" | "danger";
+export type Size = "sm" | "md";
+
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: Variant;
+  size?: Size;
+};
+
 //------AUTH/API---------//
 
 export type User = {
