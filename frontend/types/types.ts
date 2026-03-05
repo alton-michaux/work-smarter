@@ -285,6 +285,11 @@ export type ProjectTimelineProps<T extends TaskLike> = {
   onItemClick?: (t: T) => void;
 };
 
+export type MarkdownBodyProps = {
+  value?: string | null;
+  emptyText?: string;
+};
+
 //------AUTH/API---------//
 
 export type User = {
