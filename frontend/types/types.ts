@@ -229,6 +229,7 @@ export type EmptyStateProps = {
   title: string;
   description?: string;
   actions?: Action[];
+  href?: string;
 };
 
 export type TrackerProps = {

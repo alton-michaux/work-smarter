@@ -8,6 +8,9 @@ export default function EmptyStateCard({
 }: EmptyStateProps) {
   return (
     <div className="max-w-lg mx-auto text-center bg-white border border-gray-200 rounded-lg shadow-sm p-8">
+      <div className="text-gray-400 mb-4">
+        <svg className="w-8 h-8 mx-auto"/>
+      </div>
       <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
 
       {description && (
@@ -21,7 +24,6 @@ export default function EmptyStateCard({
               key={i}
               variant={action.variant ?? "secondary"}
               onClick={action.onClick}
-              href={action.href}
             >
               {action.label}
             </Button>
