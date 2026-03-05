@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { RecurrenceState, ProjectOption, TaskFormProps } from "types/types";
+import { RecurrenceState, TaskFormProps } from "types/types";
 import { useTasks } from "../../context/TasksContext";
+import MarkdownEditor from "components/shared/MarkdownEditor";
 
 export default function TaskForm({
   initialTask,
@@ -140,7 +141,7 @@ export default function TaskForm({
   }, [isEditing, recurringTemplateId, initialTask, getAuthHeaders]);
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4 max-w-xl mx-auto bg-white p-6 rounded-lg shadow">
+    <form onSubmit={handleSubmit} noValidate className="space-y-4 max-w-xl mx-auto bg-white p-6 rounded-lg shadow max-w-5xl mx-auto px-6 py-8">
       {formError ? (
         <div className="rounded border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-2">
           {formError}
@@ -209,11 +210,12 @@ export default function TaskForm({
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-        <textarea
-          name="description"
-          value={task.description ?? ""}
+        <MarkdownEditor
+          label="Notes"
+          value={task.description}
           onChange={handleChange}
-          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+          placeholder={`### Notes\n- [ ] Follow up\n- [x] Done`}
+          helpText="Markdown supported: lists, checkboxes, code blocks."
         />
       </div>
 

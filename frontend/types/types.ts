@@ -290,6 +290,15 @@ export type MarkdownBodyProps = {
   emptyText?: string;
 };
 
+
+export type MarkdownEditProps = {
+  label?: string;
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+  helpText?: string;
+};
+
 //------AUTH/API---------//
 
 export type User = {
