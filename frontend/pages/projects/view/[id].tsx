@@ -32,12 +32,16 @@ const ProjectShowPage = () => {
   if (!project) {
     return (
       <div className="min-h-screen bg-gray-100">
-        <div className="max-w-5xl mx-auto px-6 py-12">
+        <div className="max-w-5xl mx-auto px-6 py-12">          
           <EmptyStateCard
-            title="Project Not Found"
+            title="Project not found"
+            description="This project may have been deleted or the link is invalid."
             actions={[
-              { label: "Back", onClick: () => router.back(), variant: "secondary" },
-              { label: "All Projects", onClick: () => router.push("/projects"), variant: "primary" },
+              {
+                label: "Back to Projects",
+                onClick: () => router.push("/projects"),
+                variant: "primary",
+              },
             ]}
           />
         </div>

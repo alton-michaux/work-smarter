@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import Spinner from 'components/shared/Spinner';
+import Button from "../components/ui/button"; // Add this import
 
 const Register = () => {
   const { register, isLoading, error } = useAuth(); // <-- get error from context
@@ -70,21 +71,27 @@ const Register = () => {
               <p className="text-red-600 text-sm font-medium">{error}</p>
             )}
 
-            <button
-              type="submit"
-              className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-            >
-              Register
-            </button>
+            <div className="sticky bottom-0 -mx-6 mt-8 border-t border-gray-200 bg-white/90 backdrop-blur px-6 py-4">
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="primary"
+                  size="md"
+                  type="submit"
+                >
+                  Register
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  type="submit"
+                  onClick={() => router.push("/")}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
           </form>
         )}
-
-        <button
-          onClick={() => router.back()}
-          className="mt-4 text-sm text-gray-500 hover:underline"
-        >
-          ← Back
-        </button>
       </div>
     </div>
   );
