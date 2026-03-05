@@ -3,6 +3,8 @@ import { useAuth } from "../../context/AuthContext";
 import { RecurrenceState, TaskFormProps } from "types/types";
 import { useTasks } from "../../context/TasksContext";
 import MarkdownEditor from "components/shared/MarkdownEditor";
+import Button from 'components/ui/button';
+import Link from "next/link";
 
 export default function TaskForm({
   initialTask,
@@ -316,10 +318,19 @@ export default function TaskForm({
           </>
         )}
       </div>
+      <div className="mt-6 flex items-center justify-between">
+        <Link href="/tasks">
+          <Button type="button" variant="secondary">
+            Cancel
+          </Button>
+        </Link>
 
-      <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
-        {submitLabel}
-      </button>
+        <div className="flex items-center gap-2">
+          <Button type="submit" variant="primary">
+            Update
+          </Button>
+        </div>
+      </div>
     </form>
   );
 }

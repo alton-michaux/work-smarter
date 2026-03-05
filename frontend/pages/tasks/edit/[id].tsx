@@ -30,7 +30,6 @@ export default function TaskEditPage() {
         submitLabel="Update" 
         projects={projectOptions} 
       />
-      <button className="text-gray-500 text-sm hover:underline" onClick={() => router.push(`/tasks/view/${id}`)} style={{ marginTop: 12 }}>Cancel</button>
     </div>
   );
 }
