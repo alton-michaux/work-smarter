@@ -2,6 +2,8 @@ import { useRouter } from 'next/router';
 import { useTasks } from '../../../context/TasksContext';
 import Spinner from 'components/shared/Spinner';
 import EmptyStateCard from 'components/shared/EmptyStateCard';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const TaskShowPage = () => {
   const router = useRouter();
@@ -53,7 +55,11 @@ const TaskShowPage = () => {
         <li><strong>Category:</strong> {task.category}</li>
         <li><strong>Done:</strong> {task.is_done ? 'Yes' : 'No'}</li>
         <li><strong>Priority:</strong> {task.priority}</li>
-        <li><strong>Description:</strong> {task.description}</li>
+        <div className="prose prose-sm max-w-none">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {task.description || ""}
+          </ReactMarkdown>
+        </div>
         <li><strong>Is Subtask:</strong> {task.is_subtask ? 'Yes' : 'No'}</li>
         <li><strong>Carry Over:</strong> {task.carry_over ? 'Yes' : 'No'}</li>
         <li><strong>User:</strong> {task.user}</li>
