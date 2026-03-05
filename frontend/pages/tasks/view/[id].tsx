@@ -2,8 +2,6 @@ import { useRouter } from 'next/router';
 import { useTasks } from '../../../context/TasksContext';
 import Spinner from 'components/shared/Spinner';
 import EmptyStateCard from 'components/shared/EmptyStateCard';
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import MarkdownBody from 'components/shared/MarkdownBody';
 
 const TaskShowPage = () => {
@@ -22,11 +20,16 @@ const TaskShowPage = () => {
   }
 
   if (!task) {
-    return (
+    return (      
       <EmptyStateCard
-        title="Task Not Found"
+        title="Task not found"
+        description="This task may have been deleted or the link is invalid."
         actions={[
-          { label: 'All Tasks', onClick: () => router.push('/tasks'), variant: 'primary' },
+          {
+            label: "Back to Tasks",
+            onClick: () => router.push("/tasks"),
+            variant: "primary",
+          },
         ]}
       />
     );

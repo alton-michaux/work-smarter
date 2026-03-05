@@ -11,6 +11,7 @@ type Action = {
   label: string;
   onClick: () => void;
   variant?: 'primary' | 'secondary';
+  href?: string;
 };
 
 //------TASK---------//
@@ -226,7 +227,7 @@ export type OutlineTreeProps = {
 
 export type EmptyStateProps = {
   title: string;
-  message?: string;
+  description?: string;
   actions?: Action[];
 };
 
