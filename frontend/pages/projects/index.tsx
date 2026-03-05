@@ -137,17 +137,6 @@ export default function ProjectsPage() {
             </ul>
           )}
         </div>
-
-        {/* Footer nav */}
-        <div className="mt-6 flex justify-end">
-          <button
-            onClick={() => router.back()}
-            className="text-sm text-gray-600 hover:text-gray-900 hover:underline transition"
-            type="button"
-          >
-            ← Back
-          </button>
-        </div>
       </div>
     </div>
   );

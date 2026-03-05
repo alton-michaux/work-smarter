@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import Button from "../ui/button";
+import { useRouter } from "next/router";
 
 export default function ProjectForm({ initialProject, onSubmit, submitLabel = "Save", user }) {
   const [project, setProject] = useState(initialProject);
@@ -6,6 +8,8 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>('');
   
+  const router = useRouter()
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProject(p => ({ ...p, [name]: value, user: user?.id }));
@@ -24,6 +28,10 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
       setFormError(err?.message || 'Something went wrong. Please try again.');
     }
   };
+
+  const handleBack = () => {
+    router.back()
+  }
 
   const validate = () => {
     const next: Record<string, string> = {};
@@ -78,12 +86,26 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
         />
       </div>
 
-      <button
-        type="submit"
-        className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-      >
-        {submitLabel}
-      </button>
+      <div className="sticky bottom-0 -mx-6 mt-8 border-t border-gray-200 bg-white/90 backdrop-blur px-6 py-4">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="primary"
+            size="md"
+            type="submit"
+          >
+            {submitLabel}
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() => handleBack()}
+            type="button"
+            size="md"
+          >
+            ← Back
+          </Button>
+        </div>
+      </div>
     </form>
   );
 }

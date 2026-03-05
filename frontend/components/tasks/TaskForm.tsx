@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { RecurrenceState, TaskFormProps } from "types/types";
 import { useTasks } from "../../context/TasksContext";
+import { useAPI } from "context/APIContext";
 import MarkdownEditor from "components/shared/MarkdownEditor";
 import Button from 'components/ui/button';
 import Link from "next/link";
@@ -13,6 +14,8 @@ export default function TaskForm({
   projects,
 }: TaskFormProps) {
   const { user, getAuthHeaders } = useAuth();
+
+  const { isLoading } = useAPI()
 
   const [task, setTask] = useState<any>(() => ({
     ...initialTask,
@@ -318,16 +321,16 @@ export default function TaskForm({
           </>
         )}
       </div>
-      <div className="mt-6 flex items-center justify-between">
-        <Link href="/tasks">
-          <Button type="button" variant="secondary">
-            Cancel
-          </Button>
-        </Link>
+      <div className="sticky bottom-0 -mx-6 mt-8 border-t border-gray-200 bg-white/90 backdrop-blur px-6 py-4">
+        <div className="flex items-center justify-between">
+          <Link href="/tasks">
+            <Button type="button" variant="secondary">
+              Cancel
+            </Button>
+          </Link>
 
-        <div className="flex items-center gap-2">
-          <Button type="submit" variant="primary">
-            Update
+          <Button type="submit" variant="primary" disabled={isLoading}>
+            {isLoading ? "Saving..." : "Update"}
           </Button>
         </div>
       </div>
