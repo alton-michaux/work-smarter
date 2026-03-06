@@ -11,6 +11,7 @@ type Action = {
   label: string;
   onClick: () => void;
   variant?: 'primary' | 'secondary';
+  href?: string;
 };
 
 type TaskIdLike =
@@ -249,8 +250,9 @@ export type PanelProps = {
 
 export type EmptyStateProps = {
   title: string;
-  message?: string;
+  description?: string;
   actions?: Action[];
+  href?: string;
 };
 
 export type TrackerProps = {
@@ -306,6 +308,28 @@ export type ProjectTimelineProps<T extends TaskLike> = {
 
   grouped: Grouped<T>;
   onItemClick?: (t: T) => void;
+};
+
+export type MarkdownBodyProps = {
+  value?: string | null;
+  emptyText?: string;
+};
+
+
+export type MarkdownEditProps = {
+  label?: string;
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+  helpText?: string;
+};
+
+export type Variant = "primary" | "secondary" | "ghost" | "danger";
+export type Size = "sm" | "md";
+
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: Variant;
+  size?: Size;
 };
 
 //------AUTH/API---------//

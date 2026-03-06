@@ -1,6 +1,7 @@
 import { useProjects } from "../../context/ProjectsContext";
 import { useRouter } from "next/router";
 import Spinner from "components/shared/Spinner";
+import EmptyStateCard from "components/shared/EmptyStateCard";
 
 export default function ProjectsPage() {
   const { projects, deleteProject, isLoading } = useProjects();
@@ -69,13 +70,18 @@ export default function ProjectsPage() {
               <Spinner />
             </div>
           ) : results.length === 0 ? (
-            <div className="px-6 py-10 text-center">
-              <div className="text-sm font-semibold text-gray-900">
-                No projects yet
-              </div>
-              <div className="mt-1 text-sm text-gray-600">
-                Create your first project to start tracking meetings and work.
-              </div>
+            <div className="px-6 py-10 text-center">              
+              <EmptyStateCard
+                title="No Projects Yet"
+                description="Create a project or import tasks with projects to populate this page"
+                actions={[
+                  {
+                    label: "Back to Dashboard",
+                    onClick: () => router.push("/dashboard"),
+                    variant: "primary",
+                  },
+                ]}
+              />
               <div className="mt-5">
                 <button
                   onClick={() => router.push("/projects/create")}
@@ -136,17 +142,6 @@ export default function ProjectsPage() {
               ))}
             </ul>
           )}
-        </div>
-
-        {/* Footer nav */}
-        <div className="mt-6 flex justify-end">
-          <button
-            onClick={() => router.back()}
-            className="text-sm text-gray-600 hover:text-gray-900 hover:underline transition"
-            type="button"
-          >
-            ← Back
-          </button>
         </div>
       </div>
     </div>

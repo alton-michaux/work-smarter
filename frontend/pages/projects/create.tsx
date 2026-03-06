@@ -25,14 +25,6 @@ export default function ProjectCreatePage() {
       ) : (
         <ProjectForm initialProject={emptyProject} onSubmit={handleCreate} submitLabel="Create" user={auth.user} />
       )}
-      <div className="mt-8 flex justify-between">
-        <button
-          onClick={() => router.back()}
-          className="text-sm text-gray-600 hover:underline"
-        >
-          ← Back
-        </button>
-      </div>
     </div>
   );
 }
