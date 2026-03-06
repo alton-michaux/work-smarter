@@ -44,6 +44,34 @@ class RecurringTask(models.Model):
     start_date = models.DateField()
     is_active = models.BooleanField(default=True)
     last_generated_at = models.DateField(null=True, blank=True)
+    
+class RecurringTaskException(models.Model):
+    TYPE_SKIP = "skip"
+    TYPE_CHOICES = [
+        (TYPE_SKIP, "Skip"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    recurring_task = models.ForeignKey(
+        "RecurringTask",
+        on_delete=models.CASCADE,
+        related_name="exceptions",
+    )
+    date = models.DateField()
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=TYPE_SKIP)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "recurring_task", "date", "type"],
+                name="uniq_recurring_exception_per_day",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} {self.recurring_task_id} {self.date} {self.type}"
 
 class Task(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tasks", null=False, blank=False)
