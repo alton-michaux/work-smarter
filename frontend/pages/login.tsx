@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Spinner from 'components/shared/Spinner';
+import Button from "../components/ui/button";
 
 const Login = () => {
     const { login, isLoading, error } = useAuth();
@@ -62,13 +63,17 @@ const Login = () => {
                         {error}
                     </div>
                     )}
-
-                    <button
-                    type="submit"
-                    className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
-                    >
-                    Login
-                    </button>
+                    <div className="sticky bottom-0 -mx-6 mt-8 border-t border-gray-200 bg-white/90 backdrop-blur px-6 py-4">
+                        <div className="flex items-center justify-around">
+                            <Button
+                            variant="primary"
+                            size="md"
+                            type="submit"
+                            >
+                            Login
+                            </Button>
+                        </div>
+                    </div>
                 </form>
                 )}
 

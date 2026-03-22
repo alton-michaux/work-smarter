@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Task, Filters, TasksContextType, CreateTaskPayload } from 'types/types'
+import { Task, Filters, TasksContextType, CreateTaskPayload, DeleteTaskOptions } from 'types/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -58,29 +58,40 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [loggedIn, getAuthHeaders]);
 
-  const fetchTasksByDateRange = useCallback(async (begin: string, end: string, active_on: string) => {
-    if (!loggedIn) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      const url = buildUrl({ ordering: '-begin_date', begin_date: begin, end_date: end, active_on });
-      const res = await fetch(url, { headers: getAuthHeaders() });
+  const fetchTasksByDateRange = useCallback(
+    async (begin: string, end: string, active_on?: string | null) => {
+      if (!loggedIn) return;
+      setIsLoading(true);
+      setError(null);
 
-      if (res.status === 401) {
-        setError('Unauthorized');
-        return;
+      try {
+        const params: any = { ordering: "-begin_date", begin_date: begin, end_date: end };
+
+        // Only include active_on if it’s a non-empty string
+        if (typeof active_on === "string" && active_on.trim().length > 0) {
+          params.active_on = active_on;
+        }
+
+        const url = buildUrl(params);
+        const res = await fetch(url, { headers: getAuthHeaders() });
+
+        if (res.status === 401) {
+          setError("Unauthorized");
+          return;
+        }
+
+        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+
+        const data = await res.json();
+        setTasks(data.results || []);
+      } catch (e: any) {
+        setError(e.message ?? "unknown error");
+      } finally {
+        setIsLoading(false);
       }
-
-      if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-
-      const data = await res.json();
-      setTasks(data.results || []);
-    } catch (e: any) {
-      setError(e.message ?? 'unknown error');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loggedIn, getAuthHeaders]);
+    },
+    [loggedIn, getAuthHeaders]
+  );
 
   const fetchRecurringTemplate = async (recurring_task_id: number, initialTask: any, setRecurrence: any) => {
     if (!loggedIn) return;
@@ -274,7 +285,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const deleteTask = async (taskOrId: any) => {
+  const deleteTask = async (taskOrId: any, options: DeleteTaskOptions = {}) => {
     if (!loggedIn) return;
 
     const id =
@@ -292,9 +303,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       typeof taskOrId === "object" &&
       Boolean(taskOrId?.recurring_task_id || taskOrId?.recurring_task);
 
-    const url = isRecurring
-      ? `${API_URL}/tasks/${id}/?delete_series=1`
-      : `${API_URL}/tasks/${id}/`;
+    const deleteSeries = Boolean(options.deleteSeries);
+
+    const url =
+      isRecurring && deleteSeries
+        ? `${API_URL}/tasks/${id}/?delete_series=1`
+        : `${API_URL}/tasks/${id}/`;
 
     const res = await fetch(url, {
       method: "DELETE",
@@ -319,10 +333,11 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
             null)
           : null;
 
-      if (isRecurring && recurringId) {
-        return prev.filter((t: any) => (t.recurring_task_id ?? t.recurring_task) !== recurringId);
+      if (isRecurring && deleteSeries && recurringId) {
+        return prev.filter(
+          (t: any) => (t.recurring_task_id ?? t.recurring_task) !== recurringId
+        );
       }
-
       // Otherwise delete just the one row
       return prev.filter((t: any) => Number(t.id) !== Number(id));
     });

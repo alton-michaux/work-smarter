@@ -1,36 +1,35 @@
-import React from 'react';
-import { EmptyStateProps } from 'types/types';
+import Button from "components/ui/button";
+import { EmptyStateProps } from "types/types";
 
-export default function EmptyStateCard({ title, message, actions = [] }: EmptyStateProps) {
+export default function EmptyStateCard({
+  title,
+  description,
+  actions = [],
+}: EmptyStateProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="bg-white shadow-lg rounded-lg p-8 max-w-lg w-full text-center">
-        <h1 className="text-2xl font-bold text-gray-800 mb-3">{title}</h1>
-
-        {message ? (
-          <p className="text-sm text-gray-600 mb-6">{message}</p>
-        ) : (
-          <div className="mb-6" />
-        )}
-
-        {actions.length > 0 ? (
-          <div className="flex justify-center gap-4">
-            {actions.map((a) => (
-              <button
-                key={a.label}
-                onClick={a.onClick}
-                className={
-                  a.variant === 'primary'
-                    ? 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition'
-                    : 'px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition'
-                }
-              >
-                {a.label}
-              </button>
-            ))}
-          </div>
-        ) : null}
+    <div className="max-w-lg mx-auto text-center bg-white border border-gray-200 rounded-lg shadow-sm p-8">
+      <div className="text-gray-400 mb-4">
+        <svg className="w-8 h-8 mx-auto"/>
       </div>
+      <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+
+      {description && (
+        <p className="text-sm text-gray-600 mt-2">{description}</p>
+      )}
+
+      {actions.length > 0 && (
+        <div className="flex justify-center gap-3 mt-6">
+          {actions.map((action, i) => (
+            <Button
+              key={i}
+              variant={action.variant ?? "secondary"}
+              onClick={action.onClick}
+            >
+              {action.label}
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 from datetime import timedelta
 from django.db import transaction
 from api.models import RecurringTask, Task
+from .skippable_tasks import is_skipped
 
 
 def _dates_between(start, end):
@@ -38,6 +39,9 @@ def ensure_recurring_tasks_in_range(date_from, date_to, *, user, project=None):
             if not _should_generate(rt, d):
                 continue
 
+            if is_skipped(user, rt, d):
+                continue
+            
             Task.objects.get_or_create(
                 recurring_task=rt,
                 user=user,

@@ -1,7 +1,8 @@
 import pytest
 from datetime import date, timedelta
 from django.urls import reverse
-from api.models import Task
+from api.services.recurring_tasks import ensure_recurring_tasks_in_range
+from api.models import Task, RecurringTaskException
 
 def task_detail_url(task_id: int) -> str:
     return reverse("task-detail", args=[task_id])
@@ -144,14 +145,14 @@ def test_create_subtask_same_date_ok(auth_client, get_user, create_project, task
         title="Parent",
         begin_date=date(2026, 2, 3),
         project=project,
-        category="Dev",
+        category="meeting",
     )
 
     payload = {
         "title": "Child",
         "begin_date": "2026-02-03",
         "project": project.id,
-        "category": "Dev",
+        "category": "meeting",
         "parent": parent.id,
         "is_subtask": False,  # should be ignored/read-only
         "recurring_task": None,
@@ -176,13 +177,13 @@ def test_create_subtask_autocopies_begin_date_from_parent(auth_client, get_user,
         title="Parent",
         begin_date=date(2026, 2, 3),
         project=project,
-        category="Dev",
+        category="note",
     )
 
     payload = {
         "title": "Child",
         "project": project.id,
-        "category": "Dev",
+        "category": "note",
         "parent": parent.id,
         "recurring_task": None,
         # begin_date omitted on purpose
@@ -206,14 +207,14 @@ def test_create_subtask_rejects_mismatched_begin_date(auth_client, get_user, cre
         title="Parent",
         begin_date=date(2026, 2, 3),
         project=project,
-        category="Dev",
+        category="meeting",
     )
 
     payload = {
         "title": "Child",
         "begin_date": "2026-02-04",  # mismatch
         "project": project.id,
-        "category": "Dev",
+        "category": "meeting",
         "parent": parent.id,
         "recurring_task": None,
     }
@@ -233,14 +234,14 @@ def test_rejects_subtask_of_subtask_depth_limit(auth_client, get_user, create_pr
         title="Parent",
         begin_date=date(2026, 2, 3),
         project=project,
-        category="Dev",
+        category="task",
     )
     child = Task.objects.create(
         user=get_user,
         title="Child",
         begin_date=date(2026, 2, 3),
         project=project,
-        category="Dev",
+        category="task",
         parent=parent,
     )
 
@@ -248,7 +249,7 @@ def test_rejects_subtask_of_subtask_depth_limit(auth_client, get_user, create_pr
         "title": "Grandchild",
         "begin_date": "2026-02-03",
         "project": project.id,
-        "category": "Dev",
+        "category": "task",
         "parent": child.id,  # child is already a subtask
         "recurring_task": None,
     }
@@ -268,7 +269,7 @@ def test_rejects_self_parenting_on_update(auth_client, get_user, create_project)
         title="Lonely task",
         begin_date=date(2026, 2, 3),
         project=project,
-        category="Dev",
+        category="task",
     )
 
     res = auth_client.patch(task_detail_url(t.id), {"parent": t.id}, format="json")
@@ -286,13 +287,13 @@ def test_rejects_cross_user_parent(auth_client, get_user, create_user, tasks_lis
         user=other_user,
         title="Other user's parent",
         begin_date=date(2026, 2, 3),
-        category="Dev",
+        category="task",
     )
 
     payload = {
         "title": "Child",
         "begin_date": "2026-02-03",
-        "category": "Dev",
+        "category": "task",
         "parent": foreign_parent.id,
         "recurring_task": None,
     }
@@ -309,7 +310,7 @@ def test_client_cannot_force_is_subtask_true_without_parent(auth_client, get_use
     payload = {
         "title": "I try to be a subtask",
         "begin_date": "2026-02-03",
-        "category": "Dev",
+        "category": "note",
         "is_subtask": True,  # should be ignored/read-only
         "parent": None,
         "recurring_task": None,
@@ -330,13 +331,13 @@ def test_delete_parent_detaches_children(auth_client, get_user, create_task):
     parent = create_task(
         title="Parent",
         begin_date=date(2026, 2, 3),
-        category="Dev",
+        category="task",
         user=get_user,
     )
     child = create_task(
         title="Child",
         begin_date=date(2026, 2, 3),
-        category="Dev",
+        category="task",
         user=get_user,
         parent=parent,
     )
@@ -408,3 +409,73 @@ def test_task_delete(auth_client, get_user, create_task):
     response = auth_client.delete(f"/api/tasks/{task.id}/")
     assert response.status_code == 204
     assert not Task.objects.filter(id=task.id).exists()
+    
+@pytest.mark.django_db
+def test_delete_recurring_occurrence_creates_skip_exception(auth_client, get_user, create_task, create_recurring_task):
+    auth_client.force_authenticate(user=get_user)
+
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 2, 3),
+    )
+
+    occ = create_task(
+        user=get_user,
+        title="Daily thing",
+        begin_date=date(2026, 2, 3),
+        category="task",
+        recurring_task=rt,
+    )
+
+    res = auth_client.delete(task_detail_url(occ.id))
+    assert res.status_code in (204, 200)
+
+    assert not Task.objects.filter(id=occ.id).exists()
+
+    assert RecurringTaskException.objects.filter(
+        user=get_user,
+        recurring_task=rt,
+        date=date(2026, 2, 3),
+        type="skip",
+    ).exists()
+
+@pytest.mark.django_db
+def test_skip_exception_prevents_regeneration(auth_client, get_user, create_task, create_recurring_task):
+    auth_client.force_authenticate(user=get_user)
+
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 2, 3),
+    )
+
+    # occurrence exists
+    occ = create_task(
+        user=get_user,
+        title="Daily thing",
+        begin_date=date(2026, 2, 3),
+        category="task",
+        recurring_task=rt,
+    )
+
+    # delete occurrence -> creates skip
+    res = auth_client.delete(task_detail_url(occ.id))
+    assert res.status_code in (204, 200)
+
+    assert RecurringTaskException.objects.filter(
+        user=get_user,
+        recurring_task=rt,
+        date=date(2026, 2, 3),
+        type="skip",
+    ).exists()
+
+    # call ensure again for that day
+    ensure_recurring_tasks_in_range(date(2026, 2, 3), date(2026, 2, 3), user=get_user)
+
+    # should NOT come back
+    assert not Task.objects.filter(
+        user=get_user,
+        recurring_task=rt,
+        begin_date=date(2026, 2, 3),
+    ).exists()

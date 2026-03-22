@@ -11,7 +11,13 @@ type Action = {
   label: string;
   onClick: () => void;
   variant?: 'primary' | 'secondary';
+  href?: string;
 };
+
+type TaskIdLike =
+  | number
+  | Task
+  | { id?: number; task?: { id?: number }; pk?: number };
 
 //------TASK---------//
 
@@ -83,7 +89,7 @@ export type TasksContextType = {
   addTask: (task: Omit<Task, 'id'>) => Promise<void>;
   addSubtask: (payload: CreateTaskPayload) => Promise<void>;
   updateTaskAndReload: (task: Task) => Promise<void>;
-  deleteTask: (task: Task) => Promise<void>;
+  deleteTask: (taskOrId: TaskIdLike, options?: DeleteTaskOptions) => Promise<void>;
   fetchTasks: () => Promise<void>;
   fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
   fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
@@ -91,6 +97,8 @@ export type TasksContextType = {
   isLoading: boolean;
   error: string | null;
 };
+
+export type DeleteTaskOptions = { deleteSeries?: boolean };
 
 export type TaskLike = {
   id: number | string;
@@ -103,6 +111,15 @@ export type TaskLike = {
 export type SubtaskProgress = {
   done: number;
   total: number;
+};
+
+export type RecurringDeleteModalProps = {
+  open: boolean;
+  onClose: () => void;
+  onDeleteOccurrence: () => void | Promise<void>;
+  onDeleteSeries: () => void | Promise<void>;
+  title?: string;
+  body?: string;
 };
 
 //------PROJECT---------//
@@ -166,6 +183,7 @@ export type SystemsContextType = {
   fileChange: (file: File | null) => void;
   uploadStatus: string | null;
   selectedFile: File | null;
+  exportCsv: () => Promise<void>;
   error: string | null;
 };
 
@@ -221,12 +239,20 @@ export type OutlineTreeProps = {
   onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
 };
 
+export type PanelProps = {
+  title: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+};
+
 //--------UI---------//
 
 export type EmptyStateProps = {
   title: string;
-  message?: string;
+  description?: string;
   actions?: Action[];
+  href?: string;
 };
 
 export type TrackerProps = {
@@ -284,6 +310,28 @@ export type ProjectTimelineProps<T extends TaskLike> = {
   onItemClick?: (t: T) => void;
 };
 
+export type MarkdownBodyProps = {
+  value?: string | null;
+  emptyText?: string;
+};
+
+
+export type MarkdownEditProps = {
+  label?: string;
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+  helpText?: string;
+};
+
+export type Variant = "primary" | "secondary" | "ghost" | "danger";
+export type Size = "sm" | "md";
+
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: Variant;
+  size?: Size;
+};
+
 //------AUTH/API---------//
 
 export type User = {
@@ -312,6 +360,8 @@ export type AuthContextType = {
 
 export type APIContextType = {
   getAuthHeaders: () => Record<string, string>;
+  getImportCsvSpec: () => Promise<void>;
+  importTasksCsv: (file: File, dryRun: boolean) => Promise<void>
   getAuthHeadersForForm: () => Record<string, string>;
   fileUpload: (selectedFile: File | null) => Promise<Response | void>;
   uploadStatus: string | null;

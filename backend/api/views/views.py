@@ -1,144 +1,24 @@
-import csv
 from rest_framework import viewsets, status, filters
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.http import HttpResponse
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.pagination import CursorPagination
 from django.db.models import Q
-from datetime import date, datetime
-from .models import Resume, Project, Task, RecurringTask
-from .serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
-from backend.management.utils.txt_parser import DevParser
+from datetime import datetime
+from django.utils import timezone
+from api.models import Resume, Project, Task, RecurringTask, RecurringTaskException
+from api.serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range
-from django.db import transaction
-from rest_framework.exceptions import ParseError
+from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
 from loguru import logger
+from django.db.models import Count, Min, Max
+
+
+def _detach_children(task, user):
+    Task.objects.filter(user=user, parent=task).update(parent=None, is_subtask=False)
 
 class TaskCursorPagination(CursorPagination):
     ordering = "-begin_date"
-
-class ImportTasks(APIView):
-    def post(self, request):
-        file = request.FILES.get('file')
-        if not file or not file.name.endswith('.txt'):
-            return Response({'error': 'Only .txt files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            # Decode file
-            try:
-                content = file.read().decode('utf-8')
-            except UnicodeDecodeError:
-                raise ParseError("File must be UTF-8 text.")
-
-            # Parse tasks
-            parser = DevParser(content)
-            parser.parse()  # raises ValueError on known parse issues
-            tasks = parser.tasks
-
-            # Step 1: Collect distinct project names from parsed tasks
-            project_names = {
-                t["project_name"] for t in tasks if t.get("project_name")
-            }
-
-            # Step 2: Fetch or create all needed projects
-            project_map = {}
-            for name in project_names:
-                project, _ = Project.objects.get_or_create(user=request.user, name=name)
-                project_map[name] = project
-
-            # Step 3: Create tasks
-            created_count = 0
-            with transaction.atomic():
-                for t in tasks:
-                    # Only assign a project if project_name is present
-                    task_project = project_map.get(t["project_name"]) if t.get("project_name") else None
-
-                    Task.objects.create(
-                        user=request.user,
-                        project=task_project,
-                        category=t.get("category"),
-                        title=t["title"],
-                        is_done=t.get("done", False),
-                        priority=t.get("priority", "medium"),
-                        carry_over=t.get("carry_over", False),
-                        description=t.get("description", ""),
-                        is_subtask=t.get("sub_task", False),
-                        begin_date=t.get("begin_date"),
-                        end_date=t.get("end_date"),
-                    )
-                    created_count += 1
-
-            return Response(
-                {'status': 'Import successful.', 'imported': created_count},
-                status=status.HTTP_201_CREATED
-            )
-
-        except ValueError as e:
-            logger.warning(f"ValueError in task import: {e}")
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except ParseError as e:
-            logger.warning(f"ParseError in task import: {e}")
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.exception("Unexpected error during task import")
-            return Response({'error': f'Unexpected error: {str(e)}'},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-class ExportTasksCSV(APIView):
-    def get(self, request):
-        # Optional: filter by date range passed as query params
-        # ?start=2026-01-01&end=2026-01-31
-        qs = Task.objects.filter(user=request.user).select_related("project").order_by("begin_date", "id")
-
-        start = request.query_params.get("start")
-        end = request.query_params.get("end")
-        if start:
-            qs = qs.filter(begin_date__gte=start)
-        if end:
-            qs = qs.filter(begin_date__lte=end)
-
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="tasks.csv"'
-
-        writer = csv.writer(response)
-
-        header = [
-            "id",
-            "date",
-            "project",
-            "category",
-            "title",
-            "status",
-            "priority",
-            "parent_id",
-            "created_at",
-            "end_date",
-            "notes",
-        ]
-        writer.writerow(header)
-
-        for task in qs:
-            status = "done" if task.is_done else "todo"
-            project_name = task.project.name if task.project_id else ""
-            end_date = task.end_date.isoformat() if task.is_done and task.end_date else ""
-
-            writer.writerow([
-                str(task.id),
-                task.begin_date.isoformat() if task.begin_date else "",
-                project_name,
-                task.category,
-                task.title or "",
-                status,
-                task.priority or "",
-                "",  # parent_id (not supported yet in your schema)
-                task.created_at.isoformat() if task.created_at else "",
-                end_date,
-                task.description or "",
-            ])
-
-        return response
 
 class TaskViewSet(viewsets.ModelViewSet):
     pagination_class = TaskCursorPagination
@@ -161,20 +41,27 @@ class TaskViewSet(viewsets.ModelViewSet):
                 start_of_week = datetime.strptime(begin_date_str, "%Y-%m-%d").date()
                 end_of_week = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
-                logger.warning(
-                    f"[TaskViewSet] params={dict(self.request.query_params)} "
-                    f"start_of_week={start_of_week} end_of_week={end_of_week}"
-                )
                 # ✅ Generate occurrences for THIS user and THIS range
                 ensure_recurring_tasks_in_range(start_of_week, end_of_week, user=user)
 
                 active_on_str = self.request.query_params.get("active_on")
-
+                
                 if active_on_str:
                     try:
                         # Daily
                         day = datetime.strptime(active_on_str, "%Y-%m-%d").date()
 
+                        today = timezone.localdate()
+                        logger.warning(
+                            f"DAY: {day} "
+                            f"TODAY: {today} "
+                            f"GREATER?: {day > today} "
+                        )
+                        if day > today:
+                            # For future days: DO NOT pull carry-over backlog.
+                            # Only return tasks that actually belong to that day.
+                            return queryset.filter(begin_date=day)
+                        
                         # generate recurring occurrences for that specific day
                         ensure_recurring_tasks_in_range(day, day, user=user)
 
@@ -203,6 +90,18 @@ class TaskViewSet(viewsets.ModelViewSet):
                                 # - finished occurrence appears only on completion day
                                 Q(recurring_task__isnull=False, is_done=True, end_date=day)
                             )
+                        )
+
+                        agg = filtered_queryset.aggregate(
+                            c=Count("id"),
+                            min_begin=Min("begin_date"),
+                            max_begin=Max("begin_date"),
+                        )
+
+                        logger.warning(
+                            f"[TaskViewSet] RESULT count={agg['c']} "
+                            f"min_begin={agg['min_begin']} max_begin={agg['max_begin']} "
+                            f"active_on={active_on_str if 'active_on_str' in locals() else None}"
                         )
 
                         return filtered_queryset
@@ -266,26 +165,34 @@ class TaskViewSet(viewsets.ModelViewSet):
         
     def destroy(self, request, *args, **kwargs):
         task = self.get_object()
+        delete_series = request.query_params.get("delete_series") in ("1", "true")
 
-        delete_series = request.query_params.get("delete_series") in ("1", "true", "True")
+        # Always detach children if this task is a parent
+        _detach_children(task, request.user)
 
-        # If it's a recurring occurrence and caller asked to delete the series:
+        # ----- Delete entire series -----
         if delete_series and task.recurring_task_id:
             rt = task.recurring_task
-
-            # delete all occurrences for that template
             Task.objects.filter(user=request.user, recurring_task=rt).delete()
-
-            # delete the template itself (stops regeneration)
             rt.delete()
+            return Response(status=204)
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        
-        Task.objects.filter(user=request.user, parent=task).update(parent=None, is_subtask=False)
+        # ----- Delete single occurrence (recurring) -----
+        if task.recurring_task_id:
+            day = task.begin_date or task.end_date
+            if day:
+                RecurringTaskException.objects.get_or_create(
+                    user=request.user,
+                    recurring_task=task.recurring_task,
+                    date=day,
+                    type=RecurringTaskException.TYPE_SKIP,
+                )
+            task.delete()
+            return Response(status=204)
 
-        # default behavior: delete just this task row
+        # ----- Non-recurring tasks -----
         return super().destroy(request, *args, **kwargs)
-            
+
 class RecurringTaskViewSet(viewsets.ModelViewSet):
     serializer_class = RecurringTaskSerializer
 

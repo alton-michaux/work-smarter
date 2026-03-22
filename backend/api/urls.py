@@ -1,6 +1,9 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ProjectViewSet, TaskViewSet, UserViewSet, ImportTasks, ExportTasksCSV, RecurringTaskViewSet
+from api.views.views import ProjectViewSet, TaskViewSet, UserViewSet, RecurringTaskViewSet
+from api.views.upload.views_import import ImportTasksCSVView, ImportTasksTXTView
+from api.views.upload.views_import_csv_spec import ImportTasksCSVSpecView
+from api.views.download.views_export import ExportTasksCSV
 
 # JWT views
 from rest_framework_simplejwt.views import (
@@ -16,7 +19,9 @@ router.register(r'user', UserViewSet, basename='user')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('import/', ImportTasks.as_view(), name='import-tasks'),
+    path('import/txt/', ImportTasksTXTView.as_view(), name='import-tasks-txt'),
+    path("import/csv/spec/", ImportTasksCSVSpecView.as_view(), name="import-tasks-csv-spec"),
+    path('import/csv/', ImportTasksCSVView.as_view(), name="import-tasks-csv"),
     path('export/csv/', ExportTasksCSV.as_view(), name='export-tasks-csv'),
     # JWT endpoints
     path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

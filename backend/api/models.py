@@ -44,6 +44,34 @@ class RecurringTask(models.Model):
     start_date = models.DateField()
     is_active = models.BooleanField(default=True)
     last_generated_at = models.DateField(null=True, blank=True)
+    
+class RecurringTaskException(models.Model):
+    TYPE_SKIP = "skip"
+    TYPE_CHOICES = [
+        (TYPE_SKIP, "Skip"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    recurring_task = models.ForeignKey(
+        "RecurringTask",
+        on_delete=models.CASCADE,
+        related_name="exceptions",
+    )
+    date = models.DateField()
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=TYPE_SKIP)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "recurring_task", "date", "type"],
+                name="uniq_recurring_exception_per_day",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} {self.recurring_task_id} {self.date} {self.type}"
 
 class Task(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tasks", null=False, blank=False)
@@ -53,12 +81,18 @@ class Task(models.Model):
         ('medium', 'Medium'),
         ('low', 'Low'),
     ]
+    
+    CATEGORY_CHOICES = [
+        ('task', 'Task'),
+        ('meeting', 'Meeting'),
+        ('note', 'Note'),
+    ]
 
     begin_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     title = models.TextField()
-    category = models.TextField(null=True)
+    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='task', null=True)
     is_done = models.BooleanField(default=False)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     description = models.TextField(blank=True)
@@ -99,3 +133,8 @@ class Task(models.Model):
         elif not self.is_done and self.end_date:
             self.end_date = None
         super().save(*args, **kwargs)
+        
+    models.UniqueConstraint(
+        fields=["user", "title", "begin_date", "project", "parent"],
+        name="uniq_task_user_title_begin_project_parent",
+    )

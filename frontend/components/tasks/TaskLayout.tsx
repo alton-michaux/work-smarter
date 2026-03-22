@@ -1,67 +1,111 @@
-import React from 'react';
-import OutlineTree from './OutlineTree';
-import NoteCard from 'components/notes/NoteCard';
-import { TaskLayoutProps } from 'types/types';
+import React from "react";
+import OutlineTree from "./OutlineTree";
+import NoteCard from "components/notes/NoteCard";
+import { TaskLayoutProps, PanelProps } from "types/types";
 
-export function TaskLayout({ sections, onView, onEdit, onDelete, onToggleDone }: TaskLayoutProps) {
+function SectionPanel({ title, right, children, className = "" }: PanelProps) {
+  return (
+    <section className={`rounded-lg border border-gray-200 bg-white shadow-sm ${className}`}>
+      <div className="flex items-baseline justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/70 rounded-t-lg">
+        <h2 className="text-[11px] font-semibold tracking-widest text-gray-600">
+          {title}
+        </h2>
+        {right ? <div className="text-xs text-gray-400">{right}</div> : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+export function TaskLayout({
+  sections,
+  onView,
+  onEdit,
+  onDelete,
+  onToggleDone,
+}: TaskLayoutProps) {
+  const meetingsCount = sections.meetings?.length ?? 0;
+  const tasksCount = sections.tasks?.length ?? 0;
+  const notesCount = sections.notes?.length ?? 0;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      {/* LEFT: Meetings (1/3) */}
-      <section className="lg:col-span-4">
-        <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">MEETINGS</h2>
-        <div className="rounded border bg-white max-h-[60vh] overflow-auto">
-          {sections.meetings.length ? (
-            <OutlineTree nodes={sections.meetings} onView={onView} onEdit={onEdit} onDelete={onDelete} />
-          ) : (
-            <div className="px-4 py-3 text-sm text-gray-500">No meetings.</div>
-          )}
-        </div>
-      </section>
-
-      {/* RIGHT: Tasks (2/3) */}
-      <section className="lg:col-span-8">
-        <h2 className="text-xs font-bold tracking-widest text-gray-500 mb-2">TASKS</h2>
-        <div className="rounded border bg-white max-h-[60vh] overflow-auto">
-          {sections.tasks.length ? (
-            <OutlineTree
-              nodes={sections.tasks}
-              onView={onView}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onToggleDone={onToggleDone}
-            />
-          ) : (
-            <div className="px-4 py-3 text-sm text-gray-500">No tasks.</div>
-          )}
-        </div>
-      </section>
-
-      {/* FULL WIDTH: Notes (stays below) */}
-      <section className="lg:col-span-12">
-        <div className="mb-2">
-          <h2 className="text-xs font-bold tracking-widest text-gray-500">NOTES</h2>
-          <p className="text-xs text-gray-400 mt-1">Ongoing reminders</p>
-        </div>
-        <div className="rounded border bg-white p-4">
-          {sections.notes.length ? (
-            <div className="space-y-3">
-              {sections.notes.map((n: any) => (
-                <NoteCard
-                  key={n.id}
-                  note={n}
-                  variant="dashed"
-                  showMeta={false}
+      {/* LEFT: Meetings */}
+      <div className="lg:col-span-4">
+        <SectionPanel title="MEETINGS" right={`${meetingsCount} total`}>
+          <div className="p-3">
+            <div className="rounded-md border border-gray-100 bg-white max-h-[56vh] overflow-auto">
+              {meetingsCount ? (
+                <OutlineTree
+                  nodes={sections.meetings}
                   onView={onView}
                   onEdit={onEdit}
-                  onDelete={() => onDelete(n)}
+                  onDelete={onDelete}
                 />
-              ))}
+              ) : (
+                <div className="px-4 py-3 text-sm text-gray-500">
+                  No meetings.
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-sm text-gray-500">No notes.</div>
-          )}
-        </div>
-      </section>
+          </div>
+        </SectionPanel>
+      </div>
+
+      {/* RIGHT: Tasks */}
+      <div className="lg:col-span-8">
+        <SectionPanel title="TASKS" right={`${tasksCount} total`}>
+          <div className="p-3">
+            <div className="rounded-md border border-gray-100 bg-white max-h-[56vh] overflow-auto">
+              {tasksCount ? (
+                <OutlineTree
+                  nodes={sections.tasks}
+                  onView={onView}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onToggleDone={onToggleDone}
+                />
+              ) : (
+                <div className="px-4 py-3 text-sm text-gray-500">
+                  No tasks.
+                </div>
+              )}
+            </div>
+          </div>
+        </SectionPanel>
+      </div>
+
+      {/* FULL WIDTH: Notes */}
+      <div className="lg:col-span-12">
+        <SectionPanel
+          title="NOTES"
+          right={
+            <span className="text-xs text-gray-400">
+              Ongoing • {notesCount} total
+            </span>
+          }
+        >
+          <div className="p-4">
+            {notesCount ? (
+              <div className="space-y-3">
+                {sections.notes.map((n: any) => (
+                  <NoteCard
+                    key={n.id}
+                    note={n}
+                    variant="dashed"
+                    showMeta={false}
+                    onView={onView}
+                    onEdit={onEdit}
+                    onDelete={() => onDelete(n)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">No notes.</div>
+            )}
+          </div>
+        </SectionPanel>
+      </div>
     </div>
   );
 }

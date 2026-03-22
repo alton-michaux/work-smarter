@@ -10,11 +10,11 @@ import '../styles/globals.css';
 function MyApp({ Component, pageProps }) {
   return (
     <AuthProvider>
-      <SystemsProvider>
-        <APIProvider>
+      <APIProvider>
+        <SystemsProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-              <main className="flex-1" >
+              <main className="flex-1 min-h-0" >
                 <ProjectsProvider>
                   <TasksProvider>
                     <Component {...pageProps} />
@@ -23,8 +23,8 @@ function MyApp({ Component, pageProps }) {
               </main>
             <Footer />
           </div>
-        </APIProvider>
-      </SystemsProvider>
+        </SystemsProvider>
+      </APIProvider>
     </AuthProvider>
   );
 }

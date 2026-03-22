@@ -1,105 +1,181 @@
-import React from 'react';
-import { useRouter } from 'next/router';
-import { useProjects } from '../../../context/ProjectsContext';
-import Spinner from 'components/shared/Spinner';
-import { taskDay } from '../../../lib/projectInsights';
-import ProjectTimelineSection from '../../../components/projects/projectTimeline';
-import ProjectSummaryCards from 'components/projects/ProjectSummaryCards';
-import EmptyStateCard from 'components/shared/EmptyStateCard';
-import { useProjectInsights } from '../../../hooks/useProjectInsights';
+import React from "react";
+import { useRouter } from "next/router";
+import { useProjects } from "../../../context/ProjectsContext";
+import Spinner from "components/shared/Spinner";
+import { taskDay } from "../../../lib/projectInsights";
+import ProjectTimelineSection from "../../../components/projects/projectTimeline";
+import ProjectSummaryCards from "components/projects/ProjectSummaryCards";
+import EmptyStateCard from "components/shared/EmptyStateCard";
+import { useProjectInsights } from "../../../hooks/useProjectInsights";
 
 const ProjectShowPage = () => {
   const router = useRouter();
   const { id } = router.query;
   const { projects, isLoading } = useProjects();
 
-  const list = Array.isArray(projects)
-    ? projects
-    : ((projects as any)?.results ?? []);
-
+  const list = Array.isArray(projects) ? projects : (projects as any)?.results ?? [];
   const project = list.find((p) => p.id === Number(id));
   const insights = useProjectInsights(project);
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-8">
-        <Spinner />
+      <div className="min-h-screen bg-gray-100">
+        <div className="max-w-5xl mx-auto px-6 py-12">
+          <div className="flex justify-center py-10">
+            <Spinner />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!project) {
     return (
-      <EmptyStateCard
-        title="Project Not Found"
-        actions={[
-          { label: 'Back', onClick: () => router.back(), variant: 'secondary' },
-          { label: 'All Projects', onClick: () => router.push('/projects'), variant: 'primary' },
-        ]}
-      />
+      <div className="min-h-screen bg-gray-100">
+        <div className="max-w-5xl mx-auto px-6 py-12">          
+          <EmptyStateCard
+            title="Project not found"
+            description="This project may have been deleted or the link is invalid."
+            actions={[
+              {
+                label: "Back to Projects",
+                onClick: () => router.push("/projects"),
+                variant: "primary",
+              },
+            ]}
+          />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex justify-center px-4 py-10 bg-gray-50">
-      <div className="w-full max-w-2xl bg-white shadow-lg rounded-lg p-8">
-        <h1 className="text-2xl font-semibold text-gray-800 mb-4">
-          <span className="font-bold">Project: </span> {project.name}
-        </h1>
-        <ProjectSummaryCards
-          totalCount={insights.totalCount}
-          doneCount={insights.doneCount}
-          activeStart={insights.activeStart}
-          activeEnd={insights.activeEnd}
-          lastActivity={insights.lastActivity}
-          remainingPreview={insights.remainingPreview}
-          remainingCount={insights.remainingCount}
-          remainingOverflow={insights.remainingOverflow}
-        />
+    <div className="min-h-screen bg-gray-100">
+      {/* IMPORTANT: flex column + min-h-screen keeps footer reachable */}
+      <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col min-h-screen">
+        {/* ───────────────── Header (shrink-0) ───────────────── */}
+        <div className="mb-8 flex items-start justify-between gap-6 shrink-0">
+          <div className="min-w-0">
+            <div className="text-xs uppercase tracking-wide text-gray-500">Project</div>
+            <h1 className="mt-1 text-2xl font-semibold text-gray-900 truncate">
+              {project.name}
+            </h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Review activity, meetings, and work items over time.
+            </p>
+          </div>
 
-        <div className="mt-6 mb-6 space-y-10">
-          {/* MEETINGS/WORK */}
-          <div className="mt-6 space-y-10">
-            <ProjectTimelineSection
-              title="MEETINGS"
-              summaryRight={`${insights.meetings.length} total`}
-              emptyText="No meetings logged for this project."
-              grouped={insights.meetingsGrouped}
-              iconFor={() => '🗓️'}
-              metaFor={(t: any) => taskDay(t)}
-              onItemClick={(t: any) => router.push(`/tasks?date=${taskDay(t)}`)}
-            />
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => router.back()}
+              className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              type="button"
+            >
+              ← Back
+            </button>
 
-            <ProjectTimelineSection
-              title="WORK"
-              summaryRight={`${insights.workTotal} total • ${insights.workDone} done • ${insights.workOpen} open`}
-              emptyText="No work items logged for this project."
-              grouped={insights.workGrouped}
-              iconFor={(t: any) => (t.is_done ? '☑' : '☐')}
-              titleClassFor={(t: any) => (t.is_done ? 'text-gray-500 line-through' : 'text-gray-900')}
-              metaFor={(t: any) => (
-                <>
-                  {taskDay(t)}
-                  {t.priority ? ` • ${String(t.priority).toUpperCase()}` : ''}
-                </>
-              )}
-              onItemClick={(t: any) => router.push(`/tasks?date=${taskDay(t)}`)}
+            <button
+              onClick={() => router.push("/projects")}
+              className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              type="button"
+            >
+              All Projects
+            </button>
+
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+              type="button"
+            >
+              Dashboard
+            </button>
+          </div>
+        </div>
+
+        {/* ───────────────── Summary Panel (shrink-0) ───────────────── */}
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm shrink-0">
+          <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+            <div className="text-xs uppercase tracking-wide text-gray-500">Overview</div>
+          </div>
+
+          <div className="p-6">
+            <ProjectSummaryCards
+              totalCount={insights.totalCount}
+              doneCount={insights.doneCount}
+              activeStart={insights.activeStart}
+              activeEnd={insights.activeEnd}
+              lastActivity={insights.lastActivity}
+              remainingPreview={insights.remainingPreview}
+              remainingCount={insights.remainingCount}
+              remainingOverflow={insights.remainingOverflow}
             />
           </div>
         </div>
 
-        <div className="flex gap-4">
+        {/* ───────────────── Timelines (flex-1, scroll lives inside panels) ───────────────── */}
+        {/* min-h-0 is the magic spell that makes overflow work inside flex/grid */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 min-h-0">
+          {/* Meetings */}
+          <div className="lg:col-span-5 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col min-h-0">
+            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between shrink-0">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Meetings</div>
+              <div className="text-xs text-gray-500">{insights.meetings.length} total</div>
+            </div>
+
+            {/* This is the actual scroll container */}
+            <div className="flex-1 overflow-auto [scrollbar-gutter:stable] p-6 min-h-0">
+              <ProjectTimelineSection
+                title="MEETINGS"
+                summaryRight={`${insights.meetings.length} total`}
+                emptyText="No meetings logged for this project."
+                grouped={insights.meetingsGrouped}
+                iconFor={() => "🗓️"}
+                metaFor={(t: any) => taskDay(t)}
+                onItemClick={(t: any) => router.push(`/tasks?date=${taskDay(t)}`)}
+              />
+            </div>
+          </div>
+
+          {/* Work */}
+          <div className="lg:col-span-7 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col min-h-0">
+            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between shrink-0">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Work</div>
+              <div className="text-xs text-gray-500">
+                {insights.workTotal} total • {insights.workDone} done • {insights.workOpen} open
+              </div>
+            </div>
+
+            {/* This is the actual scroll container */}
+            <div className="flex-1 overflow-auto [scrollbar-gutter:stable] p-6 min-h-0">
+              <ProjectTimelineSection
+                title="WORK"
+                summaryRight={`${insights.workTotal} total • ${insights.workDone} done • ${insights.workOpen} open`}
+                emptyText="No work items logged for this project."
+                grouped={insights.workGrouped}
+                iconFor={(t: any) => (t.is_done ? "☑" : "☐")}
+                titleClassFor={(t: any) =>
+                  t.is_done ? "text-gray-500 line-through" : "text-gray-900"
+                }
+                metaFor={(t: any) => (
+                  <>
+                    {taskDay(t)}
+                    {t.priority ? ` • ${String(t.priority).toUpperCase()}` : ""}
+                  </>
+                )}
+                onItemClick={(t: any) => router.push(`/tasks?date=${taskDay(t)}`)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ───────────────── Footer nav (shrink-0) ───────────────── */}
+        <div className="mt-8 flex justify-end shrink-0">
           <button
-            onClick={() => router.push('/projects')}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            onClick={() => router.push("/projects")}
+            className="text-sm text-gray-600 hover:text-gray-900 hover:underline transition"
+            type="button"
           >
-            All Projects
-          </button>
-          <button
-            onClick={() => router.push('/')}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
-          >
-            Home
+            ← Back to Projects
           </button>
         </div>
       </div>

@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.prose input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
