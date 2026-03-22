@@ -24,8 +24,17 @@ def auth_client(api_client, get_token):
 def tasks_list_url():
     return reverse("task-list")
 
+@pytest.fixture
 def task_detail_url(task_id: int) -> str:
     return reverse("task-detail", args=[task_id])
+
+@pytest.fixture
+def import_tasks_csv_url():
+    return reverse("import-tasks-csv")
+
+@pytest.fixture
+def import_tasks_csv_spec_url():
+    return reverse("import-tasks-csv-spec")
 
 # --- User Fixtures ---
 
@@ -178,10 +187,19 @@ def create_file():
     def make_file(content=None):
         file_content = content or """
         Week of: 2024-03-11
-        Dev:
+        Task:
         - [ ] Auto-generated task
         """
         file = io.BytesIO(file_content.encode("utf-8"))
         file.name = "tasks.txt"
         return file
     return make_file
+
+@pytest.fixture
+def create_csv_file():
+    def make_csv_file(content: str, name="tasks.csv"):
+        file = io.BytesIO(content.encode("utf-8"))
+        file.name = name
+        return file
+    return make_csv_file
+

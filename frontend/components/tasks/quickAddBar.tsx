@@ -1,56 +1,91 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/router';
-import { QuickAddProps } from 'types/types';
+import React, { useMemo, useState } from "react";
+import { useRouter } from "next/router";
+import { QuickAddProps } from "types/types";
+import Button from "../ui/button"; // Add this import
 
 export default function QuickAddBar({ selectedDate }: QuickAddProps) {
   const router = useRouter();
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
+
+  const canSubmit = useMemo(() => {
+    return Boolean(selectedDate) && Boolean(text.trim());
+  }, [selectedDate, text]);
 
   const submit = async () => {
     const title = text.trim();
     if (!title || !selectedDate) return;
 
-    // Route to your existing create page with prefilled values
     router.push(
-      `/tasks/create?date=${encodeURIComponent(selectedDate)}&title=${encodeURIComponent(title)}`
+      `/tasks/create?date=${encodeURIComponent(
+        selectedDate
+      )}&title=${encodeURIComponent(title)}`
     );
 
-    setText('');
+    setText("");
   };
 
   return (
-    <div className="mb-6">
-      <label className="block text-xs font-bold tracking-widest text-gray-500 mb-2">
-        QUICK ADD
-      </label>
+    <section className="rounded-lg border border-gray-200 bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-semibold tracking-widest text-gray-500">
+            QUICK ADD
+          </div>
+          <div className="mt-1 text-xs text-gray-500">
+            Add a task for{" "}
+            <span className="font-medium text-gray-700">
+              {selectedDate ?? "…"}
+            </span>
+          </div>
+        </div>
 
-      <div className="flex gap-2">
+        <div className="hidden sm:flex items-center gap-2 text-[11px] text-gray-400">
+          <span className="rounded border border-gray-200 bg-gray-50 px-2 py-0.5 font-medium text-gray-600">
+            Enter
+          </span>
+          <span>to submit</span>
+        </div>
+      </div>
+
+      <div className="mt-3 flex gap-2">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === "Enter") {
               e.preventDefault();
               submit();
             }
           }}
-          placeholder="Type a task and hit Enter…"
-          className="flex-1 border rounded px-3 py-2 text-sm"
+          placeholder="Type a task…"
           disabled={!selectedDate}
+          className={[
+            "flex-1",
+            "rounded-md border border-gray-200 bg-white",
+            "px-3 py-2 text-sm text-gray-900",
+            "placeholder:text-gray-400",
+            "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+            "disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed",
+          ].join(" ")}
         />
 
-        <button
+        <Button
+          variant="primary"
+          size="sm"
           onClick={submit}
-          className="px-4 py-2 rounded bg-green-600 text-white hover:bg-blue-700 transition text-sm"
-          disabled={!selectedDate || !text.trim()}
+          disabled={!canSubmit}
         >
           Add
-        </button>
+        </Button>
       </div>
 
-      <div className="text-xs text-gray-400 mt-2">
-        Tip: Press <span className="font-medium">Enter</span> to add.
+      <div className="mt-2 text-xs text-gray-400">
+        Tip: add a short title like{" "}
+        <span className="font-medium text-gray-500">
+          “Email Lucy” or “Sprint retro notes”
+        </span>
+        .
       </div>
-    </div>
+    </section>
   );
 }
