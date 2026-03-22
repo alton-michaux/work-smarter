@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useTasks } from 'context/TasksContext';
 import { useProjects } from 'context/ProjectsContext';
 import { useRouter } from 'next/router';
@@ -6,6 +6,7 @@ import { DateToggleUI } from 'components/ui/dateToggleUI';
 import { TaskLayout } from 'components/tasks/TaskLayout';
 import { useDailyLog } from '../../hooks/useDailyLog';
 import QuickAddBar from '../../components/tasks/quickAddBar';
+import ConfirmDeleteRecurringModal from 'components/ui/confirmDeleteRecurringModal';
 
 const TasksPage = () => {
   const {
@@ -17,9 +18,15 @@ const TasksPage = () => {
     toggleTaskDone,
   } = useTasks();
 
+  
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [taskPendingDelete, setTaskPendingDelete] = useState<any>(null);
+
   const router = useRouter();
   const queryDate =
     typeof router.query.date === 'string' ? router.query.date : null;
+  
+  const isRecurring = (t: any) => Boolean(t?.recurring_task_id || t?.recurring_task?.id);
 
   const { projects, setProjects } = useProjects();
 
@@ -47,14 +54,15 @@ const TasksPage = () => {
     [tasks, toggleTaskDone]
   );
 
-  const handleDelete = useCallback(
-    async (task: any) => {
-      if (confirm('Are you sure you want to delete this task?')) {
-        await deleteTask(task);
-      }
-    },
-    [deleteTask]
-  );
+  const handleDelete = async (task: any) => {
+    if (isRecurring(task)) {
+      setTaskPendingDelete(task);
+      setDeleteModalOpen(true);
+      return;
+    }
+
+    await deleteTask(task);
+  };
 
   const { selectedDate, setSelectedDate, last7Days, dailyTasks, sections } =
     useDailyLog(tasks, queryDate, { activeOn: true });
@@ -168,6 +176,25 @@ const TasksPage = () => {
                 ← Back
               </button>
             </div>
+            <ConfirmDeleteRecurringModal
+              open={deleteModalOpen}
+              onClose={() => {
+                setDeleteModalOpen(false);
+                setTaskPendingDelete(null);
+              }}
+              onDeleteOccurrence={async () => {
+                if (!taskPendingDelete) return;
+                await deleteTask(taskPendingDelete); // default = single occurrence
+                setDeleteModalOpen(false);
+                setTaskPendingDelete(null);
+              }}
+              onDeleteSeries={async () => {
+                if (!taskPendingDelete) return;
+                await deleteTask(taskPendingDelete, { deleteSeries: true });
+                setDeleteModalOpen(false);
+                setTaskPendingDelete(null);
+              }}
+            />
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { QuickAddProps } from "types/types";
+import Button from "../ui/button"; // Add this import
 
 export default function QuickAddBar({ selectedDate }: QuickAddProps) {
   const router = useRouter();
@@ -68,18 +69,14 @@ export default function QuickAddBar({ selectedDate }: QuickAddProps) {
           ].join(" ")}
         />
 
-        <button
+        <Button
+          variant="primary"
+          size="sm"
           onClick={submit}
           disabled={!canSubmit}
-          className={[
-            "rounded-md px-4 py-2 text-sm font-medium",
-            "bg-blue-600 text-white hover:bg-blue-700",
-            "transition",
-            "disabled:bg-blue-300 disabled:cursor-not-allowed",
-          ].join(" ")}
         >
           Add
-        </button>
+        </Button>
       </div>
 
       <div className="mt-2 text-xs text-gray-400">

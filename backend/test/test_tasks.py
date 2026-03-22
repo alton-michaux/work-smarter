@@ -1,7 +1,8 @@
 import pytest
 from datetime import date, timedelta
 from django.urls import reverse
-from api.models import Task
+from api.services.recurring_tasks import ensure_recurring_tasks_in_range
+from api.models import Task, RecurringTaskException
 
 def task_detail_url(task_id: int) -> str:
     return reverse("task-detail", args=[task_id])
@@ -408,3 +409,73 @@ def test_task_delete(auth_client, get_user, create_task):
     response = auth_client.delete(f"/api/tasks/{task.id}/")
     assert response.status_code == 204
     assert not Task.objects.filter(id=task.id).exists()
+    
+@pytest.mark.django_db
+def test_delete_recurring_occurrence_creates_skip_exception(auth_client, get_user, create_task, create_recurring_task):
+    auth_client.force_authenticate(user=get_user)
+
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 2, 3),
+    )
+
+    occ = create_task(
+        user=get_user,
+        title="Daily thing",
+        begin_date=date(2026, 2, 3),
+        category="task",
+        recurring_task=rt,
+    )
+
+    res = auth_client.delete(task_detail_url(occ.id))
+    assert res.status_code in (204, 200)
+
+    assert not Task.objects.filter(id=occ.id).exists()
+
+    assert RecurringTaskException.objects.filter(
+        user=get_user,
+        recurring_task=rt,
+        date=date(2026, 2, 3),
+        type="skip",
+    ).exists()
+
+@pytest.mark.django_db
+def test_skip_exception_prevents_regeneration(auth_client, get_user, create_task, create_recurring_task):
+    auth_client.force_authenticate(user=get_user)
+
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 2, 3),
+    )
+
+    # occurrence exists
+    occ = create_task(
+        user=get_user,
+        title="Daily thing",
+        begin_date=date(2026, 2, 3),
+        category="task",
+        recurring_task=rt,
+    )
+
+    # delete occurrence -> creates skip
+    res = auth_client.delete(task_detail_url(occ.id))
+    assert res.status_code in (204, 200)
+
+    assert RecurringTaskException.objects.filter(
+        user=get_user,
+        recurring_task=rt,
+        date=date(2026, 2, 3),
+        type="skip",
+    ).exists()
+
+    # call ensure again for that day
+    ensure_recurring_tasks_in_range(date(2026, 2, 3), date(2026, 2, 3), user=get_user)
+
+    # should NOT come back
+    assert not Task.objects.filter(
+        user=get_user,
+        recurring_task=rt,
+        begin_date=date(2026, 2, 3),
+    ).exists()

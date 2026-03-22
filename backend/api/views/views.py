@@ -3,14 +3,19 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.pagination import CursorPagination
 from django.db.models import Q
-from datetime import date, datetime
+from datetime import datetime
 from django.utils import timezone
-from api.models import Resume, Project, Task, RecurringTask
+from api.models import Resume, Project, Task, RecurringTask, RecurringTaskException
 from api.serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range
+from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
 from loguru import logger
 from django.db.models import Count, Min, Max
+
+
+def _detach_children(task, user):
+    Task.objects.filter(user=user, parent=task).update(parent=None, is_subtask=False)
 
 class TaskCursorPagination(CursorPagination):
     ordering = "-begin_date"
@@ -160,26 +165,34 @@ class TaskViewSet(viewsets.ModelViewSet):
         
     def destroy(self, request, *args, **kwargs):
         task = self.get_object()
+        delete_series = request.query_params.get("delete_series") in ("1", "true")
 
-        delete_series = request.query_params.get("delete_series") in ("1", "true", "True")
+        # Always detach children if this task is a parent
+        _detach_children(task, request.user)
 
-        # If it's a recurring occurrence and caller asked to delete the series:
+        # ----- Delete entire series -----
         if delete_series and task.recurring_task_id:
             rt = task.recurring_task
-
-            # delete all occurrences for that template
             Task.objects.filter(user=request.user, recurring_task=rt).delete()
-
-            # delete the template itself (stops regeneration)
             rt.delete()
+            return Response(status=204)
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        
-        Task.objects.filter(user=request.user, parent=task).update(parent=None, is_subtask=False)
+        # ----- Delete single occurrence (recurring) -----
+        if task.recurring_task_id:
+            day = task.begin_date or task.end_date
+            if day:
+                RecurringTaskException.objects.get_or_create(
+                    user=request.user,
+                    recurring_task=task.recurring_task,
+                    date=day,
+                    type=RecurringTaskException.TYPE_SKIP,
+                )
+            task.delete()
+            return Response(status=204)
 
-        # default behavior: delete just this task row
+        # ----- Non-recurring tasks -----
         return super().destroy(request, *args, **kwargs)
-            
+
 class RecurringTaskViewSet(viewsets.ModelViewSet):
     serializer_class = RecurringTaskSerializer
 
