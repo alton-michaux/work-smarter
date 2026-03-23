@@ -1,14 +1,7 @@
 import React from "react";
 import OutlineTree from "./OutlineTree";
 import NoteCard from "components/notes/NoteCard";
-import { TaskLayoutProps } from "types/types";
-
-type PanelProps = {
-  title: string;
-  right?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-};
+import { TaskLayoutProps, PanelProps } from "types/types";
 
 function SectionPanel({ title, right, children, className = "" }: PanelProps) {
   return (

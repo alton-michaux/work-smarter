@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Task, Filters, TasksContextType, CreateTaskPayload } from 'types/types'
+import { Task, Filters, TasksContextType, CreateTaskPayload, DeleteTaskOptions } from 'types/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -285,7 +285,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const deleteTask = async (taskOrId: any) => {
+  const deleteTask = async (taskOrId: any, options: DeleteTaskOptions = {}) => {
     if (!loggedIn) return;
 
     const id =
@@ -303,9 +303,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       typeof taskOrId === "object" &&
       Boolean(taskOrId?.recurring_task_id || taskOrId?.recurring_task);
 
-    const url = isRecurring
-      ? `${API_URL}/tasks/${id}/?delete_series=1`
-      : `${API_URL}/tasks/${id}/`;
+    const deleteSeries = Boolean(options.deleteSeries);
+
+    const url =
+      isRecurring && deleteSeries
+        ? `${API_URL}/tasks/${id}/?delete_series=1`
+        : `${API_URL}/tasks/${id}/`;
 
     const res = await fetch(url, {
       method: "DELETE",
@@ -330,10 +333,11 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
             null)
           : null;
 
-      if (isRecurring && recurringId) {
-        return prev.filter((t: any) => (t.recurring_task_id ?? t.recurring_task) !== recurringId);
+      if (isRecurring && deleteSeries && recurringId) {
+        return prev.filter(
+          (t: any) => (t.recurring_task_id ?? t.recurring_task) !== recurringId
+        );
       }
-
       // Otherwise delete just the one row
       return prev.filter((t: any) => Number(t.id) !== Number(id));
     });

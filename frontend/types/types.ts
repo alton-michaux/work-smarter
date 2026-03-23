@@ -14,6 +14,11 @@ type Action = {
   href?: string;
 };
 
+type TaskIdLike =
+  | number
+  | Task
+  | { id?: number; task?: { id?: number }; pk?: number };
+
 //------TASK---------//
 
 export type AnyTask = Task & CollapsedMeta;
@@ -84,7 +89,7 @@ export type TasksContextType = {
   addTask: (task: Omit<Task, 'id'>) => Promise<void>;
   addSubtask: (payload: CreateTaskPayload) => Promise<void>;
   updateTaskAndReload: (task: Task) => Promise<void>;
-  deleteTask: (task: Task) => Promise<void>;
+  deleteTask: (taskOrId: TaskIdLike, options?: DeleteTaskOptions) => Promise<void>;
   fetchTasks: () => Promise<void>;
   fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
   fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
@@ -92,6 +97,8 @@ export type TasksContextType = {
   isLoading: boolean;
   error: string | null;
 };
+
+export type DeleteTaskOptions = { deleteSeries?: boolean };
 
 export type TaskLike = {
   id: number | string;
@@ -104,6 +111,15 @@ export type TaskLike = {
 export type SubtaskProgress = {
   done: number;
   total: number;
+};
+
+export type RecurringDeleteModalProps = {
+  open: boolean;
+  onClose: () => void;
+  onDeleteOccurrence: () => void | Promise<void>;
+  onDeleteSeries: () => void | Promise<void>;
+  title?: string;
+  body?: string;
 };
 
 //------PROJECT---------//
@@ -221,6 +237,13 @@ export type OutlineTreeProps = {
   onToggleDone?: (id: number, isDone: boolean) => void;
 
   onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
+};
+
+export type PanelProps = {
+  title: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
 };
 
 //--------UI---------//
