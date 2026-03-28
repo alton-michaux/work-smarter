@@ -4,14 +4,16 @@ import { TaskLayoutProps, PanelProps } from "types/types";
 
 function SectionPanel({ title, right, children, className = "" }: PanelProps) {
   return (
-    <section className={`rounded-lg border border-gray-200 bg-white shadow-sm ${className}`}>
-      <div className="flex items-baseline justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/70 rounded-t-lg">
+    <section className={`rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col min-h-0 h-full ${className}`}>
+      <div className="shrink-0 flex items-baseline justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
         <h2 className="text-[11px] font-semibold tracking-widest text-gray-600">
           {title}
         </h2>
         {right ? <div className="text-xs text-gray-400">{right}</div> : null}
       </div>
-      {children}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {children}
+      </div>
     </section>
   );
 }
@@ -27,52 +29,47 @@ export function TaskLayout({
   const tasksCount = sections.tasks?.length ?? 0;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
       {/* LEFT: Meetings */}
-      <div className="lg:col-span-4">
+      <div className="lg:col-span-4 min-h-0">
         <SectionPanel title="MEETINGS" right={`${meetingsCount} total`}>
           <div className="p-3">
-            <div className="rounded-md border border-gray-100 bg-white max-h-[56vh] overflow-auto">
-              {meetingsCount ? (
-                <OutlineTree
-                  nodes={sections.meetings}
-                  onView={onView}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                />
-              ) : (
-                <div className="px-4 py-3 text-sm text-gray-500">
-                  No meetings.
-                </div>
-              )}
-            </div>
+            {meetingsCount ? (
+              <OutlineTree
+                nodes={sections.meetings}
+                onView={onView}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ) : (
+              <div className="px-4 py-3 text-sm text-gray-500">
+                No meetings.
+              </div>
+            )}
           </div>
         </SectionPanel>
       </div>
 
       {/* RIGHT: Tasks */}
-      <div className="lg:col-span-8">
+      <div className="lg:col-span-8 min-h-0">
         <SectionPanel title="TASKS" right={`${tasksCount} total`}>
           <div className="p-3">
-            <div className="rounded-md border border-gray-100 bg-white max-h-[56vh] overflow-auto">
-              {tasksCount ? (
-                <OutlineTree
-                  nodes={sections.tasks}
-                  onView={onView}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onToggleDone={onToggleDone}
-                />
-              ) : (
-                <div className="px-4 py-3 text-sm text-gray-500">
-                  No tasks.
-                </div>
-              )}
-            </div>
+            {tasksCount ? (
+              <OutlineTree
+                nodes={sections.tasks}
+                onView={onView}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onToggleDone={onToggleDone}
+              />
+            ) : (
+              <div className="px-4 py-3 text-sm text-gray-500">
+                No tasks.
+              </div>
+            )}
           </div>
         </SectionPanel>
       </div>
-
     </div>
   );
 }
