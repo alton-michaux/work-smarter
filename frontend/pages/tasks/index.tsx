@@ -74,10 +74,9 @@ const TasksPage = () => {
   }, [selectedDate]); // keeping your existing behavior
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="mx-auto w-full max-w-6xl">
-        {/* Keep overflow visible so sticky works reliably */}
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div className="h-screen bg-gray-50 px-4 overflow-hidden">
+      <div className="mx-auto w-full max-w-6xl h-full">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm h-full flex flex-col overflow-hidden">
           {/* ───────────────── Sticky Header ───────────────── */}
           <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm isolate">
             <div className="px-6 py-4">
@@ -133,8 +132,7 @@ const TasksPage = () => {
           </div>
 
           {/* ───────────────── Content ───────────────── */}
-          {/* This creates breathing room under the sticky header without hacks */}
-          <div className="px-6 py-6 pt-10">
+          <div className="flex-1 overflow-y-auto px-6 py-6 pt-10">
             {error && (
               <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {error}
@@ -160,22 +158,6 @@ const TasksPage = () => {
               />
             )}
 
-            {/* Bottom Navigation */}
-            <div className="mt-10 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <button
-                onClick={() => router.push('/tasks/tracker')}
-                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
-              >
-                View Weekly Tracker
-              </button>
-
-              <button
-                onClick={() => router.back()}
-                className="text-sm text-gray-600 hover:text-gray-900 hover:underline"
-              >
-                ← Back
-              </button>
-            </div>
             <ConfirmDeleteRecurringModal
               open={deleteModalOpen}
               onClose={() => {
@@ -195,6 +177,23 @@ const TasksPage = () => {
                 setTaskPendingDelete(null);
               }}
             />
+          </div>
+
+          {/* ───────────────── Bottom Navigation (outside scroll) ───────────────── */}
+          <div className="shrink-0 border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <button
+              onClick={() => router.push('/tasks/tracker')}
+              className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+            >
+              View Weekly Tracker
+            </button>
+
+            <button
+              onClick={() => router.back()}
+              className="text-sm text-gray-600 hover:text-gray-900 hover:underline"
+            >
+              ← Back
+            </button>
           </div>
         </div>
       </div>
