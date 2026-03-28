@@ -7,6 +7,7 @@ import TaskTable from '../../../components/tasks/TaskTable';
 import Spinner from 'components/shared/Spinner';
 import { collapseRecurringTasks } from "../../../lib/collapseDailyRecurring";
 import { buildSubtaskProgressByParentId } from "lib/subtaskProgress";
+import { priorityRank } from "../../../lib/dailyLog";
 
 export default function TaskTrackerPage() {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
@@ -49,7 +50,11 @@ export default function TaskTrackerPage() {
     return (tasks ?? [])
       .filter((t: any) => !isMeeting(t))
       .filter((t: any) => !isNotes(t))
-      .sort((a: any, b: any) => String(b.begin_date ?? '').localeCompare(String(a.begin_date ?? ''))); // newest first
+      .sort((a: any, b: any) => {
+        const pd = priorityRank(a.priority) - priorityRank(b.priority);
+        if (pd !== 0) return pd;
+        return String(b.begin_date ?? '').localeCompare(String(a.begin_date ?? ''));
+      });
   }, [tasks]);
 
   const collapsedMeetings = useMemo(
@@ -63,7 +68,9 @@ export default function TaskTrackerPage() {
   );
 
   const notes = useMemo(
-    () => tasks.filter((t: any) => String(t.category ?? '').toLowerCase() === 'notes'),
+    () => tasks
+      .filter((t: any) => String(t.category ?? '').toLowerCase() === 'notes')
+      .sort((a: any, b: any) => priorityRank(a.priority) - priorityRank(b.priority)),
     [tasks]
   );
 
