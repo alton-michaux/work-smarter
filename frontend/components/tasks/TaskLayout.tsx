@@ -1,6 +1,5 @@
 import React from "react";
 import OutlineTree from "./OutlineTree";
-import NoteCard from "components/notes/NoteCard";
 import { TaskLayoutProps, PanelProps } from "types/types";
 
 function SectionPanel({ title, right, children, className = "" }: PanelProps) {
@@ -26,7 +25,6 @@ export function TaskLayout({
 }: TaskLayoutProps) {
   const meetingsCount = sections.meetings?.length ?? 0;
   const tasksCount = sections.tasks?.length ?? 0;
-  const notesCount = sections.notes?.length ?? 0;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -75,37 +73,6 @@ export function TaskLayout({
         </SectionPanel>
       </div>
 
-      {/* FULL WIDTH: Notes */}
-      <div className="lg:col-span-12">
-        <SectionPanel
-          title="NOTES"
-          right={
-            <span className="text-xs text-gray-400">
-              Ongoing • {notesCount} total
-            </span>
-          }
-        >
-          <div className="p-4">
-            {notesCount ? (
-              <div className="space-y-3">
-                {sections.notes.map((n: any) => (
-                  <NoteCard
-                    key={n.id}
-                    note={n}
-                    variant="dashed"
-                    showMeta={false}
-                    onView={onView}
-                    onEdit={onEdit}
-                    onDelete={() => onDelete(n)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-sm text-gray-500">No notes.</div>
-            )}
-          </div>
-        </SectionPanel>
-      </div>
     </div>
   );
 }

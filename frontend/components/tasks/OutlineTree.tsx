@@ -113,7 +113,7 @@ function OutlineRow({
             ].join(" ")}
             title={node.title}
           >
-            <span className="inline-flex items-center gap-2 min-w-0">
+            <span className="flex items-center gap-2 min-w-0">
               <span className="truncate">{node.title}</span>
 
               {!isSubtask && childCount > 0 && (
