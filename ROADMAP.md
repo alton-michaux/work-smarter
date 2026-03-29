@@ -54,6 +54,7 @@
 
 - [x] Add recurring tasks/events (meetings)
 - [ ] Meetings auto-done after day-of (frontend and backend)
+- [ ] Account show/edit page
 - [ ] Add bi-weekly schedule to recurring events
 - [ ] Integration with Google Calendar
 - [ ] Resume features
