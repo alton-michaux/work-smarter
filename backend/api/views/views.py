@@ -164,8 +164,10 @@ class TaskViewSet(viewsets.ModelViewSet):
             obj.save(update_fields=["end_date"])
         
     def destroy(self, request, *args, **kwargs):
+        from datetime import timedelta
         task = self.get_object()
         delete_series = request.query_params.get("delete_series") in ("1", "true")
+        delete_future = request.query_params.get("delete_future") in ("1", "true")
 
         # Always detach children if this task is a parent
         _detach_children(task, request.user)
@@ -175,6 +177,16 @@ class TaskViewSet(viewsets.ModelViewSet):
             rt = task.recurring_task
             Task.objects.filter(user=request.user, recurring_task=rt).delete()
             rt.delete()
+            return Response(status=204)
+
+        # ----- Delete this and all future occurrences -----
+        if delete_future and task.recurring_task_id:
+            day = task.begin_date or task.end_date
+            rt = task.recurring_task
+            if day:
+                Task.objects.filter(user=request.user, recurring_task=rt, begin_date__gte=day).delete()
+                rt.end_date = day
+                rt.save(update_fields=["end_date"])
             return Response(status=204)
 
         # ----- Delete single occurrence (recurring) -----

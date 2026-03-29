@@ -30,6 +30,7 @@
 ### Backend
 - [ ] Update tests for new functionality
 - [x] Recurring tasks need bi-weekly and quarterly options
+- [x] Users should be able to delete a single recurring task, all recurring tasks or all future recurring tasks
 - [ ] Daily recurring tasks will need to be able to exclude weekends
 
 ### UI
@@ -47,6 +48,7 @@
 - [ ] Project-scoped tags
 - [ ] "Seen this week" indicators
 - [ ] Collapsible "Background reminders" section — visual distinction only, no behavior yet
+- [ ] Add dark mode
 
 ---
 
@@ -56,10 +58,16 @@
 <<<<<<< HEAD
 - [x] Meetings auto-done after day-of (frontend and backend)
 =======
+<<<<<<< HEAD
+- [x] Meetings auto-done after day-of (frontend and backend)
+=======
 - [ ] Meetings auto-done after day-of (frontend and backend)
 >>>>>>> dev
+>>>>>>> dev
 - [ ] Account show/edit page
+- [ ] Implement deadlines
 - [ ] Add bi-weekly schedule to recurring events
 - [ ] Integration with Google Calendar
 - [ ] Resume features
 - [ ] AI resume analysis
+- [ ] Tutorial section or "About" page

@@ -15,6 +15,9 @@ def _should_generate(rt: RecurringTask, d):
     if d < rt.start_date:
         return False
 
+    if rt.end_date is not None and d >= rt.end_date:
+        return False
+
     if rt.frequency == "daily":
         return True
 

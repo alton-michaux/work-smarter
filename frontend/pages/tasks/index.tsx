@@ -168,7 +168,13 @@ const TasksPage = () => {
               }}
               onDeleteOccurrence={async () => {
                 if (!taskPendingDelete) return;
-                await deleteTask(taskPendingDelete); // default = single occurrence
+                await deleteTask(taskPendingDelete);
+                setDeleteModalOpen(false);
+                setTaskPendingDelete(null);
+              }}
+              onDeleteFuture={async () => {
+                if (!taskPendingDelete) return;
+                await deleteTask(taskPendingDelete, { deleteFuture: true });
                 setDeleteModalOpen(false);
                 setTaskPendingDelete(null);
               }}
