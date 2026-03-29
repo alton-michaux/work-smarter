@@ -29,7 +29,7 @@
 
 ### Backend
 - [ ] Update tests for new functionality
-- [ ] Recurring tasks need bi-weekly and quarterly options
+- [x] Recurring tasks need bi-weekly and quarterly options
 - [ ] Daily recurring tasks will need to be able to exclude weekends
 
 ### UI
@@ -53,7 +53,11 @@
 ## Features
 
 - [x] Add recurring tasks/events (meetings)
+<<<<<<< HEAD
+- [x] Meetings auto-done after day-of (frontend and backend)
+=======
 - [ ] Meetings auto-done after day-of (frontend and backend)
+>>>>>>> dev
 - [ ] Account show/edit page
 - [ ] Add bi-weekly schedule to recurring events
 - [ ] Integration with Google Calendar

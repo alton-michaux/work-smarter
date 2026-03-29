@@ -319,11 +319,13 @@ export default function TaskForm({
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
+                <option value="biweekly">Bi-weekly</option>
                 <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
               </select>
             </div>
 
-            {recurrence.frequency === "weekly" ? (
+            {(recurrence.frequency === "weekly" || recurrence.frequency === "biweekly") ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Day of week

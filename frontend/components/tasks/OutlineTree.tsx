@@ -83,7 +83,7 @@ function OutlineRow({
     }
   };
 
-  const isDone = Boolean(node.is_done);
+  const isDone = Boolean((node as any).effective_is_done ?? node.is_done);
 
   return (
     <li
