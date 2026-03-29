@@ -5,9 +5,10 @@ export default function ConfirmDeleteRecurringModal({
   open,
   onClose,
   onDeleteOccurrence,
+  onDeleteFuture,
   onDeleteSeries,
   title = "Delete recurring task",
-  body = "Do you want to delete only this occurrence, or the entire series?",
+  body = "Do you want to delete only this occurrence, this and all future occurrences, or the entire series?",
 }: RecurringDeleteModalProps) {
   if (!open) return null;
 
@@ -30,7 +31,7 @@ export default function ConfirmDeleteRecurringModal({
           {body}
         </div>
 
-        <div className="p-4 border-t flex justify-end gap-2">
+        <div className="p-4 border-t flex justify-end gap-2 flex-wrap">
           <button
             className="px-3 py-2 rounded-md border text-gray-700 hover:bg-gray-50"
             onClick={onClose}
@@ -44,7 +45,15 @@ export default function ConfirmDeleteRecurringModal({
             onClick={onDeleteOccurrence}
             type="button"
           >
-            Delete occurrence
+            This occurrence
+          </button>
+
+          <button
+            className="px-3 py-2 rounded-md border border-orange-300 text-orange-700 hover:bg-orange-50"
+            onClick={onDeleteFuture}
+            type="button"
+          >
+            This and future
           </button>
 
           <button
@@ -52,7 +61,7 @@ export default function ConfirmDeleteRecurringModal({
             onClick={onDeleteSeries}
             type="button"
           >
-            Delete series
+            All occurrences
           </button>
         </div>
       </div>

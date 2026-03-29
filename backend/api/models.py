@@ -42,6 +42,7 @@ class RecurringTask(models.Model):
     )
     day_of_week = models.IntegerField(null=True, blank=True)  # 0–6
     start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     last_generated_at = models.DateField(null=True, blank=True)
     

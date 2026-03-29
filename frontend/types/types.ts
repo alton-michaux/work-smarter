@@ -98,7 +98,7 @@ export type TasksContextType = {
   error: string | null;
 };
 
-export type DeleteTaskOptions = { deleteSeries?: boolean };
+export type DeleteTaskOptions = { deleteSeries?: boolean; deleteFuture?: boolean };
 
 export type TaskLike = {
   id: number | string;
@@ -117,6 +117,7 @@ export type RecurringDeleteModalProps = {
   open: boolean;
   onClose: () => void;
   onDeleteOccurrence: () => void | Promise<void>;
+  onDeleteFuture: () => void | Promise<void>;
   onDeleteSeries: () => void | Promise<void>;
   title?: string;
   body?: string;
