@@ -124,6 +124,10 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const toggleTaskDone = async (taskId: number, nextDone: boolean) => {
     if (!loggedIn) return;
     setError(null);
+
+    const previous = tasks.find(t => t.id === taskId);
+    setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, is_done: nextDone } : t)));
+
     try {
       const res = await fetch(`${API_URL}/tasks/${taskId}/`, {
         method: 'PATCH',
@@ -137,8 +141,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       if (res.ok) {
         const updated = await res.json();
         setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...updated } : t)));
+      } else {
+        if (previous) setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...previous } : t)));
+        setError('Failed to update task');
       }
     } catch (err: any) {
+      if (previous) setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...previous } : t)));
       setError(err.message || 'unknown error');
       console.error(err);
     }

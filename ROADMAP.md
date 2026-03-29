@@ -20,7 +20,7 @@
 - [x] Make Type dropdown
 - [x] Recurring tasks aren't pre-populated as recurring in edit task form
 - [x] Recurring objects not deleting from daily log page
-- [ ] Logout button doesn't work
+- [x] Logout button doesn't work
 
 ---
 
@@ -28,14 +28,16 @@
 
 ### Backend
 - [ ] Update tests for new functionality
-- [ ] Daily recurring tasks will eventually need to be able to exclude weekends
+- [ ] Recurring tasks need bi-weekly and quarterly options
+- [ ] Daily recurring tasks will need to be able to exclude weekends
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
-- [ ] Implement urgency into UI
-- [ ] Notes should take a less prominent role in UI (filtered from project view entirely, shown at bottom of tracker page, possibly removed from daily log as well)
+- [x] Implement urgency into UI
+- [x] Notes should take a less prominent role in UI (filtered from project view entirely, shown at bottom of tracker page, possibly removed from daily log as well)
 - [x] Show page audit
-- [ ] Optimistic UI for toggles (daily log feels instant)
+- [ ] Notes description should display markdown in weekly tracker page
+- [x] Optimistic UI for toggles (daily log feels instant)
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project → task creation shortcuts (preselect project when creating from project view)
 - [ ] Weekly summary header (X done / Y remaining)
@@ -50,7 +52,7 @@
 ## Features
 
 - [x] Add recurring tasks/events (meetings)
-- [x] Meetings auto-done after day-of
+- [ ] Meetings auto-done after day-of (frontend and backend)
 - [ ] Add bi-weekly schedule to recurring events
 - [ ] Integration with Google Calendar
 - [ ] Resume features
