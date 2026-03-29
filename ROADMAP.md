@@ -55,7 +55,15 @@
 ## Features
 
 - [x] Add recurring tasks/events (meetings)
+<<<<<<< HEAD
 - [x] Meetings auto-done after day-of (frontend and backend)
+=======
+<<<<<<< HEAD
+- [x] Meetings auto-done after day-of (frontend and backend)
+=======
+- [ ] Meetings auto-done after day-of (frontend and backend)
+>>>>>>> dev
+>>>>>>> dev
 - [ ] Account show/edit page
 - [ ] Implement deadlines
 - [ ] Add bi-weekly schedule to recurring events
