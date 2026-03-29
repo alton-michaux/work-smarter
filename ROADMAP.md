@@ -1,0 +1,57 @@
+# Work Smarter — Project Documentation
+
+## Design Principles
+
+- **Tasks** — sharp, actionable, binary
+- **Meetings** — scheduled, time-anchored
+- **Notes** — ambient, persistent, low-contrast
+
+---
+
+## Bugs
+
+- [x] CREATE -> Project
+- [x] Categories being labeled as projects
+- [x] Weekly tracker UI / Task edit button
+- [x] Unfinished tasks aren't being returned from API in weekly view
+- [x] Not able to associate new task to project
+- [x] Recurring tasks seem to be piling up in daily log (fixed in weekly tracker)
+- [x] Need to truncate meeting/work on daily log
+- [x] Make Type dropdown
+- [x] Recurring tasks aren't pre-populated as recurring in edit task form
+- [x] Recurring objects not deleting from daily log page
+- [ ] Logout button doesn't work
+
+---
+
+## Tweaks
+
+### Backend
+- [ ] Update tests for new functionality
+- [ ] Daily recurring tasks will eventually need to be able to exclude weekends
+
+### UI
+- [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
+- [ ] Implement urgency into UI
+- [ ] Notes should take a less prominent role in UI (filtered from project view entirely, shown at bottom of tracker page, possibly removed from daily log as well)
+- [x] Show page audit
+- [ ] Optimistic UI for toggles (daily log feels instant)
+- [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
+- [ ] Project → task creation shortcuts (preselect project when creating from project view)
+- [ ] Weekly summary header (X done / Y remaining)
+- [ ] Micro polish: hover states, subtle transitions, keyboard nav
+- [ ] Recurrence badges ("weekly", "ongoing")
+- [ ] Project-scoped tags
+- [ ] "Seen this week" indicators
+- [ ] Collapsible "Background reminders" section — visual distinction only, no behavior yet
+
+---
+
+## Features
+
+- [x] Add recurring tasks/events (meetings)
+- [x] Meetings auto-done after day-of
+- [ ] Add bi-weekly schedule to recurring events
+- [ ] Integration with Google Calendar
+- [ ] Resume features
+- [ ] AI resume analysis
