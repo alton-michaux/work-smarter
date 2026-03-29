@@ -21,6 +21,7 @@
 - [x] Recurring tasks aren't pre-populated as recurring in edit task form
 - [x] Recurring objects not deleting from daily log page
 - [x] Logout button doesn't work
+- [x] Task index page does not always have access to projects — missing identifiers and blank dropdowns in task edit page
 
 ---
 
