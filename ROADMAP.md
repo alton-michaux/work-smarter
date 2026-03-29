@@ -29,7 +29,7 @@
 
 ### Backend
 - [ ] Update tests for new functionality
-- [ ] Recurring tasks need bi-weekly and quarterly options
+- [x] Recurring tasks need bi-weekly and quarterly options
 - [ ] Daily recurring tasks will need to be able to exclude weekends
 
 ### UI
