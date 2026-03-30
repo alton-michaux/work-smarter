@@ -42,6 +42,7 @@
 - [x] Show page audit
 - [x] Implement toast notifications
 - [x] Remove redundant "back" buttons
+- [ ] Remove notes from "what's left" section of project page
 - [ ] Project colors should be assignable by user
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [ ] Notes description should display markdown in weekly tracker page
