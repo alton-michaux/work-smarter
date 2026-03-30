@@ -7,6 +7,7 @@ import { TaskLayout } from 'components/tasks/TaskLayout';
 import { useDailyLog } from '../../hooks/useDailyLog';
 import QuickAddBar from '../../components/tasks/quickAddBar';
 import ConfirmDeleteRecurringModal from 'components/ui/confirmDeleteRecurringModal';
+import { toast } from 'sonner';
 
 const TasksPage = () => {
   const {
@@ -48,7 +49,7 @@ const TasksPage = () => {
       try {
         await toggleTaskDone(id, isDone);
       } catch {
-        alert('Failed to update task. Please try again.');
+        toast.error('Failed to update task. Please try again.');
       }
     },
     [tasks, toggleTaskDone]
