@@ -63,10 +63,16 @@
 - [x] Add recurring tasks/events (meetings)
 - [x] Meetings auto-done after day-of (frontend and backend)
 - [ ] Meetings should have a time
-- [ ] Account show/edit page
 - [ ] Implement deadlines
 - [ ] Add bi-weekly schedule to recurring events
 - [ ] Integration with Google Calendar
 - [ ] Resume features
 - [ ] AI resume analysis
-- [ ] Tutorial section or "About" page
+
+
+## User-facing (go-live features)
+
+- [ ] Account show/edit page
+- [ ] Beef up account security
+- [ ] Tutorial section
+- [ ] About page
