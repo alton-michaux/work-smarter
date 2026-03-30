@@ -40,10 +40,10 @@
 - [x] Implement urgency into UI
 - [x] Notes should take a less prominent role in UI (filtered from project view entirely, shown at bottom of tracker page, possibly removed from daily log as well)
 - [x] Show page audit
-- [ ] Implement toast notifications
-- [ ] Remove redundant "back" buttons
+- [x] Implement toast notifications
+- [x] Remove redundant "back" buttons
 - [ ] Project colors should be assignable by user
-- [ ] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
+- [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [ ] Notes description should display markdown in weekly tracker page
 - [x] Optimistic UI for toggles (daily log feels instant)
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
