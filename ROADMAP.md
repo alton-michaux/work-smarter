@@ -33,7 +33,7 @@
 - [x] Update tests for new functionality
 - [x] Recurring tasks need bi-weekly and quarterly options
 - [x] Users should be able to delete a single recurring task, all recurring tasks or all future recurring tasks
-- [ ] Daily recurring tasks will need to be able to exclude weekends
+- [x] Daily recurring tasks will need to be able to exclude weekends
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
