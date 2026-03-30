@@ -22,8 +22,8 @@
 - [x] Recurring objects not deleting from daily log page
 - [x] Logout button doesn't work
 - [x] Task index page does not always have access to projects — missing identifiers and blank dropdowns in task edit page
-- [ ] Task and Meetings do not scroll on weekly tracker page, container just continues to grow to accomodate content
-- [ ] There is no mitigation of large content on the projects page. If there are many tasks the page just keeps going. Not sure if infinite scroll, pagination or truncation would be the best option here. What do you think?
+- [x] Task and Meetings do not scroll on weekly tracker page, container just continues to grow to accomodate content
+- [x] There is no mitigation of large content on the projects page. If there are many tasks the page just keeps going. Not sure if infinite scroll, pagination or truncation would be the best option here. What do you think?
 
 ---
 
@@ -40,6 +40,7 @@
 - [x] Implement urgency into UI
 - [x] Notes should take a less prominent role in UI (filtered from project view entirely, shown at bottom of tracker page, possibly removed from daily log as well)
 - [x] Show page audit
+- [ ] Implement toast notifications
 - [ ] Project colors should be assignable by user
 - [ ] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [ ] Notes description should display markdown in weekly tracker page

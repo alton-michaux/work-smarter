@@ -1,9 +1,8 @@
 export const sectionMaxHeightClass = (rows: number) => {
-  // tune these numbers however you like
-  if (rows <= 2) return "max-h-32";   // very small weeks
-  if (rows <= 5) return "max-h-48";   // normal weeks
-  if (rows <= 9) return "max-h-64";   // busy weeks
-  return "max-h-[28vh]";             // very busy weeks (viewport-based cap)
+  // Let sections with 5 or fewer items grow naturally (no scroll needed)
+  if (rows <= 5) return "";
+  // Cap busier sections and make them scroll
+  return "max-h-72";
 };
 
 export function SectionPanel({

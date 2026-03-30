@@ -94,7 +94,7 @@ export default function TaskTrackerPage() {
 
         {/* ✅ Scrollable content area */}
         <div className="px-8 pb-8">
-          <div className="mt-6 min-h-0 overflow-hidden">
+          <div className="mt-6">
             {isLoading ? (
               <div className="flex justify-center py-8">
                 <Spinner />
