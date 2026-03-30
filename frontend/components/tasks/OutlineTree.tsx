@@ -2,6 +2,23 @@ import React, { useState, useEffect, useRef } from 'react';
 import { categoryToType } from '../../lib/dailyLog';
 import { OutlineTreeProps, OutlineRowProps } from 'types/types';
 import { useTasks } from 'context/TasksContext';
+import { useProjects } from 'context/ProjectsContext';
+
+const PRIORITY_BORDER: Record<string, string> = {
+  high:   '#ef4444',
+  urgent: '#ef4444',
+  medium: '#f59e0b',
+  low:    '#22c55e',
+};
+
+const PROJECT_COLORS = [
+  '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4',
+  '#f97316', '#84cc16', '#14b8a6', '#6366f1',
+];
+
+function projectColor(id: number) {
+  return PROJECT_COLORS[id % PROJECT_COLORS.length];
+}
 
 function OutlineRow({
   node,
@@ -41,6 +58,11 @@ function OutlineRow({
 
   const effectiveDepth = Math.max(depth, isSubtask ? 1 : 0);
 
+  const { projects } = useProjects();
+  const priorityBorder = PRIORITY_BORDER[String(node.priority ?? '').toLowerCase()] ?? 'transparent';
+  const projectObj = node.project != null ? projects.find(p => p.id === node.project) : null;
+  const pColor = projectObj ? projectColor(projectObj.id) : null;
+
   const submitSubtask = async () => {
     const title = subtaskTitle.trim();
     if (!title || !onAddSubtask) return;
@@ -61,7 +83,7 @@ function OutlineRow({
     }
   };
 
-  const isDone = Boolean(node.is_done);
+  const isDone = Boolean((node as any).effective_is_done ?? node.is_done);
 
   return (
     <li
@@ -75,7 +97,10 @@ function OutlineRow({
         "flex items-start justify-between gap-4",
         "focus-within:bg-gray-50/70",
       ].join(" ")}
-      style={{ paddingLeft: 16 + effectiveDepth * 18 }}
+      style={{
+        paddingLeft: 16 + effectiveDepth * 18,
+        borderLeft: `3px solid ${priorityBorder}`,
+      }}
     >
       {/* LEFT: checkbox/icon + content */}
       <div className="min-w-0 flex-1 flex items-start gap-3">
@@ -113,7 +138,14 @@ function OutlineRow({
             ].join(" ")}
             title={node.title}
           >
-            <span className="inline-flex items-center gap-2 min-w-0">
+            <span className="flex items-center gap-2 min-w-0">
+              {pColor && (
+                <span
+                  className="shrink-0 inline-block w-2 h-2 rounded-full"
+                  style={{ backgroundColor: pColor }}
+                  title={projectObj?.name}
+                />
+              )}
               <span className="truncate">{node.title}</span>
 
               {!isSubtask && childCount > 0 && (

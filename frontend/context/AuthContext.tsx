@@ -146,7 +146,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(null);
       hydratedOnce.current = false;
       setIsLoading(false);
-      router.push('/login');
+      router.replace('/login');
     }
   };
 

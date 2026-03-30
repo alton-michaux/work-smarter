@@ -53,7 +53,6 @@ export default function TaskTable({
             meetingsToRender.length
           )} overflow-auto rounded-lg border bg-blue-50/40`}
         >
-          <div className="rounded-lg border bg-blue-50/40">
             <table className="w-full text-sm table-fixed">
               <thead className="text-[11px] text-gray-600">
                 <tr className="border-b">
@@ -123,7 +122,6 @@ export default function TaskTable({
                 No meetings this week.
               </div>
             )}
-          </div>
         </div>
       </SectionPanel>
 

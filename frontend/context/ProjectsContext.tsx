@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Project, NewProject, ProjectsContextType } from 'types/types';
@@ -37,6 +37,11 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (loggedIn) fetchProjects();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedIn]);
 
   const addProject = async (project: Omit<NewProject, 'id'>) => {
     if (!loggedIn) return;

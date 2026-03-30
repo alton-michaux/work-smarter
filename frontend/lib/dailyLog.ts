@@ -29,12 +29,27 @@ export function buildTree<T extends { id: any; parent?: any | null; parent_id?: 
   return roots;
 }
 
+const PRIORITY_RANK: Record<string, number> = {
+  urgent: 0,
+  high:   1,
+  medium: 2,
+  low:    3,
+};
+
+export function priorityRank(p?: string | null): number {
+  return PRIORITY_RANK[String(p ?? '').toLowerCase()] ?? 4;
+}
+
+function byPriority(a: any, b: any) {
+  return priorityRank(a.priority) - priorityRank(b.priority);
+}
+
 export function splitIntoSections(tasks: any[]) {
   const uniq = Array.from(new Map((tasks ?? []).map(t => [t.id, t])).values());
-  
+
   const meetings = uniq.filter(t => categoryToType(t.category) === 'meeting');
-  const taskItems = uniq.filter(t => categoryToType(t.category) === 'task');
-  const notes = uniq.filter(t => categoryToType(t.category) === 'note');
+  const taskItems = uniq.filter(t => categoryToType(t.category) === 'task').sort(byPriority);
+  const notes = uniq.filter(t => categoryToType(t.category) === 'note').sort(byPriority);
 
   return {
     meetings: buildTree(meetings),

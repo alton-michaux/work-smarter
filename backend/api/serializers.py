@@ -40,7 +40,7 @@ class TaskSerializer(serializers.ModelSerializer):
     def get_effective_is_done(self, obj):
         today = timezone.localdate()
         auto_done = (
-            obj.category == "Meetings"
+            obj.category == "meeting"
             and obj.begin_date is not None
             and obj.begin_date < today
         )
