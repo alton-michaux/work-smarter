@@ -169,8 +169,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           is_active: true,
         };
 
-        if (task.recurrence.frequency === 'weekly') {
+        if (task.recurrence.frequency === 'weekly' || task.recurrence.frequency === 'biweekly') {
           payload.day_of_week = task.recurrence.day_of_week;
+        }
+
+        if (task.recurrence.frequency === 'daily') {
+          payload.skip_weekends = task.recurrence.skip_weekends ?? false;
         }
 
         const res = await fetch(`${API_URL}/recurring-tasks/`, {
