@@ -7,6 +7,7 @@ import TaskTable from '../../../components/tasks/TaskTable';
 import Spinner from 'components/shared/Spinner';
 import { collapseRecurringTasks } from "../../../lib/collapseDailyRecurring";
 import { buildSubtaskProgressByParentId } from "lib/subtaskProgress";
+import { categoryToType, priorityRank } from "../../../lib/dailyLog";
 
 export default function TaskTrackerPage() {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
@@ -32,24 +33,20 @@ export default function TaskTrackerPage() {
     fetchTasksByDateRange(selectedWeek, end, null);
   }, [selectedWeek, fetchTasksByDateRange]);
 
-  const isMeeting = (t: any) => {
-    const c = String(t.category ?? '').trim().toLowerCase();
-    return c === 'meeting' || c === 'meetings';
-  };
-
-  const isNotes = (t: any) => String(t.category ?? '').trim().toLowerCase() === 'notes';
-
   const meetings = useMemo(() => {
     return (tasks ?? [])
-      .filter(isMeeting)
+      .filter((t: any) => categoryToType(t.category) === 'meeting')
       .sort((a: any, b: any) => String(a.begin_date ?? '').localeCompare(String(b.begin_date ?? '')));
   }, [tasks]);
 
   const work = useMemo(() => {
     return (tasks ?? [])
-      .filter((t: any) => !isMeeting(t))
-      .filter((t: any) => !isNotes(t))
-      .sort((a: any, b: any) => String(b.begin_date ?? '').localeCompare(String(a.begin_date ?? ''))); // newest first
+      .filter((t: any) => categoryToType(t.category) === 'task')
+      .sort((a: any, b: any) => {
+        const pd = priorityRank(a.priority) - priorityRank(b.priority);
+        if (pd !== 0) return pd;
+        return String(b.begin_date ?? '').localeCompare(String(a.begin_date ?? ''));
+      });
   }, [tasks]);
 
   const collapsedMeetings = useMemo(
@@ -63,7 +60,9 @@ export default function TaskTrackerPage() {
   );
 
   const notes = useMemo(
-    () => tasks.filter((t: any) => String(t.category ?? '').toLowerCase() === 'notes'),
+    () => tasks
+      .filter((t: any) => categoryToType(t.category) === 'note')
+      .sort((a: any, b: any) => priorityRank(a.priority) - priorityRank(b.priority)),
     [tasks]
   );
 
@@ -95,7 +94,7 @@ export default function TaskTrackerPage() {
 
         {/* ✅ Scrollable content area */}
         <div className="px-8 pb-8">
-          <div className="mt-6 min-h-0 overflow-hidden">
+          <div className="mt-6">
             {isLoading ? (
               <div className="flex justify-center py-8">
                 <Spinner />

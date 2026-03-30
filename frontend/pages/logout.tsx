@@ -7,14 +7,7 @@ export default function LogoutPage() {
   const { logout } = useAuth();
 
   useEffect(() => {
-    // run once on client
-    (async () => {
-      try {
-        await logout(); // should clear tokens + user state
-      } finally {
-        router.replace("/"); // hard redirect away from the dead-end page
-      }
-    })();
+    logout();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

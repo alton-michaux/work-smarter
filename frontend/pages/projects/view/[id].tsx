@@ -114,16 +114,15 @@ const ProjectShowPage = () => {
 
         {/* ───────────────── Timelines (flex-1, scroll lives inside panels) ───────────────── */}
         {/* min-h-0 is the magic spell that makes overflow work inside flex/grid */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 min-h-0">
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Meetings */}
-          <div className="lg:col-span-5 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col min-h-0">
-            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between shrink-0">
+          <div className="lg:col-span-5 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
               <div className="text-xs uppercase tracking-wide text-gray-500">Meetings</div>
               <div className="text-xs text-gray-500">{insights.meetings.length} total</div>
             </div>
 
-            {/* This is the actual scroll container */}
-            <div className="flex-1 overflow-auto [scrollbar-gutter:stable] p-6 min-h-0">
+            <div className="max-h-[50vh] overflow-y-auto [scrollbar-gutter:stable] p-6">
               <ProjectTimelineSection
                 title="MEETINGS"
                 summaryRight={`${insights.meetings.length} total`}
@@ -137,16 +136,15 @@ const ProjectShowPage = () => {
           </div>
 
           {/* Work */}
-          <div className="lg:col-span-7 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col min-h-0">
-            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between shrink-0">
+          <div className="lg:col-span-7 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
               <div className="text-xs uppercase tracking-wide text-gray-500">Work</div>
               <div className="text-xs text-gray-500">
                 {insights.workTotal} total • {insights.workDone} done • {insights.workOpen} open
               </div>
             </div>
 
-            {/* This is the actual scroll container */}
-            <div className="flex-1 overflow-auto [scrollbar-gutter:stable] p-6 min-h-0">
+            <div className="max-h-[50vh] overflow-y-auto [scrollbar-gutter:stable] p-6">
               <ProjectTimelineSection
                 title="WORK"
                 summaryRight={`${insights.workTotal} total • ${insights.workDone} done • ${insights.workOpen} open`}

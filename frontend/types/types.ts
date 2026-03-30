@@ -98,7 +98,7 @@ export type TasksContextType = {
   error: string | null;
 };
 
-export type DeleteTaskOptions = { deleteSeries?: boolean };
+export type DeleteTaskOptions = { deleteSeries?: boolean; deleteFuture?: boolean };
 
 export type TaskLike = {
   id: number | string;
@@ -117,6 +117,7 @@ export type RecurringDeleteModalProps = {
   open: boolean;
   onClose: () => void;
   onDeleteOccurrence: () => void | Promise<void>;
+  onDeleteFuture: () => void | Promise<void>;
   onDeleteSeries: () => void | Promise<void>;
   title?: string;
   body?: string;
@@ -189,7 +190,7 @@ export type SystemsContextType = {
 
 export type RecurrenceState = {
   repeats: boolean;
-  frequency: "daily" | "weekly" | "monthly";
+  frequency: "daily" | "weekly" | "biweekly" | "monthly" | "quarterly";
   day_of_week: number; // 0=Mon .. 6=Sun
   start_date: string;  // YYYY-MM-DD
 };
@@ -202,7 +203,7 @@ export type CollapsedMeta = {
 };
 
 export type WeeklyOptions = {
-  frequency?: "daily" | "weekly" | "monthly";
+  frequency?: "daily" | "weekly" | "biweekly" | "monthly" | "quarterly";
 };
 
 export type Filters = {

@@ -124,6 +124,10 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const toggleTaskDone = async (taskId: number, nextDone: boolean) => {
     if (!loggedIn) return;
     setError(null);
+
+    const previous = tasks.find(t => t.id === taskId);
+    setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, is_done: nextDone } : t)));
+
     try {
       const res = await fetch(`${API_URL}/tasks/${taskId}/`, {
         method: 'PATCH',
@@ -137,8 +141,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       if (res.ok) {
         const updated = await res.json();
         setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...updated } : t)));
+      } else {
+        if (previous) setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...previous } : t)));
+        setError('Failed to update task');
       }
     } catch (err: any) {
+      if (previous) setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...previous } : t)));
       setError(err.message || 'unknown error');
       console.error(err);
     }
@@ -304,11 +312,11 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       Boolean(taskOrId?.recurring_task_id || taskOrId?.recurring_task);
 
     const deleteSeries = Boolean(options.deleteSeries);
+    const deleteFuture = Boolean(options.deleteFuture);
 
-    const url =
-      isRecurring && deleteSeries
-        ? `${API_URL}/tasks/${id}/?delete_series=1`
-        : `${API_URL}/tasks/${id}/`;
+    let url = `${API_URL}/tasks/${id}/`;
+    if (isRecurring && deleteSeries) url = `${API_URL}/tasks/${id}/?delete_series=1`;
+    else if (isRecurring && deleteFuture) url = `${API_URL}/tasks/${id}/?delete_future=1`;
 
     const res = await fetch(url, {
       method: "DELETE",
@@ -323,7 +331,6 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setTasks((prev) => {
-      // If we deleted a whole recurring series, remove all occurrences we have in memory
       const recurringId =
         typeof taskOrId === "object"
           ? (taskOrId?.recurring_task_id ??
@@ -338,6 +345,17 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           (t: any) => (t.recurring_task_id ?? t.recurring_task) !== recurringId
         );
       }
+
+      if (isRecurring && deleteFuture && recurringId) {
+        const fromDate = typeof taskOrId === "object" ? taskOrId?.begin_date ?? null : null;
+        return prev.filter((t: any) => {
+          const sameRecurring = (t.recurring_task_id ?? t.recurring_task) === recurringId;
+          if (!sameRecurring) return true;
+          if (!fromDate || !t.begin_date) return false;
+          return t.begin_date < fromDate;
+        });
+      }
+
       // Otherwise delete just the one row
       return prev.filter((t: any) => Number(t.id) !== Number(id));
     });

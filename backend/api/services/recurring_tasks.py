@@ -15,15 +15,31 @@ def _should_generate(rt: RecurringTask, d):
     if d < rt.start_date:
         return False
 
+    if rt.end_date is not None and d >= rt.end_date:
+        return False
+
     if rt.frequency == "daily":
         return True
 
     if rt.frequency == "weekly":
         return rt.day_of_week is not None and d.weekday() == rt.day_of_week
 
+    if rt.frequency == "biweekly":
+        target_dow = rt.day_of_week if rt.day_of_week is not None else rt.start_date.weekday()
+        if d.weekday() != target_dow:
+            return False
+        weeks_since_start = (d - rt.start_date).days // 7
+        return weeks_since_start % 2 == 0
+
     if rt.frequency == "monthly":
         # MVP: same day-of-month as start_date
         return d.day == rt.start_date.day
+
+    if rt.frequency == "quarterly":
+        if d.day != rt.start_date.day:
+            return False
+        months_since_start = (d.year - rt.start_date.year) * 12 + (d.month - rt.start_date.month)
+        return months_since_start % 3 == 0
 
     return False
 

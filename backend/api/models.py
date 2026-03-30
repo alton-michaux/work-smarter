@@ -38,10 +38,11 @@ class RecurringTask(models.Model):
     category = models.CharField(max_length=50, null=True)
     frequency = models.CharField(
         max_length=10,
-        choices=[('daily', 'Daily'), ('weekly', 'Weekly'), ('monthly', 'Monthly')]
+        choices=[('daily', 'Daily'), ('weekly', 'Weekly'), ('biweekly', 'Bi-weekly'), ('monthly', 'Monthly'), ('quarterly', 'Quarterly')]
     )
     day_of_week = models.IntegerField(null=True, blank=True)  # 0–6
     start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     last_generated_at = models.DateField(null=True, blank=True)
     
