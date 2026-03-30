@@ -118,15 +118,15 @@ const ProjectShowPage = () => {
           {/* Meetings */}
           <div className="lg:col-span-5 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
             <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Meetings</div>
-              <div className="text-xs text-gray-500">{insights.meetings.length} total</div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">Upcoming Meetings</div>
+              <div className="text-xs text-gray-500">{insights.meetings.length} upcoming</div>
             </div>
 
             <div className="max-h-[50vh] overflow-y-auto [scrollbar-gutter:stable] p-6">
               <ProjectTimelineSection
-                title="MEETINGS"
-                summaryRight={`${insights.meetings.length} total`}
-                emptyText="No meetings logged for this project."
+                title="UPCOMING MEETINGS"
+                summaryRight={`${insights.meetings.length} upcoming`}
+                emptyText="No upcoming meetings for this project."
                 grouped={insights.meetingsGrouped}
                 iconFor={() => "🗓️"}
                 metaFor={(t: any) => taskDay(t)}
