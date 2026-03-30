@@ -729,3 +729,68 @@ def test_recurring_task_end_date_stops_generation(get_user, create_recurring_tas
     assert date(2026, 3, 3) in dates
     assert date(2026, 3, 4) not in dates  # end_date is exclusive
     assert date(2026, 3, 5) not in dates
+
+
+# -----------------------
+# skip_weekends
+# -----------------------
+
+@pytest.mark.django_db
+def test_skip_weekends_excludes_saturday_and_sunday(get_user, create_recurring_task):
+    # 2026-03-30 is Monday; the week contains Sat 2026-04-04 and Sun 2026-04-05
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 3, 30),
+        skip_weekends=True,
+    )
+
+    ensure_recurring_tasks_in_range(date(2026, 3, 30), date(2026, 4, 5), user=get_user)
+
+    dates = list(
+        Task.objects.filter(user=get_user, recurring_task=rt)
+        .values_list("begin_date", flat=True)
+    )
+
+    assert date(2026, 3, 30) in dates  # Monday
+    assert date(2026, 3, 31) in dates  # Tuesday
+    assert date(2026, 4, 1)  in dates  # Wednesday
+    assert date(2026, 4, 2)  in dates  # Thursday
+    assert date(2026, 4, 3)  in dates  # Friday
+    assert date(2026, 4, 4)  not in dates  # Saturday
+    assert date(2026, 4, 5)  not in dates  # Sunday
+
+
+@pytest.mark.django_db
+def test_skip_weekends_false_includes_saturday_and_sunday(get_user, create_recurring_task):
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 3, 30),
+        skip_weekends=False,
+    )
+
+    ensure_recurring_tasks_in_range(date(2026, 3, 30), date(2026, 4, 5), user=get_user)
+
+    dates = list(
+        Task.objects.filter(user=get_user, recurring_task=rt)
+        .values_list("begin_date", flat=True)
+    )
+
+    assert date(2026, 4, 4) in dates  # Saturday
+    assert date(2026, 4, 5) in dates  # Sunday
+
+
+@pytest.mark.django_db
+def test_skip_weekends_uses_should_generate_directly(get_user, create_recurring_task):
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 3, 30),
+        skip_weekends=True,
+    )
+
+    assert _should_generate(rt, date(2026, 4, 3)) is True   # Friday
+    assert _should_generate(rt, date(2026, 4, 4)) is False  # Saturday
+    assert _should_generate(rt, date(2026, 4, 5)) is False  # Sunday
+    assert _should_generate(rt, date(2026, 4, 6)) is True   # Monday

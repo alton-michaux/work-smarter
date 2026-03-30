@@ -26,6 +26,7 @@ export default function TaskForm({
     frequency: "weekly",
     day_of_week: 0,
     start_date: initialTask?.begin_date || "",
+    skip_weekends: false,
   }));
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -119,6 +120,7 @@ export default function TaskForm({
         frequency: rtObj.frequency ?? prev.frequency,
         day_of_week: rtObj.day_of_week ?? prev.day_of_week,
         start_date: rtObj.start_date ?? initialTask?.begin_date ?? prev.start_date,
+        skip_weekends: rtObj.skip_weekends ?? false,
       }));
       return;
     }
@@ -325,7 +327,21 @@ export default function TaskForm({
               </select>
             </div>
 
-            {(recurrence.frequency === "weekly" || recurrence.frequency === "biweekly") ? (
+            {recurrence.frequency === "daily" ? (
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-2 text-sm text-gray-700 select-none">
+                  <input
+                    type="checkbox"
+                    checked={recurrence.skip_weekends}
+                    onChange={(e) =>
+                      setRecurrence((r) => ({ ...r, skip_weekends: e.target.checked }))
+                    }
+                    className="h-4 w-4"
+                  />
+                  <span>Skip weekends</span>
+                </label>
+              </div>
+            ) : (recurrence.frequency === "weekly" || recurrence.frequency === "biweekly") ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Day of week
