@@ -44,7 +44,7 @@
 - [x] Remove redundant "back" buttons
 - [ ] There's currently no way to view a note, we should make them clickable in the weekly tracker
 - [ ] Add some padding between the weekly tracker containers (meetings, tasks, notes)
-- [ ] Notes description should display markdown in weekly tracker page
+- [ ] Notes description should display markdown in weekly tracker page and be truncated to 2-3 lines per note
 - [ ] Project colors should be assignable by user
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [x] Optimistic UI for toggles (daily log feels instant)
