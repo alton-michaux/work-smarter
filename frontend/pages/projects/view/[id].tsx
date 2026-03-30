@@ -166,16 +166,6 @@ const ProjectShowPage = () => {
           </div>
         </div>
 
-        {/* ───────────────── Footer nav (shrink-0) ───────────────── */}
-        <div className="mt-8 flex justify-end shrink-0">
-          <button
-            onClick={() => router.push("/projects")}
-            className="text-sm text-gray-600 hover:text-gray-900 hover:underline transition"
-            type="button"
-          >
-            ← Back to Projects
-          </button>
-        </div>
       </div>
     </div>
   );
