@@ -3,6 +3,7 @@ import { useTasks } from '../../../context/TasksContext';
 import Spinner from 'components/shared/Spinner';
 import EmptyStateCard from 'components/shared/EmptyStateCard';
 import MarkdownBody from 'components/shared/MarkdownBody';
+import { toast } from 'sonner';
 
 const TaskShowPage = () => {
   const router = useRouter();
@@ -46,7 +47,7 @@ const TaskShowPage = () => {
       await deleteTask(task);
       await router.push('/tasks');
     } catch (err) {
-      alert('Failed to delete. Please try again.');
+      toast.error('Failed to delete. Please try again.');
     }
   };
 
