@@ -30,7 +30,7 @@
 ## Tweaks
 
 ### Backend
-- [ ] Update tests for new functionality
+- [x] Update tests for new functionality
 - [x] Recurring tasks need bi-weekly and quarterly options
 - [x] Users should be able to delete a single recurring task, all recurring tasks or all future recurring tasks
 - [ ] Daily recurring tasks will need to be able to exclude weekends

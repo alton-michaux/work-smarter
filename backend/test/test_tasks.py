@@ -1,8 +1,8 @@
 import pytest
 from datetime import date, timedelta
 from django.urls import reverse
-from api.services.recurring_tasks import ensure_recurring_tasks_in_range
-from api.models import Task, RecurringTaskException
+from api.services.recurring_tasks import ensure_recurring_tasks_in_range, _should_generate
+from api.models import Task, RecurringTask, RecurringTaskException
 
 def task_detail_url(task_id: int) -> str:
     return reverse("task-detail", args=[task_id])
@@ -479,3 +479,253 @@ def test_skip_exception_prevents_regeneration(auth_client, get_user, create_task
         recurring_task=rt,
         begin_date=date(2026, 2, 3),
     ).exists()
+
+
+# -----------------------
+# Biweekly Frequency Tests
+# -----------------------
+
+@pytest.mark.django_db
+def test_biweekly_generates_on_start_date(get_user, create_recurring_task):
+    # Monday 2026-03-02
+    start = date(2026, 3, 2)
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="biweekly",
+        start_date=start,
+    )
+
+    assert _should_generate(rt, start) is True
+
+
+@pytest.mark.django_db
+def test_biweekly_skips_one_week_later(get_user, create_recurring_task):
+    start = date(2026, 3, 2)  # Monday
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="biweekly",
+        start_date=start,
+    )
+
+    one_week_later = start + timedelta(weeks=1)
+    assert _should_generate(rt, one_week_later) is False
+
+
+@pytest.mark.django_db
+def test_biweekly_generates_two_weeks_later(get_user, create_recurring_task):
+    start = date(2026, 3, 2)  # Monday
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="biweekly",
+        start_date=start,
+    )
+
+    two_weeks_later = start + timedelta(weeks=2)
+    assert _should_generate(rt, two_weeks_later) is True
+
+
+@pytest.mark.django_db
+def test_biweekly_ensure_generates_correct_occurrences(get_user, create_recurring_task):
+    start = date(2026, 3, 2)  # Monday
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="biweekly",
+        start_date=start,
+    )
+
+    # 4-week range should produce occurrences on week 0 and week 2 only
+    ensure_recurring_tasks_in_range(start, start + timedelta(weeks=4), user=get_user)
+
+    dates = list(
+        Task.objects.filter(user=get_user, recurring_task=rt)
+        .values_list("begin_date", flat=True)
+        .order_by("begin_date")
+    )
+
+    assert start in dates                              # week 0
+    assert start + timedelta(weeks=1) not in dates    # week 1 skipped
+    assert start + timedelta(weeks=2) in dates        # week 2
+    assert start + timedelta(weeks=3) not in dates    # week 3 skipped
+    assert start + timedelta(weeks=4) in dates        # week 4
+
+
+# -----------------------
+# Quarterly Frequency Tests
+# -----------------------
+
+@pytest.mark.django_db
+def test_quarterly_generates_on_start_date(get_user, create_recurring_task):
+    start = date(2026, 1, 15)
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="quarterly",
+        start_date=start,
+    )
+
+    assert _should_generate(rt, start) is True
+
+
+@pytest.mark.django_db
+def test_quarterly_skips_one_month_later(get_user, create_recurring_task):
+    start = date(2026, 1, 15)
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="quarterly",
+        start_date=start,
+    )
+
+    assert _should_generate(rt, date(2026, 2, 15)) is False
+    assert _should_generate(rt, date(2026, 3, 15)) is False
+
+
+@pytest.mark.django_db
+def test_quarterly_generates_three_months_later(get_user, create_recurring_task):
+    start = date(2026, 1, 15)
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="quarterly",
+        start_date=start,
+    )
+
+    assert _should_generate(rt, date(2026, 4, 15)) is True
+    assert _should_generate(rt, date(2026, 7, 15)) is True
+    assert _should_generate(rt, date(2026, 10, 15)) is True
+
+
+# -----------------------
+# Delete Series Tests
+# -----------------------
+
+@pytest.mark.django_db
+def test_delete_series_removes_all_occurrences_and_recurring_task(auth_client, get_user, create_task, create_recurring_task):
+    auth_client.force_authenticate(user=get_user)
+
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 3, 1),
+    )
+
+    occ1 = create_task(user=get_user, title="Daily", begin_date=date(2026, 3, 1), recurring_task=rt)
+    occ2 = create_task(user=get_user, title="Daily", begin_date=date(2026, 3, 2), recurring_task=rt)
+    occ3 = create_task(user=get_user, title="Daily", begin_date=date(2026, 3, 3), recurring_task=rt)
+
+    res = auth_client.delete(task_detail_url(occ1.id) + "?delete_series=true")
+    assert res.status_code in (200, 204)
+
+    assert not Task.objects.filter(recurring_task=rt).exists()
+    assert not RecurringTask.objects.filter(id=rt.id).exists()
+
+
+@pytest.mark.django_db
+def test_delete_series_does_not_affect_other_recurring_tasks(auth_client, get_user, create_task, create_recurring_task):
+    auth_client.force_authenticate(user=get_user)
+
+    rt_a = create_recurring_task(user=get_user, frequency="daily", start_date=date(2026, 3, 1))
+    rt_b = create_recurring_task(user=get_user, frequency="daily", start_date=date(2026, 3, 1))
+
+    occ_a = create_task(user=get_user, title="A", begin_date=date(2026, 3, 1), recurring_task=rt_a)
+    occ_b = create_task(user=get_user, title="B", begin_date=date(2026, 3, 1), recurring_task=rt_b)
+
+    res = auth_client.delete(task_detail_url(occ_a.id) + "?delete_series=true")
+    assert res.status_code in (200, 204)
+
+    assert not RecurringTask.objects.filter(id=rt_a.id).exists()
+    assert RecurringTask.objects.filter(id=rt_b.id).exists()
+    assert Task.objects.filter(id=occ_b.id).exists()
+
+
+# -----------------------
+# Delete Future Tests
+# -----------------------
+
+@pytest.mark.django_db
+def test_delete_future_removes_this_and_future_occurrences(auth_client, get_user, create_task, create_recurring_task):
+    auth_client.force_authenticate(user=get_user)
+
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 3, 1),
+    )
+
+    past_occ = create_task(user=get_user, title="Daily", begin_date=date(2026, 3, 1), recurring_task=rt)
+    pivot_occ = create_task(user=get_user, title="Daily", begin_date=date(2026, 3, 3), recurring_task=rt)
+    future_occ = create_task(user=get_user, title="Daily", begin_date=date(2026, 3, 5), recurring_task=rt)
+
+    res = auth_client.delete(task_detail_url(pivot_occ.id) + "?delete_future=true")
+    assert res.status_code in (200, 204)
+
+    assert Task.objects.filter(id=past_occ.id).exists()
+    assert not Task.objects.filter(id=pivot_occ.id).exists()
+    assert not Task.objects.filter(id=future_occ.id).exists()
+
+
+@pytest.mark.django_db
+def test_delete_future_sets_recurring_task_end_date(auth_client, get_user, create_task, create_recurring_task):
+    auth_client.force_authenticate(user=get_user)
+
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 3, 1),
+    )
+
+    occ = create_task(user=get_user, title="Daily", begin_date=date(2026, 3, 5), recurring_task=rt)
+
+    res = auth_client.delete(task_detail_url(occ.id) + "?delete_future=true")
+    assert res.status_code in (200, 204)
+
+    rt.refresh_from_db()
+    assert rt.end_date == date(2026, 3, 5)
+
+
+@pytest.mark.django_db
+def test_delete_future_stops_future_generation(auth_client, get_user, create_task, create_recurring_task):
+    auth_client.force_authenticate(user=get_user)
+
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 3, 1),
+    )
+
+    occ = create_task(user=get_user, title="Daily", begin_date=date(2026, 3, 3), recurring_task=rt)
+
+    auth_client.delete(task_detail_url(occ.id) + "?delete_future=true")
+
+    # Try to regenerate across the cutoff range
+    ensure_recurring_tasks_in_range(date(2026, 3, 3), date(2026, 3, 7), user=get_user)
+
+    assert not Task.objects.filter(
+        user=get_user,
+        recurring_task=rt,
+        begin_date__gte=date(2026, 3, 3),
+    ).exists()
+
+
+# -----------------------
+# RecurringTask end_date Stops Generation
+# -----------------------
+
+@pytest.mark.django_db
+def test_recurring_task_end_date_stops_generation(get_user, create_recurring_task):
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="daily",
+        start_date=date(2026, 3, 1),
+    )
+    rt.end_date = date(2026, 3, 4)
+    rt.save(update_fields=["end_date"])
+
+    ensure_recurring_tasks_in_range(date(2026, 3, 1), date(2026, 3, 7), user=get_user)
+
+    dates = list(
+        Task.objects.filter(user=get_user, recurring_task=rt)
+        .values_list("begin_date", flat=True)
+    )
+
+    assert date(2026, 3, 1) in dates
+    assert date(2026, 3, 3) in dates
+    assert date(2026, 3, 4) not in dates  # end_date is exclusive
+    assert date(2026, 3, 5) not in dates
