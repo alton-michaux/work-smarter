@@ -62,6 +62,7 @@
 
 - [x] Add recurring tasks/events (meetings)
 - [x] Meetings auto-done after day-of (frontend and backend)
+- [ ] Meetings should have a time
 - [ ] Account show/edit page
 - [ ] Implement deadlines
 - [ ] Add bi-weekly schedule to recurring events
