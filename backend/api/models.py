@@ -45,7 +45,8 @@ class RecurringTask(models.Model):
     end_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     last_generated_at = models.DateField(null=True, blank=True)
-    
+    skip_weekends = models.BooleanField(default=False)
+
 class RecurringTaskException(models.Model):
     TYPE_SKIP = "skip"
     TYPE_CHOICES = [
