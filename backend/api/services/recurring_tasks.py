@@ -19,6 +19,8 @@ def _should_generate(rt: RecurringTask, d):
         return False
 
     if rt.frequency == "daily":
+        if rt.skip_weekends and d.weekday() >= 5:  # 5=Sat, 6=Sun
+            return False
         return True
 
     if rt.frequency == "weekly":

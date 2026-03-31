@@ -193,6 +193,7 @@ export type RecurrenceState = {
   frequency: "daily" | "weekly" | "biweekly" | "monthly" | "quarterly";
   day_of_week: number; // 0=Mon .. 6=Sun
   start_date: string;  // YYYY-MM-DD
+  skip_weekends: boolean;
 };
 
 export type CollapsedMeta = {
