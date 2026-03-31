@@ -24,6 +24,7 @@
 - [x] Task index page does not always have access to projects — missing identifiers and blank dropdowns in task edit page
 - [x] Task and Meetings do not scroll on weekly tracker page, container just continues to grow to accomodate content
 - [x] There is no mitigation of large content on the projects page. If there are many tasks the page just keeps going. Not sure if infinite scroll, pagination or truncation would be the best option here. What do you think?
+- [ ] When signed out, users should see login page no matter what route they attempt to access (home page already has this behavior)
 
 ---
 
