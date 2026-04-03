@@ -44,9 +44,13 @@ export default function NoteCard({
             </h3>
             {note.description && (
               <div
-                className={`mt-1 text-sm leading-snug ${
-                  variant === 'dashed' ? 'line-clamp-3 overflow-hidden' : ''
-                } ${note.is_done ? 'opacity-60' : ''}`}
+                className={`mt-1 text-sm leading-snug ${note.is_done ? 'opacity-60' : ''}`}
+                style={variant === 'dashed' ? {
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                } : undefined}
               >
                 <MarkdownBody value={note.description} emptyText="" />
               </div>
