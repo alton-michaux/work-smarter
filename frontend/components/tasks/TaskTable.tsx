@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import NoteCard from "components/notes/NoteCard";
 import { AnyTask, TrackerProps } from "types/types";
 import { SectionPanel, sectionMaxHeightClass } from "components/ui/trackerSection";
@@ -17,6 +18,7 @@ export default function TaskTable({
    * @param t - The task object to check
    * @returns True if the task's effective_is_done or is_done property is truthy, false otherwise
    */
+  const router = useRouter();
   const isDone = (t: any) => Boolean(t.effective_is_done ?? t.is_done);
   const isAutoDoneMeeting = (t: any) => t.effective_is_done && !t.is_done;
 
@@ -214,7 +216,13 @@ export default function TaskTable({
           {notes.length ? (
             <div className="space-y-3">
               {notes.map((n: any) => (
-                <NoteCard key={n.id} note={n} variant="dashed" showMeta={false} />
+                <NoteCard
+                  key={n.id}
+                  note={n}
+                  variant="dashed"
+                  showMeta={false}
+                  onView={(id) => router.push(`/tasks/view/${id}`)}
+                />
               ))}
             </div>
           ) : (
