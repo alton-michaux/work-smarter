@@ -32,6 +32,16 @@ export default function TaskTable({
 
   const dateLabel = (t: any) => String(t.begin_date ?? "").slice(0, 10);
 
+  const recurrenceBadge = (t: AnyTask) => {
+    const freq = (t as any).recurring_frequency;
+    if (!freq || t.__collapsed) return null;
+    return (
+      <span className="text-[11px] px-2 py-0.5 rounded bg-purple-50 text-purple-500 border border-purple-200 whitespace-nowrap">
+        ↻ {freq}
+      </span>
+    );
+  };
+
   const progressBadge = (t: AnyTask) => {
     const prog = subtaskProgressByParentId?.[Number(t.id)];
     if (!prog || prog.total <= 0) return null;
@@ -99,6 +109,7 @@ export default function TaskTable({
 
                         {/* Weekly: show subtask progress badge on parent rows */}
                         {progressBadge(t)}
+                        {recurrenceBadge(t)}
 
                         {t.__collapsed ? (
                           <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
@@ -175,6 +186,7 @@ export default function TaskTable({
 
                       {/* Weekly: show subtask progress badge on parent rows */}
                       {progressBadge(t)}
+                      {recurrenceBadge(t)}
 
                       {t.__collapsed ? (
                         <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">

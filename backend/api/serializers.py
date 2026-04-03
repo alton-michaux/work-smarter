@@ -18,6 +18,7 @@ class TaskSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
     recurring_task_id = serializers.IntegerField(source="recurring_task.id", read_only=True)
+    recurring_frequency = serializers.CharField(source="recurring_task.frequency", read_only=True, allow_null=True, default=None)
 
     parent = serializers.PrimaryKeyRelatedField(
         required=False,
@@ -129,6 +130,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "carry_over",
             "recurring_task",
             "recurring_task_id",
+            "recurring_frequency",
             "is_recurring",
         ]
         extra_kwargs = {
