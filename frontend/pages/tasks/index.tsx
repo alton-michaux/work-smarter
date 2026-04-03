@@ -133,7 +133,7 @@ const TasksPage = () => {
           </div>
 
           {/* ───────────────── Content ───────────────── */}
-          <div className="flex-1 min-h-0 flex flex-col px-6 pt-10 pb-6">
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-6 pt-6 pb-6">
             {error && (
               <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {error}
@@ -150,7 +150,7 @@ const TasksPage = () => {
                 </p>
               </div>
             ) : (
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 h-full">
                 <TaskLayout
                   sections={sections}
                   onView={handleTaskClick}
