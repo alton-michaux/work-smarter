@@ -47,7 +47,7 @@
 - [x] Add some padding between the weekly tracker containers (meetings, tasks, notes)
 - [x] Notes description should display markdown in weekly tracker page and be truncated to 2-3 lines per note
 - [x] Meeting and task section too short in daily log
-- [ ] Weekly tracker should display 3 sections like a grid with meetings on the left
+- [x] Weekly tracker should display 3 sections like a grid with meetings on the left
 - [ ] Project colors should be assignable by user
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [x] Optimistic UI for toggles (daily log feels instant)

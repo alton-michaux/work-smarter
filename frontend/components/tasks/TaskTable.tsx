@@ -57,14 +57,11 @@ export default function TaskTable({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
       {/* MEETINGS */}
+      <div className="lg:col-span-3">
       <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`}>
-        <div
-          className={`${sectionMaxHeightClass(
-            meetingsToRender.length
-          )} overflow-auto rounded-lg border bg-blue-50/40`}
-        >
+        <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
             <table className="w-full text-sm table-fixed">
               <thead className="text-[11px] text-gray-600">
                 <tr className="border-b">
@@ -73,9 +70,6 @@ export default function TaskTable({
                   </th>
                   <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">
                     Date
-                  </th>
-                  <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">
-                    Priority
                   </th>
                 </tr>
               </thead>
@@ -122,9 +116,6 @@ export default function TaskTable({
                     <td className="px-3 py-2 text-gray-600">
                       {dateLabel(t)}
                     </td>
-                    <td className="px-3 py-2 text-gray-600">
-                      {(t as any).priority}
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -137,28 +128,17 @@ export default function TaskTable({
             )}
         </div>
       </SectionPanel>
+      </div>
 
       {/* WORK */}
+      <div className="lg:col-span-6">
       <SectionPanel title="WORK" right={`${workToRender.length} total`}>
-        <div
-          className={`${sectionMaxHeightClass(
-            workToRender.length
-          )} overflow-auto rounded-lg border bg-blue-50/40`}
-        >
+        <div className={`${sectionMaxHeightClass(workToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
           <table className="w-full text-sm table-fixed">
             <thead className="text-[11px] text-gray-600">
               <tr className="border-b">
                 <th className="px-3 py-1.5 text-left uppercase tracking-wide">
                   Task
-                </th>
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">
-                  Date
-                </th>
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-36">
-                  Category
-                </th>
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">
-                  Priority
                 </th>
               </tr>
             </thead>
@@ -196,19 +176,12 @@ export default function TaskTable({
                     </div>
                   </td>
 
-                  <td className="p-3 text-gray-600">{dateLabel(t)}</td>
-                  <td className="p-3 text-gray-600">
-                    {(t as any).category ?? "—"}
-                  </td>
-                  <td className="p-3 text-gray-600">
-                    {(t as any).priority ?? "—"}
-                  </td>
                 </tr>
               ))}
 
               {!workToRender.length && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-3 text-sm text-gray-500">
+                  <td colSpan={1} className="px-4 py-3 text-sm text-gray-500">
                     No work items this week.
                   </td>
                 </tr>
@@ -217,14 +190,12 @@ export default function TaskTable({
           </table>
         </div>
       </SectionPanel>
+      </div>
 
       {/* NOTES */}
+      <div className="lg:col-span-3">
       <SectionPanel title="NOTES" right="Ongoing">
-        <div
-          className={`${sectionMaxHeightClass(
-            notes.length
-          )} overflow-auto rounded-lg border bg-blue-50/40`}
-        >
+        <div className={`${sectionMaxHeightClass(notes.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
           {notes.length ? (
             <div className="space-y-3">
               {notes.map((n: any) => (
@@ -242,6 +213,7 @@ export default function TaskTable({
           )}
         </div>
       </SectionPanel>
+      </div>
     </div>
   );
 }

@@ -82,9 +82,9 @@ export default function TaskTrackerPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">
-      <div className="w-full max-w-4xl bg-white rounded-lg shadow">
+      <div className="w-full max-w-6xl bg-white rounded-lg shadow">
 
-        {/* ✅ Sticky header area */}
+        {/* Sticky header */}
         <div className="sticky top-0 z-20 bg-white border-b">
           <div className="p-8 pb-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
@@ -106,7 +106,7 @@ export default function TaskTrackerPage() {
           </div>
         </div>
 
-        {/* ✅ Scrollable content area */}
+        {/* Scrollable content */}
         <div className="px-8 pb-8">
           <div className="mt-6">
             {isLoading ? (
