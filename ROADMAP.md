@@ -51,7 +51,7 @@
 - [x] Optimistic UI for toggles (daily log feels instant)
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project → task creation shortcuts (preselect project when creating from project view)
-- [ ] Weekly summary header (X done / Y remaining)
+- [x] Weekly summary header (X done / Y remaining)
 - [ ] Micro polish: hover states, subtle transitions, keyboard nav
 - [ ] Recurrence badges ("weekly", "ongoing")
 - [ ] Project-scoped tags

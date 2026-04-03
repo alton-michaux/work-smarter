@@ -71,6 +71,12 @@ export default function TaskTrackerPage() {
     [tasks]
   );
 
+  const weekSummary = useMemo(() => {
+    const all = [...collapsedWork, ...collapsedMeetings];
+    const done = all.filter((t: any) => t.effective_is_done ?? t.is_done).length;
+    return { done, remaining: all.length - done };
+  }, [collapsedWork, collapsedMeetings]);
+
   // Don't render until selectedWeek is set (avoids hydration mismatch)
   if (!selectedWeek) return null;
 
@@ -89,6 +95,14 @@ export default function TaskTrackerPage() {
               selectedWeek={selectedWeek}
               onWeekChange={setSelectedWeek}
             />
+
+            {!isLoading && (
+              <div className="mt-3 flex justify-center gap-4 text-sm text-gray-500">
+                <span className="text-green-600 font-medium">{weekSummary.done} done</span>
+                <span>·</span>
+                <span>{weekSummary.remaining} remaining</span>
+              </div>
+            )}
           </div>
         </div>
 
