@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import NoteCard from "components/notes/NoteCard";
 import { AnyTask, TrackerProps } from "types/types";
 import { SectionPanel, sectionMaxHeightClass } from "components/ui/trackerSection";
@@ -17,6 +18,7 @@ export default function TaskTable({
    * @param t - The task object to check
    * @returns True if the task's effective_is_done or is_done property is truthy, false otherwise
    */
+  const router = useRouter();
   const isDone = (t: any) => Boolean(t.effective_is_done ?? t.is_done);
   const isAutoDoneMeeting = (t: any) => t.effective_is_done && !t.is_done;
 
@@ -29,6 +31,16 @@ export default function TaskTable({
   const workToRender = workBase.filter((t: any) => !t.parent);
 
   const dateLabel = (t: any) => String(t.begin_date ?? "").slice(0, 10);
+
+  const recurrenceBadge = (t: AnyTask) => {
+    const freq = (t as any).recurring_frequency;
+    if (!freq || t.__collapsed) return null;
+    return (
+      <span className="text-[11px] px-2 py-0.5 rounded bg-purple-50 text-purple-500 border border-purple-200 whitespace-nowrap">
+        ↻ {freq}
+      </span>
+    );
+  };
 
   const progressBadge = (t: AnyTask) => {
     const prog = subtaskProgressByParentId?.[Number(t.id)];
@@ -45,14 +57,11 @@ export default function TaskTable({
   };
 
   return (
-    <>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
       {/* MEETINGS */}
+      <div className="lg:col-span-3">
       <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`}>
-        <div
-          className={`${sectionMaxHeightClass(
-            meetingsToRender.length
-          )} overflow-auto rounded-lg border bg-blue-50/40`}
-        >
+        <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
             <table className="w-full text-sm table-fixed">
               <thead className="text-[11px] text-gray-600">
                 <tr className="border-b">
@@ -62,9 +71,6 @@ export default function TaskTable({
                   <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">
                     Date
                   </th>
-                  <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">
-                    Priority
-                  </th>
                 </tr>
               </thead>
 
@@ -72,7 +78,7 @@ export default function TaskTable({
                 {meetingsToRender.map((t: AnyTask) => (
                   <tr
                     key={t.id}
-                    className={`border-b last:border-b-0 hover:bg-white/60 ${
+                    className={`border-b last:border-b-0 transition-colors duration-150 hover:bg-white/60 ${
                       isDone(t)
                         ? isAutoDoneMeeting(t)
                           ? "bg-blue-50/60"
@@ -97,6 +103,7 @@ export default function TaskTable({
 
                         {/* Weekly: show subtask progress badge on parent rows */}
                         {progressBadge(t)}
+                        {recurrenceBadge(t)}
 
                         {t.__collapsed ? (
                           <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
@@ -108,9 +115,6 @@ export default function TaskTable({
 
                     <td className="px-3 py-2 text-gray-600">
                       {dateLabel(t)}
-                    </td>
-                    <td className="px-3 py-2 text-gray-600">
-                      {(t as any).priority}
                     </td>
                   </tr>
                 ))}
@@ -124,28 +128,17 @@ export default function TaskTable({
             )}
         </div>
       </SectionPanel>
+      </div>
 
       {/* WORK */}
+      <div className="lg:col-span-6">
       <SectionPanel title="WORK" right={`${workToRender.length} total`}>
-        <div
-          className={`${sectionMaxHeightClass(
-            workToRender.length
-          )} overflow-auto rounded-lg border bg-blue-50/40`}
-        >
+        <div className={`${sectionMaxHeightClass(workToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
           <table className="w-full text-sm table-fixed">
             <thead className="text-[11px] text-gray-600">
               <tr className="border-b">
                 <th className="px-3 py-1.5 text-left uppercase tracking-wide">
                   Task
-                </th>
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">
-                  Date
-                </th>
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-36">
-                  Category
-                </th>
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide w-28">
-                  Priority
                 </th>
               </tr>
             </thead>
@@ -154,7 +147,7 @@ export default function TaskTable({
               {workToRender.map((t: AnyTask) => (
                 <tr
                   key={t.id}
-                  className={`font-medium border-b last:border-b-0 hover:bg-gray-50 ${
+                  className={`font-medium border-b last:border-b-0 transition-colors duration-150 hover:bg-white ${
                     isDone(t) ? "bg-green-50" : ""
                   }`}
                 >
@@ -173,6 +166,7 @@ export default function TaskTable({
 
                       {/* Weekly: show subtask progress badge on parent rows */}
                       {progressBadge(t)}
+                      {recurrenceBadge(t)}
 
                       {t.__collapsed ? (
                         <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
@@ -182,19 +176,12 @@ export default function TaskTable({
                     </div>
                   </td>
 
-                  <td className="p-3 text-gray-600">{dateLabel(t)}</td>
-                  <td className="p-3 text-gray-600">
-                    {(t as any).category ?? "—"}
-                  </td>
-                  <td className="p-3 text-gray-600">
-                    {(t as any).priority ?? "—"}
-                  </td>
                 </tr>
               ))}
 
               {!workToRender.length && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-3 text-sm text-gray-500">
+                  <td colSpan={1} className="px-4 py-3 text-sm text-gray-500">
                     No work items this week.
                   </td>
                 </tr>
@@ -203,18 +190,22 @@ export default function TaskTable({
           </table>
         </div>
       </SectionPanel>
+      </div>
 
       {/* NOTES */}
+      <div className="lg:col-span-3">
       <SectionPanel title="NOTES" right="Ongoing">
-        <div
-          className={`${sectionMaxHeightClass(
-            notes.length
-          )} overflow-auto rounded-lg border bg-blue-50/40`}
-        >
+        <div className={`${sectionMaxHeightClass(notes.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
           {notes.length ? (
             <div className="space-y-3">
               {notes.map((n: any) => (
-                <NoteCard key={n.id} note={n} variant="dashed" showMeta={false} />
+                <NoteCard
+                  key={n.id}
+                  note={n}
+                  variant="dashed"
+                  showMeta={false}
+                  onView={(id) => router.push(`/tasks/view/${id}`)}
+                />
               ))}
             </div>
           ) : (
@@ -222,6 +213,7 @@ export default function TaskTable({
           )}
         </div>
       </SectionPanel>
-    </>
+      </div>
+    </div>
   );
 }

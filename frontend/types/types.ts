@@ -39,8 +39,9 @@ export type Task = {
   begin_date: string;
   end_date: string;
 
-  recurring_task?: { frequency?: string | null } | null;
+  recurring_task?: number | null;
   recurring_task_id?: number | string | null;
+  recurring_frequency?: string | null;
 
   user: number;
 };

@@ -72,7 +72,11 @@ export function collapseRecurringTasks<T extends Task>(
   for (const g of Array.from(groups.values())) {
     const { seed, items, beginDates } = g;
 
-    const recurringFreq = String(seed?.recurring_task?.frequency ?? "").toLowerCase() || null;
+    // recurring_task may be an object with a 'frequency' field or just an ID number; handle both.
+    const rt = (seed as any).recurring_task;
+    const recurringFreq = (rt != null && typeof rt === "object" && "frequency" in rt)
+      ? String((rt as any).frequency).toLowerCase()
+      : null;
 
     // Decide if THIS GROUP should collapse
     let shouldCollapse = Boolean(seed.recurring_task_id);
