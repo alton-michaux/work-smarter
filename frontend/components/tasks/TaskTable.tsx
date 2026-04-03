@@ -47,7 +47,7 @@ export default function TaskTable({
   };
 
   return (
-    <>
+    <div className="space-y-4">
       {/* MEETINGS */}
       <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`}>
         <div
@@ -230,6 +230,6 @@ export default function TaskTable({
           )}
         </div>
       </SectionPanel>
-    </>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { NoteProps } from 'types/types';
+import MarkdownBody from 'components/shared/MarkdownBody';
 
 export default function NoteCard({
   note,
@@ -42,13 +43,13 @@ export default function NoteCard({
               {note.title}
             </h3>
             {note.description && (
-              <p
-                className={`mt-1 text-sm leading-snug whitespace-pre-wrap ${
-                  note.is_done ? 'text-gray-400' : 'text-gray-600'
-                }`}
+              <div
+                className={`mt-1 text-sm leading-snug ${
+                  variant === 'dashed' ? 'line-clamp-3 overflow-hidden' : ''
+                } ${note.is_done ? 'opacity-60' : ''}`}
               >
-                {note.description}
-              </p>
+                <MarkdownBody value={note.description} emptyText="" />
+              </div>
             )}
             {showMeta && (date || priority) ? (
               <div className="text-xs text-gray-500 mt-1">

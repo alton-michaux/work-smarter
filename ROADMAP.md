@@ -24,6 +24,7 @@
 - [x] Task index page does not always have access to projects — missing identifiers and blank dropdowns in task edit page
 - [x] Task and Meetings do not scroll on weekly tracker page, container just continues to grow to accomodate content
 - [x] There is no mitigation of large content on the projects page. If there are many tasks the page just keeps going. Not sure if infinite scroll, pagination or truncation would be the best option here. What do you think?
+- [ ] Logout requests take about 2 minutes to resolve on staging
 
 ---
 
@@ -42,7 +43,7 @@
 - [x] Show page audit
 - [x] Implement toast notifications
 - [x] Remove redundant "back" buttons
-- [ ] There's currently no way to view a note, we should make them clickable in the weekly tracker
+- [x] There's currently no way to view a note, we should make them clickable in the weekly tracker
 - [ ] Add some padding between the weekly tracker containers (meetings, tasks, notes)
 - [ ] Notes description should display markdown in weekly tracker page and be truncated to 2-3 lines per note
 - [ ] Project colors should be assignable by user
