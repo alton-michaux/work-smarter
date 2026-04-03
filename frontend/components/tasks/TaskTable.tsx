@@ -84,7 +84,7 @@ export default function TaskTable({
                 {meetingsToRender.map((t: AnyTask) => (
                   <tr
                     key={t.id}
-                    className={`border-b last:border-b-0 hover:bg-white/60 ${
+                    className={`border-b last:border-b-0 transition-colors duration-150 hover:bg-white/60 ${
                       isDone(t)
                         ? isAutoDoneMeeting(t)
                           ? "bg-blue-50/60"
@@ -167,7 +167,7 @@ export default function TaskTable({
               {workToRender.map((t: AnyTask) => (
                 <tr
                   key={t.id}
-                  className={`font-medium border-b last:border-b-0 hover:bg-gray-50 ${
+                  className={`font-medium border-b last:border-b-0 transition-colors duration-150 hover:bg-white ${
                     isDone(t) ? "bg-green-50" : ""
                   }`}
                 >

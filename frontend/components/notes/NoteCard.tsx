@@ -21,12 +21,12 @@ export default function NoteCard({
       : 'border-gray-200';
 
   return (
-    <div className={border + "w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-3"}>
+    <div className={`w-full rounded-lg border bg-gray-50 px-4 py-3 transition-colors duration-150 ${border} ${onView ? 'hover:bg-white cursor-pointer' : ''}`}>
       <div className="flex items-start justify-between gap-4">
         <button
           type="button"
           onClick={() => onView?.(id)}
-          className="flex items-start gap-2 min-w-0 text-left"
+          className="flex items-start gap-2 min-w-0 text-left w-full"
         >
           {note.is_done && (
             <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400 my-auto">

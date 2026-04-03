@@ -46,14 +46,15 @@
 - [x] There's currently no way to view a note, we should make them clickable in the weekly tracker
 - [x] Add some padding between the weekly tracker containers (meetings, tasks, notes)
 - [x] Notes description should display markdown in weekly tracker page and be truncated to 2-3 lines per note
+- [ ] Meeting and task section too short in daily log
 - [ ] Project colors should be assignable by user
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [x] Optimistic UI for toggles (daily log feels instant)
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project → task creation shortcuts (preselect project when creating from project view)
 - [x] Weekly summary header (X done / Y remaining)
-- [ ] Micro polish: hover states, subtle transitions, keyboard nav
-- [ ] Recurrence badges ("weekly", "ongoing")
+- [x] Micro polish: hover states, subtle transitions, keyboard nav
+- [x] Recurrence badges ("weekly", "ongoing")
 - [ ] Project-scoped tags
 - [ ] "Seen this week" indicators
 - [ ] Collapsible "Background reminders" section — visual distinction only, no behavior yet
