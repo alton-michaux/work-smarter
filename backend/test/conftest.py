@@ -146,6 +146,7 @@ def create_recurring_task(db):
         start_date=None,        # required by your model
         is_active=True,
         last_generated_at=None,
+        skip_weekends=False,
         user=None,
     ):
         if start_date is None:
@@ -167,6 +168,7 @@ def create_recurring_task(db):
             start_date=start_date,
             is_active=is_active,
             last_generated_at=last_generated_at,
+            skip_weekends=skip_weekends,
             user=user,
         )
     return make_recurring_task

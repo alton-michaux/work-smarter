@@ -33,7 +33,7 @@
 - [x] Update tests for new functionality
 - [x] Recurring tasks need bi-weekly and quarterly options
 - [x] Users should be able to delete a single recurring task, all recurring tasks or all future recurring tasks
-- [ ] Daily recurring tasks will need to be able to exclude weekends
+- [x] Daily recurring tasks will need to be able to exclude weekends
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
@@ -42,9 +42,17 @@
 - [x] Show page audit
 - [x] Implement toast notifications
 - [x] Remove redundant "back" buttons
+<<<<<<< HEAD
 - [ ] Project colors should be assignable by user
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [ ] Notes description should display markdown in weekly tracker page
+=======
+- [ ] There's currently no way to view a note, we should make them clickable in the weekly tracker
+- [ ] Add some padding between the weekly tracker containers (meetings, tasks, notes)
+- [ ] Notes description should display markdown in weekly tracker page and be truncated to 2-3 lines per note
+- [ ] Project colors should be assignable by user
+- [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
+>>>>>>> dev
 - [x] Optimistic UI for toggles (daily log feels instant)
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project → task creation shortcuts (preselect project when creating from project view)
