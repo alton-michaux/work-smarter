@@ -60,16 +60,13 @@ export default function TaskTable({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
       {/* MEETINGS */}
       <div className="lg:col-span-3">
-      <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`}>
+      <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`} children={(
         <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
             <table className="w-full text-sm table-fixed">
               <thead className="text-[11px] text-gray-600">
                 <tr className="border-b">
                   <th className="px-3 py-1.5 text-left uppercase tracking-wide">
                     Title
-                  </th>
-                  <th className="px-3 py-1.5 text-left uppercase tracking-wide w-32">
-                    Date
                   </th>
                 </tr>
               </thead>
@@ -112,10 +109,6 @@ export default function TaskTable({
                         ) : null}
                       </div>
                     </td>
-
-                    <td className="px-3 py-2 text-gray-600">
-                      {dateLabel(t)}
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -127,12 +120,12 @@ export default function TaskTable({
               </div>
             )}
         </div>
-      </SectionPanel>
+      )} />
       </div>
 
       {/* WORK */}
       <div className="lg:col-span-6">
-      <SectionPanel title="WORK" right={`${workToRender.length} total`}>
+      <SectionPanel title="WORK" right={`${workToRender.length} total`} children={(
         <div className={`${sectionMaxHeightClass(workToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
           <table className="w-full text-sm table-fixed">
             <thead className="text-[11px] text-gray-600">
@@ -189,30 +182,31 @@ export default function TaskTable({
             </tbody>
           </table>
         </div>
-      </SectionPanel>
+      )} />
       </div>
 
       {/* NOTES */}
       <div className="lg:col-span-3">
-      <SectionPanel title="NOTES" right="Ongoing">
+      <SectionPanel title="NOTES" right="Ongoing" children={(
         <div className={`${sectionMaxHeightClass(notes.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
           {notes.length ? (
             <div className="space-y-3">
               {notes.map((n: any) => (
-                <NoteCard
-                  key={n.id}
-                  note={n}
-                  variant="dashed"
-                  showMeta={false}
-                  onView={(id) => router.push(`/tasks/view/${id}`)}
-                />
+                <div key={n.id}>
+                  <NoteCard
+                    note={n}
+                    variant="dashed"
+                    showMeta={false}
+                    onView={(id) => router.push(`/tasks/view/${id}`)}
+                  />
+                </div>
               ))}
             </div>
           ) : (
             <div className="px-4 py-3 text-sm text-gray-500">No notes.</div>
           )}
         </div>
-      </SectionPanel>
+      )} />
       </div>
     </div>
   );
