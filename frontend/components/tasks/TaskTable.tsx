@@ -192,13 +192,14 @@ export default function TaskTable({
           {notes.length ? (
             <div className="space-y-3">
               {notes.map((n: any) => (
-                <NoteCard
-                  key={n.id}
-                  note={n}
-                  variant="dashed"
-                  showMeta={false}
-                  onView={(id) => router.push(`/tasks/view/${id}`)}
-                />
+                <div key={n.id}>
+                  <NoteCard
+                    note={n}
+                    variant="dashed"
+                    showMeta={false}
+                    onView={(id) => router.push(`/tasks/view/${id}`)}
+                  />
+                </div>
               ))}
             </div>
           ) : (
