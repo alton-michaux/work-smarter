@@ -47,7 +47,16 @@ function byPriority(a: any, b: any) {
 export function splitIntoSections(tasks: any[]) {
   const uniq = Array.from(new Map((tasks ?? []).map(t => [t.id, t])).values());
 
-  const meetings = uniq.filter(t => categoryToType(t.category) === 'meeting');
+  const meetings = uniq
+    .filter(t => categoryToType(t.category) === 'meeting')
+    .sort((a, b) => {
+      const ta = a.begin_time ?? '';
+      const tb = b.begin_time ?? '';
+      if (!ta && !tb) return 0;
+      if (!ta) return 1;
+      if (!tb) return -1;
+      return ta < tb ? -1 : ta > tb ? 1 : 0;
+    });
   const taskItems = uniq.filter(t => categoryToType(t.category) === 'task').sort(byPriority);
   const notes = uniq.filter(t => categoryToType(t.category) === 'note').sort(byPriority);
 
