@@ -92,6 +92,8 @@ class Task(models.Model):
 
     begin_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    begin_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     title = models.TextField()
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='task', null=True)

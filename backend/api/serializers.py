@@ -11,6 +11,8 @@ class UserSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     begin_date = serializers.DateField(required=False, allow_null=True, default=None)
     end_date = serializers.DateField(required=False, allow_null=True, default=None)
+    begin_time = serializers.TimeField(required=False, allow_null=True, default=None)
+    end_time = serializers.TimeField(required=False, allow_null=True, default=None)
 
     recurring_task = serializers.PrimaryKeyRelatedField(
         queryset=RecurringTask.objects.all(),
@@ -39,13 +41,21 @@ class TaskSerializer(serializers.ModelSerializer):
         return obj.recurring_task is not None
 
     def get_effective_is_done(self, obj):
-        today = timezone.localdate()
-        auto_done = (
-            obj.category == "meeting"
-            and obj.begin_date is not None
-            and obj.begin_date < today
-        )
-        return bool(obj.is_done or auto_done)
+        now = timezone.localtime()
+        today = now.date()
+        current_time = now.time()
+
+        if obj.category == "meeting" and obj.begin_date is not None:
+            if obj.begin_date < today:
+                return True
+            if (
+                obj.begin_date == today
+                and obj.begin_time is not None
+                and obj.begin_time < current_time
+            ):
+                return True
+
+        return bool(obj.is_done)
 
     def validate_parent(self, parent):
         if parent is None:
@@ -117,6 +127,8 @@ class TaskSerializer(serializers.ModelSerializer):
             "user",
             "begin_date",
             "end_date",
+            "begin_time",
+            "end_time",
             "project",
             "title",
             "category",
@@ -139,6 +151,8 @@ class TaskSerializer(serializers.ModelSerializer):
             "recurring_task": {"required": False, "allow_null": True},
             "begin_date": {"required": False, "allow_null": True},
             "end_date": {"required": False, "allow_null": True},
+            "begin_time": {"required": False, "allow_null": True},
+            "end_time": {"required": False, "allow_null": True},
         }
         
 class RecurringTaskSerializer(serializers.ModelSerializer):

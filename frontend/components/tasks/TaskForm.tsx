@@ -73,6 +73,7 @@ export default function TaskForm({
     setFormError("");
     if (!validate()) return;
 
+    const isMeeting = task.category === "meeting";
     const payload: any = {
       id: task.id,
       title: task.title,
@@ -81,6 +82,8 @@ export default function TaskForm({
       description: task.description ?? "",
       begin_date: task.begin_date,
       end_date: task.end_date ?? null,
+      begin_time: isMeeting ? (task.begin_time || null) : null,
+      end_time: isMeeting ? (task.end_time || null) : null,
       project: task.project === "" ? null : task.project ?? null,
       is_done: !!task.is_done,
       is_subtask: !!task.is_subtask,
@@ -203,6 +206,32 @@ export default function TaskForm({
             <p className="text-sm text-red-600 mt-1">{errors.begin_date}</p>
           ) : null}
         </div>
+
+        {task.category === "meeting" && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+              <input
+                type="time"
+                name="begin_time"
+                value={task.begin_time ?? ""}
+                onChange={handleChange}
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+              <input
+                type="time"
+                name="end_time"
+                value={task.end_time ?? ""}
+                onChange={handleChange}
+                className={inputClass}
+              />
+            </div>
+          </>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
