@@ -1,5 +1,6 @@
 import pytest
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, timezone as dt_timezone
+from unittest.mock import patch
 from django.urls import reverse
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range, _should_generate
 from api.models import Task, RecurringTask, RecurringTaskException
@@ -794,3 +795,119 @@ def test_skip_weekends_uses_should_generate_directly(get_user, create_recurring_
     assert _should_generate(rt, date(2026, 4, 4)) is False  # Saturday
     assert _should_generate(rt, date(2026, 4, 5)) is False  # Sunday
     assert _should_generate(rt, date(2026, 4, 6)) is True   # Monday
+
+
+# -----------------------
+# Meeting Time Tests
+# -----------------------
+
+@pytest.mark.django_db
+def test_meeting_time_fields_stored_and_returned(auth_client, tasks_list_url):
+    """begin_time and end_time are persisted and returned by the API."""
+    payload = {
+        "title": "Standup",
+        "category": "meeting",
+        "begin_date": "2026-04-10",
+        "begin_time": "09:00:00",
+        "end_time": "09:30:00",
+        "recurring_task": None,
+    }
+    res = auth_client.post(tasks_list_url, payload, format="json")
+    assert res.status_code == 201, res.data
+    assert res.data["begin_time"] == "09:00:00"
+    assert res.data["end_time"] == "09:30:00"
+
+    task_id = res.data["id"]
+    res = auth_client.get(f"/api/tasks/{task_id}/")
+    assert res.status_code == 200
+    assert res.data["begin_time"] == "09:00:00"
+    assert res.data["end_time"] == "09:30:00"
+
+
+@pytest.mark.django_db
+def test_meeting_time_fields_are_optional(auth_client, tasks_list_url):
+    """Meetings without times are valid and return null for both time fields."""
+    payload = {
+        "title": "Untimed Meeting",
+        "category": "meeting",
+        "begin_date": "2026-04-10",
+        "recurring_task": None,
+    }
+    res = auth_client.post(tasks_list_url, payload, format="json")
+    assert res.status_code == 201, res.data
+    assert res.data["begin_time"] is None
+    assert res.data["end_time"] is None
+
+
+@pytest.mark.django_db
+def test_effective_is_done_past_date(auth_client, get_user):
+    """Meeting with a past begin_date is auto-done regardless of time."""
+    task = Task.objects.create(
+        user=get_user,
+        title="Yesterday's Meeting",
+        category="meeting",
+        begin_date=date(2026, 1, 1),
+        begin_time=None,
+    )
+    res = auth_client.get(f"/api/tasks/{task.id}/")
+    assert res.status_code == 200
+    assert res.data["effective_is_done"] is True
+    assert res.data["is_done"] is False
+
+
+@pytest.mark.django_db
+def test_effective_is_done_today_time_has_passed(auth_client, get_user):
+    """Meeting today whose begin_time has already passed is auto-done."""
+    fake_now = datetime(2026, 4, 3, 15, 0, 0, tzinfo=dt_timezone.utc)
+
+    task = Task.objects.create(
+        user=get_user,
+        title="Morning Standup",
+        category="meeting",
+        begin_date=date(2026, 4, 3),
+        begin_time=datetime.strptime("09:00", "%H:%M").time(),
+    )
+    with patch("api.serializers.timezone.localtime", return_value=fake_now):
+        res = auth_client.get(f"/api/tasks/{task.id}/")
+
+    assert res.status_code == 200
+    assert res.data["effective_is_done"] is True
+    assert res.data["is_done"] is False
+
+
+@pytest.mark.django_db
+def test_effective_is_done_today_time_not_yet(auth_client, get_user):
+    """Meeting today whose begin_time hasn't arrived yet is NOT auto-done."""
+    fake_now = datetime(2026, 4, 3, 8, 0, 0, tzinfo=dt_timezone.utc)
+
+    task = Task.objects.create(
+        user=get_user,
+        title="Afternoon Sync",
+        category="meeting",
+        begin_date=date(2026, 4, 3),
+        begin_time=datetime.strptime("14:00", "%H:%M").time(),
+    )
+    with patch("api.serializers.timezone.localtime", return_value=fake_now):
+        res = auth_client.get(f"/api/tasks/{task.id}/")
+
+    assert res.status_code == 200
+    assert res.data["effective_is_done"] is False
+
+
+@pytest.mark.django_db
+def test_effective_is_done_today_no_time(auth_client, get_user):
+    """Meeting today with no begin_time is NOT auto-done (date alone is not enough)."""
+    fake_now = datetime(2026, 4, 3, 23, 59, 0, tzinfo=dt_timezone.utc)
+
+    task = Task.objects.create(
+        user=get_user,
+        title="Timeless Meeting",
+        category="meeting",
+        begin_date=date(2026, 4, 3),
+        begin_time=None,
+    )
+    with patch("api.serializers.timezone.localtime", return_value=fake_now):
+        res = auth_client.get(f"/api/tasks/{task.id}/")
+
+    assert res.status_code == 200
+    assert res.data["effective_is_done"] is False
