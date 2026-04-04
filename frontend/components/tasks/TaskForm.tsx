@@ -229,6 +229,11 @@ export default function TaskForm({
                 step={900}
                 className={inputClass}
               />
+              {!task.begin_time && (
+                <p className="mt-1 text-xs text-amber-600">
+                  No start time set — meeting won't appear in time order.
+                </p>
+              )}
             </div>
 
             <div>
