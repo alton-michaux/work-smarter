@@ -38,6 +38,8 @@ export type Task = {
   project?: number;
   begin_date: string;
   end_date: string;
+  begin_time?: string | null;
+  end_time?: string | null;
 
   recurring_task?: number | null;
   recurring_task_id?: number | string | null;

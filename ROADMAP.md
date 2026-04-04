@@ -51,6 +51,8 @@
 - [ ] Project colors should be assignable by user
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [x] Optimistic UI for toggles (daily log feels instant)
+- [ ] Sort meetings in order by time in daily log (earliest first)
+- [ ] Time select should be less granular (15 minute scale vs 60 minute scale)
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project → task creation shortcuts (preselect project when creating from project view)
 - [x] Weekly summary header (X done / Y remaining)
@@ -67,7 +69,7 @@
 
 - [x] Add recurring tasks/events (meetings)
 - [x] Meetings auto-done after day-of (frontend and backend)
-- [ ] Meetings should have a time
+- [x] Meetings should have a time
 - [ ] Implement deadlines
 - [ ] Add bi-weekly schedule to recurring events
 - [ ] Integration with Google Calendar
