@@ -50,11 +50,21 @@ export default function TaskForm({
 
   const selectClass = inputClass;
 
+  const roundToQuarterHour = (timeStr: string): string => {
+    if (!timeStr) return timeStr;
+    const [h, m] = timeStr.split(':').map(Number);
+    const rounded = Math.round(m / 15) * 15;
+    const finalHour = rounded === 60 ? (h + 1) % 24 : h;
+    const finalMin = rounded === 60 ? 0 : rounded;
+    return `${String(finalHour).padStart(2, '0')}:${String(finalMin).padStart(2, '0')}`;
+  };
+
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
+    const isTimeField = name === 'begin_time' || name === 'end_time';
     setTask((t: any) => ({
       ...t,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : (isTimeField ? roundToQuarterHour(value) : value),
     }));
   };
 
@@ -216,6 +226,7 @@ export default function TaskForm({
                 name="begin_time"
                 value={task.begin_time ?? ""}
                 onChange={handleChange}
+                step={900}
                 className={inputClass}
               />
             </div>
@@ -227,6 +238,7 @@ export default function TaskForm({
                 name="end_time"
                 value={task.end_time ?? ""}
                 onChange={handleChange}
+                step={900}
                 className={inputClass}
               />
             </div>

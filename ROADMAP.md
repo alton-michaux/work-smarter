@@ -51,8 +51,8 @@
 - [ ] Project colors should be assignable by user
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [x] Optimistic UI for toggles (daily log feels instant)
-- [ ] Sort meetings in order by time in daily log (earliest first)
-- [ ] Time select should be less granular (15 minute scale vs 60 minute scale)
+- [x] Sort meetings in order by time in daily log (earliest first)
+- [x] Time select should be less granular (15 minute scale vs 60 minute scale)
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project → task creation shortcuts (preselect project when creating from project view)
 - [x] Weekly summary header (X done / Y remaining)

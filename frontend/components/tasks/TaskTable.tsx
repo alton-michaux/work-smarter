@@ -32,20 +32,6 @@ export default function TaskTable({
 
   const dateLabel = (t: any) => String(t.begin_date ?? "").slice(0, 10);
 
-  const formatTime = (timeStr?: string | null): string | null => {
-    if (!timeStr) return null;
-    const [h, m] = timeStr.split(':').map(Number);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const hour = h % 12 || 12;
-    return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
-  };
-
-  const meetingTimeLabel = (t: any): string | null => {
-    const start = formatTime(t.begin_time);
-    if (!start) return null;
-    const end = formatTime(t.end_time);
-    return end ? `${start} – ${end}` : start;
-  };
 
   const recurrenceBadge = (t: AnyTask) => {
     const freq = (t as any).recurring_frequency;
@@ -102,23 +88,16 @@ export default function TaskTable({
                       <div className="min-w-0 flex items-center gap-2">
                         <span className="text-sm leading-tight">🗓️</span>
 
-                        <div className="min-w-0 flex-1">
-                          <span
-                            className={`block truncate font-medium leading-tight ${
-                              isDone(t)
-                                ? "text-gray-500 line-through"
-                                : "text-gray-900"
-                            }`}
-                            title={t.title}
-                          >
-                            {t.title}
-                          </span>
-                          {meetingTimeLabel(t) && (
-                            <span className="block text-[11px] text-blue-600 leading-tight mt-0.5">
-                              {meetingTimeLabel(t)}
-                            </span>
-                          )}
-                        </div>
+                        <span
+                          className={`min-w-0 truncate font-medium leading-tight ${
+                            isDone(t)
+                              ? "text-gray-500 line-through"
+                              : "text-gray-900"
+                          }`}
+                          title={t.title}
+                        >
+                          {t.title}
+                        </span>
 
                         {/* Weekly: show subtask progress badge on parent rows */}
                         {progressBadge(t)}
