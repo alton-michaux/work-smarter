@@ -1,6 +1,6 @@
 accumulation_tree==0.6.2
 aiohappyeyeballs==2.6.1
-aiohttp==3.13.3
+aiohttp==3.13.4
 aiosignal==1.4.0
 django-allauth==65.14.1
 asgiref==3.8.1
@@ -98,7 +98,7 @@ pybrake==1.10.1
 pycparser==2.21
 pydot==2.0.0
 pydotplus==2.0.2
-Pygments==2.17.2
+Pygments==2.20.0
 PyHamcrest==1.9.0
 PyJWT==2.12.0
 pymacaroons==0.13.0
