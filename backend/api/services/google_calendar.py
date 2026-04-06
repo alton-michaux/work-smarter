@@ -53,7 +53,15 @@ def list_user_calendars(user):
     ]
 
 
-def _build_event_body(task) -> dict:
+def _get_calendar_timezone(service, calendar_id) -> str:
+    try:
+        cal = service.calendars().get(calendarId=calendar_id).execute()
+        return cal.get("timeZone", "UTC")
+    except HttpError:
+        return "UTC"
+
+
+def _build_event_body(task, tz: str = "UTC") -> dict:
     date_str = str(task.begin_date)
 
     if task.begin_time:
@@ -65,8 +73,8 @@ def _build_event_body(task) -> dict:
                 datetime.combine(task.begin_date, task.begin_time) + timedelta(hours=1)
             ).time()
             end_dt = f"{date_str}T{end_time.strftime('%H:%M:%S')}"
-        start = {"dateTime": start_dt, "timeZone": "UTC"}
-        end = {"dateTime": end_dt, "timeZone": "UTC"}
+        start = {"dateTime": start_dt, "timeZone": tz}
+        end = {"dateTime": end_dt, "timeZone": tz}
     else:
         start = {"date": date_str}
         end = {"date": date_str}
@@ -88,7 +96,8 @@ def push_meeting(task, user) -> str:
 
     service, token_record = get_calendar_service(user)
     calendar_id = token_record.selected_calendar_id or "primary"
-    event_body = _build_event_body(task)
+    tz = _get_calendar_timezone(service, calendar_id)
+    event_body = _build_event_body(task, tz)
 
     try:
         if task.google_event_id:
