@@ -1,6 +1,6 @@
 accumulation_tree==0.6.2
 aiohappyeyeballs==2.6.1
-aiohttp==3.13.3
+aiohttp==3.13.4
 aiosignal==1.4.0
 django-allauth==65.14.1
 asgiref==3.8.1
