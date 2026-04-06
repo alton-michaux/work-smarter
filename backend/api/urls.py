@@ -4,6 +4,13 @@ from api.views.views import ProjectViewSet, TaskViewSet, UserViewSet, RecurringT
 from api.views.upload.views_import import ImportTasksCSVView, ImportTasksTXTView
 from api.views.upload.views_import_csv_spec import ImportTasksCSVSpecView
 from api.views.download.views_export import ExportTasksCSV
+from api.views.views_calendar import (
+    GoogleOAuthInitView,
+    GoogleOAuthCallbackView,
+    GoogleCalendarStatusView,
+    GoogleCalendarListView,
+    GoogleCalendarSelectView,
+)
 
 # JWT views
 from rest_framework_simplejwt.views import (
@@ -26,4 +33,10 @@ urlpatterns = [
     # JWT endpoints
     path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # Google Calendar
+    path('calendar/oauth/init/', GoogleOAuthInitView.as_view(), name='calendar-oauth-init'),
+    path('calendar/oauth/callback/', GoogleOAuthCallbackView.as_view(), name='calendar-oauth-callback'),
+    path('calendar/status/', GoogleCalendarStatusView.as_view(), name='calendar-status'),
+    path('calendar/calendars/', GoogleCalendarListView.as_view(), name='calendar-list'),
+    path('calendar/select/', GoogleCalendarSelectView.as_view(), name='calendar-select'),
 ]
