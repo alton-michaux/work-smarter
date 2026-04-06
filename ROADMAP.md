@@ -49,6 +49,7 @@
 - [x] Meeting and task section too short in daily log
 - [x] Weekly tracker should display 3 sections like a grid with meetings on the left
 - [ ] Project colors should be assignable by user
+- [ ] Settings page should allow users to change account info (email, password)
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [x] Optimistic UI for toggles (daily log feels instant)
 - [x] Sort meetings in order by time in daily log (earliest first)
