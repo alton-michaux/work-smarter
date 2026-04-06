@@ -1,5 +1,6 @@
 import React from 'react';
 import { NoteProps } from 'types/types';
+import MarkdownBody from 'components/shared/MarkdownBody';
 
 export default function NoteCard({
   note,
@@ -20,12 +21,12 @@ export default function NoteCard({
       : 'border-gray-200';
 
   return (
-    <div className={border + "w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-3"}>
+    <div className={`w-full rounded-lg border bg-gray-50 px-4 py-3 transition-colors duration-150 ${border} ${onView ? 'hover:bg-white cursor-pointer' : ''}`}>
       <div className="flex items-start justify-between gap-4">
         <button
           type="button"
           onClick={() => onView?.(id)}
-          className="flex items-start gap-2 min-w-0 text-left"
+          className="flex items-start gap-2 min-w-0 text-left w-full"
         >
           {note.is_done && (
             <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400 my-auto">
@@ -42,13 +43,17 @@ export default function NoteCard({
               {note.title}
             </h3>
             {note.description && (
-              <p
-                className={`mt-1 text-sm leading-snug whitespace-pre-wrap ${
-                  note.is_done ? 'text-gray-400' : 'text-gray-600'
-                }`}
+              <div
+                className={`mt-1 text-sm leading-snug ${note.is_done ? 'opacity-60' : ''}`}
+                style={variant === 'dashed' ? {
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                } : undefined}
               >
-                {note.description}
-              </p>
+                <MarkdownBody value={note.description} emptyText="" />
+              </div>
             )}
             {showMeta && (date || priority) ? (
               <div className="text-xs text-gray-500 mt-1">

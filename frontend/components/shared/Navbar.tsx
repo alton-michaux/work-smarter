@@ -17,6 +17,7 @@ export default function Navbar() {
           loggedIn ? (
             <>
               <a href="/">Home</a>
+              <a href="/settings" className="text-gray-700 hover:text-blue-600">Settings</a>
               <Button variant="secondary" size="sm" onClick={handleLogout}>
                 Logout
               </Button>

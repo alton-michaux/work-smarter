@@ -38,9 +38,14 @@ export type Task = {
   project?: number;
   begin_date: string;
   end_date: string;
+  begin_time?: string | null;
+  end_time?: string | null;
 
-  recurring_task?: { frequency?: string | null } | null;
+  recurring_task?: number | null;
   recurring_task_id?: number | string | null;
+  recurring_frequency?: string | null;
+
+  google_event_id?: string | null;
 
   user: number;
 };
@@ -94,8 +99,14 @@ export type TasksContextType = {
   fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
   fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
+  pushToCalendar: (taskId: number) => Promise<Task>;
   isLoading: boolean;
   error: string | null;
+};
+
+export type GoogleCalendarStatus = {
+  connected: boolean;
+  selected_calendar_id: string | null;
 };
 
 export type DeleteTaskOptions = { deleteSeries?: boolean; deleteFuture?: boolean };

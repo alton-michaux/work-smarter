@@ -1,6 +1,6 @@
 accumulation_tree==0.6.2
 aiohappyeyeballs==2.6.1
-aiohttp==3.13.3
+aiohttp==3.13.4
 aiosignal==1.4.0
 django-allauth==65.14.1
 asgiref==3.8.1
@@ -42,8 +42,11 @@ fasteners==0.19
 fastjsonschema==2.19.1
 filelock==3.20.3
 frozenlist==1.7.0
+google-api-python-client==2.95.0
+google-auth-oauthlib==1.1.0
+google-auth-httplib2==0.2.0
 gunicorn==22.0.0
-httplib2==0.14.0
+httplib2==0.22.0
 hyperlink==19.0.0
 idna==2.8
 importlib-metadata==1.5.0
@@ -74,7 +77,7 @@ multidict==6.5.1
 nbformat==5.10.3
 networkx==3.2.1
 numpy==1.26.4
-oauthlib==3.1.0
+oauthlib==3.2.2
 openai==0.27.0
 openpyxl==3.1.5
 packaging==24.2
@@ -95,7 +98,7 @@ pybrake==1.10.1
 pycparser==2.21
 pydot==2.0.0
 pydotplus==2.0.2
-Pygments==2.17.2
+Pygments==2.20.0
 PyHamcrest==1.9.0
 PyJWT==2.12.0
 pymacaroons==0.13.0
