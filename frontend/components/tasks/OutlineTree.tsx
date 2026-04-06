@@ -170,6 +170,16 @@ function OutlineRow({
                   🔁
                 </span>
               )}
+
+              {node.category === 'meeting' && node.google_event_id && (
+                <span
+                  className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200"
+                  title="Synced to Google Calendar"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
+                  Synced
+                </span>
+              )}
             </span>
           </button>
 

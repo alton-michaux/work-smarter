@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Task, Filters, TasksContextType, CreateTaskPayload, DeleteTaskOptions } from 'types/types'
 
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
@@ -365,6 +366,27 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const pushToCalendar = async (taskId: number): Promise<Task> => {
+    if (!loggedIn) throw new Error('Not logged in');
+
+    const res = await fetch(`${API_URL}/tasks/${taskId}/push-to-calendar/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.error || 'Failed to push to Google Calendar');
+    }
+
+    const updated: Task = await res.json();
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updated } : t)));
+    return updated;
+  };
+
   return (
     <TasksContext.Provider
       value={{
@@ -378,6 +400,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         fetchTasksByDateRange,
         fetchRecurringTemplate,
         toggleTaskDone,
+        pushToCalendar,
         isLoading,
         error,
       }}

@@ -1,14 +1,33 @@
 import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import { useTasks } from '../../../context/TasksContext';
+import { useAPI } from '../../../context/APIContext';
+import { useAuth } from '../../../context/AuthContext';
 import Spinner from 'components/shared/Spinner';
 import EmptyStateCard from 'components/shared/EmptyStateCard';
 import MarkdownBody from 'components/shared/MarkdownBody';
 import { toast } from 'sonner';
+import { GoogleCalendarStatus } from 'types/types';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const TaskShowPage = () => {
   const router = useRouter();
   const { id } = router.query;
-  const { tasks, deleteTask, isLoading } = useTasks();
+  const { tasks, deleteTask, pushToCalendar, isLoading } = useTasks();
+  const { getAuthHeaders } = useAPI();
+  const { loggedIn } = useAuth();
+
+  const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarStatus | null>(null);
+  const [isPushing, setIsPushing] = useState(false);
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    fetch(`${API_URL}/calendar/status/`, { headers: getAuthHeaders() })
+      .then((r) => r.json())
+      .then((data: GoogleCalendarStatus) => setCalendarStatus(data))
+      .catch(() => {});
+  }, [loggedIn]);
 
   const task = tasks?.find(t => t.id === Number(id));
 
@@ -40,6 +59,19 @@ const TaskShowPage = () => {
     router.push(`/tasks/edit/${id}`);
   };
 
+  const handlePushToCalendar = async () => {
+    if (!task) return;
+    setIsPushing(true);
+    try {
+      await pushToCalendar(task.id);
+      toast.success(task.google_event_id ? 'Meeting re-synced to Google Calendar.' : 'Meeting pushed to Google Calendar.');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to push to Google Calendar.');
+    } finally {
+      setIsPushing(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this occurence?\n If this is a recurring event, all past and future occurences will be deleted as well")) return;
 
@@ -60,6 +92,15 @@ const TaskShowPage = () => {
         </a>
 
         <div className="flex items-center gap-2">
+          {task.category === 'meeting' && calendarStatus?.connected && (
+            <button
+              onClick={handlePushToCalendar}
+              disabled={isPushing}
+              className="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {isPushing ? 'Syncing…' : task.google_event_id ? 'Re-sync to Calendar' : 'Push to Calendar'}
+            </button>
+          )}
           {/* replace with your Button later */}
           <a
             onClick={() => handleEdit()}
@@ -153,6 +194,20 @@ const TaskShowPage = () => {
                 <dd className="text-gray-900">{task.end_date}</dd>
               </div>
             ) : null}
+
+            {task.category === 'meeting' && (
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-gray-500">Calendar Sync</dt>
+                <dd className="text-gray-900">
+                  {task.google_event_id ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-green-700">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
+                      Synced
+                    </span>
+                  ) : 'Not synced'}
+                </dd>
+              </div>
+            )}
 
             {/* Keep IDs de-emphasized if you must show them */}
             {task.user ? (

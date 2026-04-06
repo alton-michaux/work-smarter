@@ -14,6 +14,18 @@ User = get_user_model()
 #
 # Then, use signals to automatically create/update the Profile when a User is created.
 
+class GoogleCalendarToken(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='google_calendar_token')
+    access_token = models.TextField()
+    refresh_token = models.TextField()
+    token_expiry = models.DateTimeField()
+    selected_calendar_id = models.CharField(max_length=255, blank=True, default='primary')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user}'s Google Calendar Token"
+
 class Resume(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="resume", null=False, blank=False)
     file = models.FileField(upload_to='resumes/')
@@ -112,6 +124,7 @@ class Task(models.Model):
     is_subtask = models.BooleanField(default=False)
     
     carry_over = models.BooleanField(default=True)
+    google_event_id = models.CharField(max_length=255, null=True, blank=True)
     recurring_task = models.ForeignKey(
         RecurringTask,
         null=True,

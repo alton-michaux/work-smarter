@@ -1,4 +1,5 @@
 from rest_framework import viewsets, status, filters
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.pagination import CursorPagination
@@ -204,6 +205,45 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         # ----- Non-recurring tasks -----
         return super().destroy(request, *args, **kwargs)
+
+    @action(detail=True, methods=["post"], url_path="push-to-calendar")
+    def push_to_calendar(self, request, pk=None):
+        from api.services.google_calendar import push_meeting
+        from googleapiclient.errors import HttpError
+
+        task = self.get_object()
+
+        if task.category != "meeting":
+            return Response(
+                {"error": "Only meetings can be pushed to Google Calendar."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if task.begin_date is None:
+            return Response(
+                {"error": "Meeting must have a begin_date to push to Google Calendar."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            event_id = push_meeting(task, request.user)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except HttpError as e:
+            logger.error(f"Google Calendar API error: {e}")
+            return Response(
+                {"error": "Google Calendar API error. Please reconnect your account."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error pushing to calendar: {e}")
+            return Response({"error": "Unexpected error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        task.google_event_id = event_id
+        task.save(update_fields=["google_event_id"])
+
+        serializer = self.get_serializer(task)
+        return Response(serializer.data)
 
 class RecurringTaskViewSet(viewsets.ModelViewSet):
     serializer_class = RecurringTaskSerializer

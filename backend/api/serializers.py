@@ -144,6 +144,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "recurring_task_id",
             "recurring_frequency",
             "is_recurring",
+            "google_event_id",
         ]
         extra_kwargs = {
             "user": {"read_only": True},
@@ -153,6 +154,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "end_date": {"required": False, "allow_null": True},
             "begin_time": {"required": False, "allow_null": True},
             "end_time": {"required": False, "allow_null": True},
+            "google_event_id": {"read_only": True},
         }
         
 class RecurringTaskSerializer(serializers.ModelSerializer):
