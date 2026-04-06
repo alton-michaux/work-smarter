@@ -71,8 +71,9 @@
 - [x] Meetings auto-done after day-of (frontend and backend)
 - [x] Meetings should have a time
 - [ ] Implement deadlines
-- [ ] Add bi-weekly schedule to recurring events
-- [ ] Integration with Google Calendar
+- [x] Integration with Google Calendar (push meetings to calendar, timezone-aware)
+  - [ ] Pull events from Google Calendar into Work Smarter
+  - [ ] Sync tasks with deadlines once deadlines are implemented
 - [ ] Resume features
 - [ ] AI resume analysis
 
