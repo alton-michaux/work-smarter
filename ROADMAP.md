@@ -24,6 +24,7 @@
 - [x] Task index page does not always have access to projects — missing identifiers and blank dropdowns in task edit page
 - [x] Task and Meetings do not scroll on weekly tracker page, container just continues to grow to accomodate content
 - [x] There is no mitigation of large content on the projects page. If there are many tasks the page just keeps going. Not sure if infinite scroll, pagination or truncation would be the best option here. What do you think?
+- [ ] Logout requests take about 2 minutes to resolve on staging
 
 ---
 
@@ -42,17 +43,21 @@
 - [x] Show page audit
 - [x] Implement toast notifications
 - [x] Remove redundant "back" buttons
-- [ ] There's currently no way to view a note, we should make them clickable in the weekly tracker
-- [ ] Add some padding between the weekly tracker containers (meetings, tasks, notes)
-- [ ] Notes description should display markdown in weekly tracker page and be truncated to 2-3 lines per note
+- [x] There's currently no way to view a note, we should make them clickable in the weekly tracker
+- [x] Add some padding between the weekly tracker containers (meetings, tasks, notes)
+- [x] Notes description should display markdown in weekly tracker page and be truncated to 2-3 lines per note
+- [x] Meeting and task section too short in daily log
+- [x] Weekly tracker should display 3 sections like a grid with meetings on the left
 - [ ] Project colors should be assignable by user
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [x] Optimistic UI for toggles (daily log feels instant)
+- [x] Sort meetings in order by time in daily log (earliest first)
+- [x] Time select should be less granular (15 minute scale vs 60 minute scale)
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project → task creation shortcuts (preselect project when creating from project view)
-- [ ] Weekly summary header (X done / Y remaining)
-- [ ] Micro polish: hover states, subtle transitions, keyboard nav
-- [ ] Recurrence badges ("weekly", "ongoing")
+- [x] Weekly summary header (X done / Y remaining)
+- [x] Micro polish: hover states, subtle transitions, keyboard nav
+- [x] Recurrence badges ("weekly", "ongoing")
 - [ ] Project-scoped tags
 - [ ] "Seen this week" indicators
 - [ ] Collapsible "Background reminders" section — visual distinction only, no behavior yet
@@ -64,7 +69,7 @@
 
 - [x] Add recurring tasks/events (meetings)
 - [x] Meetings auto-done after day-of (frontend and backend)
-- [ ] Meetings should have a time
+- [x] Meetings should have a time
 - [ ] Implement deadlines
 - [ ] Add bi-weekly schedule to recurring events
 - [ ] Integration with Google Calendar
