@@ -28,6 +28,10 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx["user"] = self.request.user
+        try:
+            ctx["tz_offset"] = int(self.request.query_params.get("tz_offset", 0))
+        except (TypeError, ValueError):
+            ctx["tz_offset"] = 0
         return ctx
 
     def get_queryset(self):
@@ -155,9 +159,16 @@ class TaskViewSet(viewsets.ModelViewSet):
         obj = serializer.save()
 
         # if just marked done, stamp end_date as "completion date"
-        if (not was_done) and obj.is_done and obj.end_date is None:
-            obj.end_date = timezone.localdate()
-            obj.save(update_fields=["end_date"])
+        if (not was_done) and obj.is_done:
+            if obj.end_date is None:
+                obj.end_date = timezone.localdate()
+                obj.save(update_fields=["end_date"])
+
+            # cascade: mark all children done on the same date
+            Task.objects.filter(user=obj.user, parent=obj, is_done=False).update(
+                is_done=True,
+                end_date=obj.end_date,
+            )
 
         # if un-done, clear the completion date
         if was_done and (not obj.is_done):

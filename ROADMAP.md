@@ -24,7 +24,11 @@
 - [x] Task index page does not always have access to projects — missing identifiers and blank dropdowns in task edit page
 - [x] Task and Meetings do not scroll on weekly tracker page, container just continues to grow to accomodate content
 - [x] There is no mitigation of large content on the projects page. If there are many tasks the page just keeps going. Not sure if infinite scroll, pagination or truncation would be the best option here. What do you think?
-- [ ] Logout requests take about 2 minutes to resolve on staging
+- [x] Logout requests take about 2 minutes to resolve on staging
+- [x] Logout button should always log users out and redirect to home page
+- [x] Redundant copy on projects page at the top of meetings and tasks containers
+- [x] Meetings are marked complete about 4 hours too early
+- [x] Marking parent task as done should also mark children as done
 
 ---
 
@@ -35,6 +39,7 @@
 - [x] Recurring tasks need bi-weekly and quarterly options
 - [x] Users should be able to delete a single recurring task, all recurring tasks or all future recurring tasks
 - [x] Daily recurring tasks will need to be able to exclude weekends
+- [ ] Is there a programmatic way to automatically assign imported google calendar meetings to projects?
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
