@@ -21,7 +21,7 @@ function Dashboard() {
     fetchProjects();
   }, [loggedIn]);
 
-  const handleLogout = async () => logout();
+  const handleLogout = () => logout();
 
   const go = (path: string) => (e?: any) => {
     if (e?.preventDefault) e.preventDefault();

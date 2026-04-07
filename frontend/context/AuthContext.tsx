@@ -121,32 +121,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const logout = async () => {
-    setIsLoading(true);
-    setError(null);
+  const logout = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
-    try {
-      if (token) {
-        await fetch(`${API_URL}/auth/logout/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      }
-    } catch (err: any) {
-      // Soft-fail logout if server error
-      setError('Logout failed');
-      console.error(err);
-    } finally {
-      localStorage.removeItem('authToken');
-      setLoggedIn(false);
-      setUser(null);
-      hydratedOnce.current = false;
-      setIsLoading(false);
-      router.replace('/login');
+    // Clear local state and redirect immediately — don't wait on the server
+    localStorage.removeItem('authToken');
+    setLoggedIn(false);
+    setUser(null);
+    setError(null);
+    hydratedOnce.current = false;
+    router.replace('/login');
+
+    // Fire-and-forget server-side token invalidation
+    if (token) {
+      fetch(`${API_URL}/auth/logout/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }).catch((err) => console.error('Server logout failed:', err));
     }
   };
 

@@ -367,7 +367,7 @@ export type AuthContextType = {
   setLoggedIn: (v: boolean) => void;
   register: (form: { email: string; password1: string; password2: string }) => Promise<void>;
   login: (form: { username: string; password: string }) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => void;
   getUser: () => Promise<void>;
   getAuthHeaders: () => Record<string, string>;
 };
