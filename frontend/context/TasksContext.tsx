@@ -366,6 +366,36 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const pullFromCalendar = async (dateFrom: string, dateTo: string): Promise<{ imported: number; skipped: number }> => {
+    if (!loggedIn) throw new Error('Not logged in');
+
+    const res = await fetch(`${API_URL}/calendar/pull/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ date_from: dateFrom, date_to: dateTo }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.error || 'Failed to pull from Google Calendar');
+    }
+
+    const result = await res.json();
+
+    if (result.tasks?.length > 0) {
+      setTasks((prev) => {
+        const existingIds = new Set(prev.map((t) => t.id));
+        const newTasks = result.tasks.filter((t: Task) => !existingIds.has(t.id));
+        return [...prev, ...newTasks];
+      });
+    }
+
+    return { imported: result.imported, skipped: result.skipped };
+  };
+
   const pushToCalendar = async (taskId: number): Promise<Task> => {
     if (!loggedIn) throw new Error('Not logged in');
 
@@ -401,6 +431,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         fetchRecurringTemplate,
         toggleTaskDone,
         pushToCalendar,
+        pullFromCalendar,
         isLoading,
         error,
       }}

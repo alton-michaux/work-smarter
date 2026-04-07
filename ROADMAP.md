@@ -75,7 +75,7 @@
 - [x] Meetings should have a time
 - [ ] Implement deadlines
 - [x] Integration with Google Calendar (push meetings to calendar, timezone-aware)
-  - [ ] Pull events from Google Calendar into Work Smarter
+  - [x] Pull events from Google Calendar into Work Smarter
   - [ ] Sync tasks with deadlines once deadlines are implemented
 - [ ] Resume features
 - [ ] AI resume analysis

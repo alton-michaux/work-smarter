@@ -1,8 +1,9 @@
-from datetime import datetime, timedelta, timezone as dt_timezone
+from datetime import datetime, timedelta, timezone as dt_timezone, date as date_type
 
 from django.conf import settings
 from django.shortcuts import redirect
 from google_auth_oauthlib.flow import Flow
+from googleapiclient.errors import HttpError
 from loguru import logger
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -10,7 +11,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.models import GoogleCalendarToken
-from api.services.google_calendar import list_user_calendars
+from api.serializers import TaskSerializer
+from api.services.google_calendar import list_user_calendars, pull_events
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
@@ -111,12 +113,21 @@ class GoogleCalendarStatusView(APIView):
     def get(self, request):
         try:
             token = GoogleCalendarToken.objects.get(user=request.user)
-            return Response({
-                "connected": True,
-                "selected_calendar_id": token.selected_calendar_id or "primary",
-            })
         except GoogleCalendarToken.DoesNotExist:
             return Response({"connected": False, "selected_calendar_id": None})
+
+        # Proactively check if the token is still valid by attempting a refresh if expired
+        from api.services.google_calendar import _build_credentials
+        try:
+            _build_credentials(token)
+        except ValueError:
+            # Token is expired/revoked — treat as disconnected so UI shows reconnect
+            return Response({"connected": False, "selected_calendar_id": None})
+
+        return Response({
+            "connected": True,
+            "selected_calendar_id": token.selected_calendar_id or "primary",
+        })
 
 
 class GoogleCalendarListView(APIView):
@@ -148,3 +159,45 @@ class GoogleCalendarSelectView(APIView):
             return Response({"error": "Google Calendar not connected."}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"selected_calendar_id": calendar_id})
+
+
+class GoogleCalendarPullView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        today = date_type.today()
+        raw_from = request.data.get("date_from")
+        raw_to = request.data.get("date_to")
+
+        try:
+            date_from = date_type.fromisoformat(raw_from) if raw_from else today
+            date_to = date_type.fromisoformat(raw_to) if raw_to else today + timedelta(days=7)
+        except ValueError:
+            return Response(
+                {"error": "Invalid date format. Use YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if date_to < date_from:
+            return Response(
+                {"error": "date_to must be on or after date_from."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            result = pull_events(request.user, date_from, date_to)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except HttpError as e:
+            logger.error(f"Google Calendar pull error for user {request.user.id}: {e}")
+            return Response({"error": "Google Calendar API error."}, status=status.HTTP_502_BAD_GATEWAY)
+        except Exception as e:
+            logger.error(f"Unexpected error pulling calendar for user {request.user.id}: {e}")
+            return Response({"error": "Failed to pull events."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        serialized_tasks = TaskSerializer(result["tasks"], many=True).data
+        return Response({
+            "imported": result["imported"],
+            "skipped": result["skipped"],
+            "tasks": serialized_tasks,
+        }, status=status.HTTP_200_OK)

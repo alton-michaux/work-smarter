@@ -10,6 +10,7 @@ from api.views.views_calendar import (
     GoogleCalendarStatusView,
     GoogleCalendarListView,
     GoogleCalendarSelectView,
+    GoogleCalendarPullView,
 )
 
 # JWT views
@@ -39,4 +40,5 @@ urlpatterns = [
     path('calendar/status/', GoogleCalendarStatusView.as_view(), name='calendar-status'),
     path('calendar/calendars/', GoogleCalendarListView.as_view(), name='calendar-list'),
     path('calendar/select/', GoogleCalendarSelectView.as_view(), name='calendar-select'),
+    path('calendar/pull/', GoogleCalendarPullView.as_view(), name='calendar-pull'),
 ]

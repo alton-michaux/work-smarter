@@ -1,7 +1,8 @@
-from datetime import datetime, timedelta, timezone as dt_timezone
+from datetime import datetime, timedelta, timezone as dt_timezone, date as date_type
 
 from django.conf import settings
 from django.utils import timezone
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -24,7 +25,11 @@ def _build_credentials(token_record) -> Credentials:
     creds.expiry = token_record.token_expiry.replace(tzinfo=None)
 
     if creds.expired and creds.refresh_token:
-        creds.refresh(Request())
+        try:
+            creds.refresh(Request())
+        except RefreshError as e:
+            logger.warning(f"Google token refresh failed for user, marking token invalid: {e}")
+            raise ValueError("Google Calendar token has expired or been revoked. Please reconnect.")
         token_record.access_token = creds.token
         token_record.token_expiry = datetime.utcnow().replace(tzinfo=dt_timezone.utc) + timedelta(hours=1)
         token_record.save(update_fields=["access_token", "token_expiry"])
@@ -119,3 +124,89 @@ def push_meeting(task, user) -> str:
         raise
 
     return event["id"]
+
+
+def _parse_google_event_datetime(dt_field: dict):
+    """Return (date, time_or_None) from a Google Calendar start/end dict."""
+    if "dateTime" in dt_field:
+        dt = datetime.fromisoformat(dt_field["dateTime"])
+        return dt.date(), dt.time().replace(second=0, microsecond=0)
+    # All-day event
+    return date_type.fromisoformat(dt_field["date"]), None
+
+
+def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
+    """
+    Fetch events from the user's selected Google Calendar between date_from
+    and date_to (inclusive) and create Task records for any that don't already
+    exist (matched by google_event_id).
+
+    Returns {"imported": N, "skipped": N, "tasks": [<serialized tasks>]}
+    """
+    from api.models import Task
+
+    service, token_record = get_calendar_service(user)
+    calendar_id = token_record.selected_calendar_id or "primary"
+
+    time_min = datetime.combine(date_from, datetime.min.time()).replace(tzinfo=dt_timezone.utc).isoformat()
+    time_max = datetime.combine(date_to, datetime.max.time()).replace(tzinfo=dt_timezone.utc).isoformat()
+
+    try:
+        result = (
+            service.events()
+            .list(
+                calendarId=calendar_id,
+                timeMin=time_min,
+                timeMax=time_max,
+                singleEvents=True,
+                orderBy="startTime",
+            )
+            .execute()
+        )
+    except HttpError as e:
+        logger.error(f"Google Calendar API error pulling events for user {user.id}: {e}")
+        raise
+
+    events = result.get("items", [])
+    existing_ids = set(
+        Task.objects.filter(user=user, google_event_id__isnull=False)
+        .values_list("google_event_id", flat=True)
+    )
+
+    imported = 0
+    skipped = 0
+    created_tasks = []
+
+    for event in events:
+        event_id = event.get("id")
+        if not event_id or event.get("status") == "cancelled":
+            skipped += 1
+            continue
+
+        if event_id in existing_ids:
+            skipped += 1
+            continue
+
+        start = event.get("start", {})
+        end = event.get("end", {})
+
+        begin_date, begin_time = _parse_google_event_datetime(start)
+        _, end_time = _parse_google_event_datetime(end)
+
+        task = Task.objects.create(
+            user=user,
+            title=event.get("summary") or "(No title)",
+            description=event.get("description") or "",
+            category="meeting",
+            begin_date=begin_date,
+            begin_time=begin_time,
+            end_time=end_time,
+            google_event_id=event_id,
+            is_done=False,
+        )
+        created_tasks.append(task)
+        existing_ids.add(event_id)
+        imported += 1
+        logger.info(f"Pulled Google Calendar event {event_id} as task {task.id} for user {user.id}")
+
+    return {"imported": imported, "skipped": skipped, "tasks": created_tasks}
