@@ -312,7 +312,7 @@ export type ProjectSummaryProps = {
 };
 
 export type ProjectTimelineProps<T extends TaskLike> = {
-  title: string; // "MEETINGS" | "WORK"
+  title?: string;
   summaryRight?: React.ReactNode; // e.g. "12 total • 7 done • 5 open"
   emptyText: string;
 

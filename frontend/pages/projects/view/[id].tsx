@@ -124,8 +124,6 @@ const ProjectShowPage = () => {
 
             <div className="max-h-[50vh] overflow-y-auto [scrollbar-gutter:stable] p-6">
               <ProjectTimelineSection
-                title="UPCOMING MEETINGS"
-                summaryRight={`${insights.meetings.length} upcoming`}
                 emptyText="No upcoming meetings for this project."
                 grouped={insights.meetingsGrouped}
                 iconFor={() => "🗓️"}
@@ -146,8 +144,6 @@ const ProjectShowPage = () => {
 
             <div className="max-h-[50vh] overflow-y-auto [scrollbar-gutter:stable] p-6">
               <ProjectTimelineSection
-                title="WORK"
-                summaryRight={`${insights.workTotal} total • ${insights.workDone} done • ${insights.workOpen} open`}
                 emptyText="No work items logged for this project."
                 grouped={insights.workGrouped}
                 iconFor={(t: any) => (t.is_done ? "☑" : "☐")}
