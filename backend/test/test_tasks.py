@@ -867,7 +867,7 @@ def test_effective_is_done_today_time_has_passed(auth_client, get_user):
         begin_date=date(2026, 4, 3),
         begin_time=datetime.strptime("09:00", "%H:%M").time(),
     )
-    with patch("api.serializers.timezone.localtime", return_value=fake_now):
+    with patch("api.serializers.timezone.now", return_value=fake_now):
         res = auth_client.get(f"/api/tasks/{task.id}/")
 
     assert res.status_code == 200
@@ -887,7 +887,7 @@ def test_effective_is_done_today_time_not_yet(auth_client, get_user):
         begin_date=date(2026, 4, 3),
         begin_time=datetime.strptime("14:00", "%H:%M").time(),
     )
-    with patch("api.serializers.timezone.localtime", return_value=fake_now):
+    with patch("api.serializers.timezone.now", return_value=fake_now):
         res = auth_client.get(f"/api/tasks/{task.id}/")
 
     assert res.status_code == 200
@@ -906,7 +906,7 @@ def test_effective_is_done_today_no_time(auth_client, get_user):
         begin_date=date(2026, 4, 3),
         begin_time=None,
     )
-    with patch("api.serializers.timezone.localtime", return_value=fake_now):
+    with patch("api.serializers.timezone.now", return_value=fake_now):
         res = auth_client.get(f"/api/tasks/{task.id}/")
 
     assert res.status_code == 200

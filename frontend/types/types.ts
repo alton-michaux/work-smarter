@@ -228,6 +228,7 @@ export type Filters = {
   begin_date?: string;
   end_date?: string;
   active_on?: string;
+  tz_offset?: number;
 };
 
 export type OutlineRowProps = {

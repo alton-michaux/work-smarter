@@ -28,6 +28,10 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx["user"] = self.request.user
+        try:
+            ctx["tz_offset"] = int(self.request.query_params.get("tz_offset", 0))
+        except (TypeError, ValueError):
+            ctx["tz_offset"] = 0
         return ctx
 
     def get_queryset(self):
