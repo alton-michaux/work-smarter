@@ -20,6 +20,14 @@ function projectColor(id: number) {
   return PROJECT_COLORS[id % PROJECT_COLORS.length];
 }
 
+function formatTime(timeStr?: string | null): string | null {
+  if (!timeStr) return null;
+  const [h, m] = timeStr.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
 function OutlineRow({
   node,
   depth,
@@ -162,6 +170,16 @@ function OutlineRow({
                   🔁
                 </span>
               )}
+
+              {node.category === 'meeting' && node.google_event_id && (
+                <span
+                  className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200"
+                  title="Synced to Google Calendar"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
+                  Synced
+                </span>
+              )}
             </span>
           </button>
 
@@ -171,6 +189,15 @@ function OutlineRow({
             </span>
             <span className="mx-2 text-gray-300">•</span>
             <span>{node.begin_date ?? '—'}</span>
+            {type === 'meeting' && node.begin_time && (
+              <>
+                <span className="mx-2 text-gray-300">•</span>
+                <span>
+                  {formatTime(node.begin_time)}
+                  {node.end_time ? ` – ${formatTime(node.end_time)}` : ''}
+                </span>
+              </>
+            )}
           </div>
 
           {/* Inline Add Subtask */}

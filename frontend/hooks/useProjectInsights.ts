@@ -4,8 +4,11 @@ import { groupByBeginDate, isMeetingTask } from '../lib/projectInsights';
 export function useProjectInsights(project: any, remainingLimit = 6) {
   return useMemo(() => {
     const tasks = project?.dashboard_tasks ?? project?.tasks ?? [];
+    const today = new Date().toISOString().slice(0, 10);
 
-    const meetings = tasks.filter(isMeetingTask);
+    const meetings = tasks
+      .filter(isMeetingTask)
+      .filter((t: any) => (t.begin_date ?? '') >= today);
     const work = tasks.filter((t: any) => !isMeetingTask(t));
 
     const meetingsGrouped = groupByBeginDate(meetings, 'desc');

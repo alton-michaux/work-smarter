@@ -5,6 +5,7 @@ import { APIProvider } from '../context/APIContext';
 import { SystemsProvider } from '../context/SystemsContext'
 import Navbar from '../components/shared/Navbar';
 import Footer from '../components/shared/footer';
+import { Toaster } from 'sonner';
 import '../styles/globals.css';
 
 function MyApp({ Component, pageProps }) {
@@ -23,6 +24,7 @@ function MyApp({ Component, pageProps }) {
               </main>
             <Footer />
           </div>
+          <Toaster position="bottom-right" richColors />
         </SystemsProvider>
       </APIProvider>
     </AuthProvider>

@@ -7,6 +7,7 @@ import { TaskLayout } from 'components/tasks/TaskLayout';
 import { useDailyLog } from '../../hooks/useDailyLog';
 import QuickAddBar from '../../components/tasks/quickAddBar';
 import ConfirmDeleteRecurringModal from 'components/ui/confirmDeleteRecurringModal';
+import { toast } from 'sonner';
 
 const TasksPage = () => {
   const {
@@ -48,7 +49,7 @@ const TasksPage = () => {
       try {
         await toggleTaskDone(id, isDone);
       } catch {
-        alert('Failed to update task. Please try again.');
+        toast.error('Failed to update task. Please try again.');
       }
     },
     [tasks, toggleTaskDone]
@@ -132,7 +133,7 @@ const TasksPage = () => {
           </div>
 
           {/* ───────────────── Content ───────────────── */}
-          <div className="flex-1 min-h-0 flex flex-col px-6 pt-10 pb-6">
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-6 pt-6 pb-6">
             {error && (
               <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {error}
@@ -149,7 +150,7 @@ const TasksPage = () => {
                 </p>
               </div>
             ) : (
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 h-full">
                 <TaskLayout
                   sections={sections}
                   onView={handleTaskClick}
@@ -188,19 +189,12 @@ const TasksPage = () => {
           </div>
 
           {/* ───────────────── Bottom Navigation (outside scroll) ───────────────── */}
-          <div className="shrink-0 border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="shrink-0 border-t border-gray-200 px-6 py-4 flex justify-start">
             <button
               onClick={() => router.push('/tasks/tracker')}
               className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
             >
               View Weekly Tracker
-            </button>
-
-            <button
-              onClick={() => router.back()}
-              className="text-sm text-gray-600 hover:text-gray-900 hover:underline"
-            >
-              ← Back
             </button>
           </div>
         </div>

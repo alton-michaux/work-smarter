@@ -71,14 +71,20 @@ export default function TaskTrackerPage() {
     [tasks]
   );
 
+  const weekSummary = useMemo(() => {
+    const all = [...collapsedWork, ...collapsedMeetings];
+    const done = all.filter((t: any) => t.effective_is_done ?? t.is_done).length;
+    return { done, remaining: all.length - done };
+  }, [collapsedWork, collapsedMeetings]);
+
   // Don't render until selectedWeek is set (avoids hydration mismatch)
   if (!selectedWeek) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">
-      <div className="w-full max-w-4xl bg-white rounded-lg shadow">
+      <div className="w-full max-w-6xl bg-white rounded-lg shadow">
 
-        {/* ✅ Sticky header area */}
+        {/* Sticky header */}
         <div className="sticky top-0 z-20 bg-white border-b">
           <div className="p-8 pb-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
@@ -89,10 +95,18 @@ export default function TaskTrackerPage() {
               selectedWeek={selectedWeek}
               onWeekChange={setSelectedWeek}
             />
+
+            {!isLoading && (
+              <div className="mt-3 flex justify-center gap-4 text-sm text-gray-500">
+                <span className="text-green-600 font-medium">{weekSummary.done} done</span>
+                <span>·</span>
+                <span>{weekSummary.remaining} remaining</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* ✅ Scrollable content area */}
+        {/* Scrollable content */}
         <div className="px-8 pb-8">
           <div className="mt-6">
             {isLoading ? (

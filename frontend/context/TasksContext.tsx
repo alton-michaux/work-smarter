@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Task, Filters, TasksContextType, CreateTaskPayload, DeleteTaskOptions } from 'types/types'
 
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
@@ -169,8 +170,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           is_active: true,
         };
 
-        if (task.recurrence.frequency === 'weekly') {
+        if (task.recurrence.frequency === 'weekly' || task.recurrence.frequency === 'biweekly') {
           payload.day_of_week = task.recurrence.day_of_week;
+        }
+
+        if (task.recurrence.frequency === 'daily') {
+          payload.skip_weekends = task.recurrence.skip_weekends ?? false;
         }
 
         const res = await fetch(`${API_URL}/recurring-tasks/`, {
@@ -361,6 +366,57 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const pullFromCalendar = async (dateFrom: string, dateTo: string): Promise<{ imported: number; skipped: number }> => {
+    if (!loggedIn) throw new Error('Not logged in');
+
+    const res = await fetch(`${API_URL}/calendar/pull/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ date_from: dateFrom, date_to: dateTo }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.error || 'Failed to pull from Google Calendar');
+    }
+
+    const result = await res.json();
+
+    if (result.tasks?.length > 0) {
+      setTasks((prev) => {
+        const existingIds = new Set(prev.map((t) => t.id));
+        const newTasks = result.tasks.filter((t: Task) => !existingIds.has(t.id));
+        return [...prev, ...newTasks];
+      });
+    }
+
+    return { imported: result.imported, skipped: result.skipped };
+  };
+
+  const pushToCalendar = async (taskId: number): Promise<Task> => {
+    if (!loggedIn) throw new Error('Not logged in');
+
+    const res = await fetch(`${API_URL}/tasks/${taskId}/push-to-calendar/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.error || 'Failed to push to Google Calendar');
+    }
+
+    const updated: Task = await res.json();
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updated } : t)));
+    return updated;
+  };
+
   return (
     <TasksContext.Provider
       value={{
@@ -374,6 +430,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         fetchTasksByDateRange,
         fetchRecurringTemplate,
         toggleTaskDone,
+        pushToCalendar,
+        pullFromCalendar,
         isLoading,
         error,
       }}

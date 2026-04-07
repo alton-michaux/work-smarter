@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'dj_rest_auth',
     'dj_rest_auth.registration',
 
+    'allauth.socialaccount.providers.google',
+
     # Local apps
     'backend.apps.BackendConfig',
     'api',
@@ -159,6 +161,12 @@ CORS_ALLOW_CREDENTIALS = True
 
 # --- DEBUG ---
 REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = ['rest_framework.renderers.JSONRenderer']
+
+# --- Google OAuth2 ---
+GOOGLE_OAUTH2_CLIENT_ID = env("GOOGLE_OAUTH2_CLIENT_ID", default="")
+GOOGLE_OAUTH2_CLIENT_SECRET = env("GOOGLE_OAUTH2_CLIENT_SECRET", default="")
+GOOGLE_OAUTH2_REDIRECT_URI = env("GOOGLE_OAUTH2_REDIRECT_URI", default="http://localhost:8000/api/calendar/oauth/callback/")
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 
 # --- Misc ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
