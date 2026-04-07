@@ -100,6 +100,7 @@ export type TasksContextType = {
   fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
   pushToCalendar: (taskId: number) => Promise<Task>;
+  pullFromCalendar: (dateFrom: string, dateTo: string) => Promise<{ imported: number; skipped: number }>;
   isLoading: boolean;
   error: string | null;
 };

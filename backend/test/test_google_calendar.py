@@ -7,7 +7,7 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from api.models import GoogleCalendarToken, Task
-from api.services.google_calendar import _build_event_body, push_meeting
+from api.services.google_calendar import _build_event_body, push_meeting, pull_events
 
 User = get_user_model()
 
@@ -183,3 +183,154 @@ class TestPushToCalendarEndpoint:
 
         task.refresh_from_db()
         assert task.google_event_id == "gcal-abc-789"
+
+
+# ---------------------------------------------------------------------------
+# pull_events service
+# ---------------------------------------------------------------------------
+
+def _gcal_event(event_id, summary, start_dt, end_dt, description=""):
+    """Build a minimal Google Calendar event dict."""
+    return {
+        "id": event_id,
+        "summary": summary,
+        "description": description,
+        "status": "confirmed",
+        "start": {"dateTime": start_dt},
+        "end": {"dateTime": end_dt},
+    }
+
+
+@pytest.mark.django_db
+class TestPullEventsService:
+    @patch("api.services.google_calendar.build")
+    @patch("api.services.google_calendar._build_credentials")
+    def test_imports_new_events(self, mock_creds, mock_build, get_user):
+        _make_token(get_user)
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        mock_service.events.return_value.list.return_value.execute.return_value = {
+            "items": [
+                _gcal_event("evt-1", "Standup", "2026-04-10T09:00:00+00:00", "2026-04-10T09:30:00+00:00"),
+                _gcal_event("evt-2", "Planning", "2026-04-11T10:00:00+00:00", "2026-04-11T11:00:00+00:00"),
+            ]
+        }
+
+        result = pull_events(get_user, date(2026, 4, 10), date(2026, 4, 11))
+
+        assert result["imported"] == 2
+        assert result["skipped"] == 0
+        assert Task.objects.filter(user=get_user, google_event_id="evt-1").exists()
+        assert Task.objects.filter(user=get_user, google_event_id="evt-2").exists()
+
+    @patch("api.services.google_calendar.build")
+    @patch("api.services.google_calendar._build_credentials")
+    def test_skips_already_imported_events(self, mock_creds, mock_build, get_user):
+        _make_token(get_user)
+        # Pre-create a task that was already pulled
+        Task.objects.create(
+            user=get_user, title="Standup", category="meeting",
+            begin_date=date(2026, 4, 10), google_event_id="evt-1",
+        )
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        mock_service.events.return_value.list.return_value.execute.return_value = {
+            "items": [
+                _gcal_event("evt-1", "Standup", "2026-04-10T09:00:00+00:00", "2026-04-10T09:30:00+00:00"),
+                _gcal_event("evt-2", "New meeting", "2026-04-11T10:00:00+00:00", "2026-04-11T11:00:00+00:00"),
+            ]
+        }
+
+        result = pull_events(get_user, date(2026, 4, 10), date(2026, 4, 11))
+
+        assert result["imported"] == 1
+        assert result["skipped"] == 1
+        assert Task.objects.filter(user=get_user, google_event_id="evt-2").exists()
+
+    @patch("api.services.google_calendar.build")
+    @patch("api.services.google_calendar._build_credentials")
+    def test_skips_cancelled_events(self, mock_creds, mock_build, get_user):
+        _make_token(get_user)
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        cancelled = _gcal_event("evt-c", "Cancelled", "2026-04-10T09:00:00+00:00", "2026-04-10T09:30:00+00:00")
+        cancelled["status"] = "cancelled"
+        mock_service.events.return_value.list.return_value.execute.return_value = {"items": [cancelled]}
+
+        result = pull_events(get_user, date(2026, 4, 10), date(2026, 4, 10))
+
+        assert result["imported"] == 0
+        assert result["skipped"] == 1
+
+    @patch("api.services.google_calendar.build")
+    @patch("api.services.google_calendar._build_credentials")
+    def test_all_day_event_has_no_time(self, mock_creds, mock_build, get_user):
+        _make_token(get_user)
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        mock_service.events.return_value.list.return_value.execute.return_value = {
+            "items": [{
+                "id": "evt-allday",
+                "summary": "Company Holiday",
+                "status": "confirmed",
+                "start": {"date": "2026-04-10"},
+                "end": {"date": "2026-04-10"},
+            }]
+        }
+
+        pull_events(get_user, date(2026, 4, 10), date(2026, 4, 10))
+
+        task = Task.objects.get(user=get_user, google_event_id="evt-allday")
+        assert task.begin_date == date(2026, 4, 10)
+        assert task.begin_time is None
+        assert task.end_time is None
+
+    def test_raises_when_no_token(self, get_user):
+        with pytest.raises(ValueError, match="not connected"):
+            pull_events(get_user, date(2026, 4, 10), date(2026, 4, 10))
+
+
+# ---------------------------------------------------------------------------
+# pull endpoint
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+class TestPullEndpoint:
+    def test_unauthenticated_returns_401(self, api_client):
+        res = api_client.post("/api/calendar/pull/", {"date_from": "2026-04-10", "date_to": "2026-04-17"})
+        assert res.status_code == 401
+
+    def test_returns_400_when_not_connected(self, auth_client):
+        res = auth_client.post("/api/calendar/pull/", {"date_from": "2026-04-10", "date_to": "2026-04-17"})
+        assert res.status_code == 400
+
+    def test_returns_400_for_invalid_date(self, auth_client, get_user):
+        _make_token(get_user)
+        res = auth_client.post("/api/calendar/pull/", {"date_from": "not-a-date", "date_to": "2026-04-17"})
+        assert res.status_code == 400
+
+    def test_returns_400_when_date_to_before_date_from(self, auth_client, get_user):
+        _make_token(get_user)
+        res = auth_client.post("/api/calendar/pull/", {"date_from": "2026-04-17", "date_to": "2026-04-10"})
+        assert res.status_code == 400
+
+    @patch("api.services.google_calendar.build")
+    @patch("api.services.google_calendar._build_credentials")
+    def test_successful_pull_returns_summary(self, mock_creds, mock_build, auth_client, get_user):
+        _make_token(get_user)
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        mock_service.events.return_value.list.return_value.execute.return_value = {
+            "items": [
+                _gcal_event("evt-x", "Kickoff", "2026-04-10T09:00:00+00:00", "2026-04-10T10:00:00+00:00"),
+            ]
+        }
+
+        res = auth_client.post("/api/calendar/pull/", {"date_from": "2026-04-10", "date_to": "2026-04-10"})
+
+        assert res.status_code == 200
+        assert res.data["imported"] == 1
+        assert res.data["skipped"] == 0
+        assert len(res.data["tasks"]) == 1
+        assert res.data["tasks"][0]["google_event_id"] == "evt-x"
+        assert res.data["tasks"][0]["category"] == "meeting"
