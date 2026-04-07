@@ -28,7 +28,7 @@
 - [x] Logout button should always log users out and redirect to home page
 - [x] Redundant copy on projects page at the top of meetings and tasks containers
 - [x] Meetings are marked complete about 4 hours too early
-- [ ] Marking parent task as done should also mark children as done
+- [x] Marking parent task as done should also mark children as done
 
 ---
 

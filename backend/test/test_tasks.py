@@ -911,3 +911,51 @@ def test_effective_is_done_today_no_time(auth_client, get_user):
 
     assert res.status_code == 200
     assert res.data["effective_is_done"] is False
+
+@pytest.mark.django_db
+def test_marking_parent_done_cascades_to_children(auth_client, get_user):
+    """Marking a parent task done should also mark all incomplete children done."""
+    parent = Task.objects.create(
+        user=get_user,
+        title="Parent Task",
+        category="task",
+        begin_date=date(2026, 4, 7),
+        is_done=False,
+    )
+    child1 = Task.objects.create(
+        user=get_user,
+        title="Child One",
+        category="task",
+        begin_date=date(2026, 4, 7),
+        parent=parent,
+        is_done=False,
+    )
+    child2 = Task.objects.create(
+        user=get_user,
+        title="Child Two",
+        category="task",
+        begin_date=date(2026, 4, 7),
+        parent=parent,
+        is_done=False,
+    )
+    already_done_child = Task.objects.create(
+        user=get_user,
+        title="Already Done Child",
+        category="task",
+        begin_date=date(2026, 4, 7),
+        parent=parent,
+        is_done=True,
+    )
+
+    res = auth_client.patch(f"/api/tasks/{parent.id}/", {"is_done": True}, format="json")
+    assert res.status_code == 200
+    assert res.data["is_done"] is True
+
+    child1.refresh_from_db()
+    child2.refresh_from_db()
+    already_done_child.refresh_from_db()
+
+    assert child1.is_done is True
+    assert child2.is_done is True
+    # already-done child is untouched (end_date not overwritten)
+    assert already_done_child.is_done is True
