@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from 'context/AuthContext';
 import { useAPI } from 'context/APIContext';
+import { useTasks } from 'context/TasksContext';
 import { toast } from 'sonner';
 import { GoogleCalendarStatus } from 'types/types';
 
@@ -9,16 +10,30 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 type CalendarOption = { id: string; summary: string };
 
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function plusDays(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export default function SettingsPage() {
   const router = useRouter();
   const { loggedIn } = useAuth();
   const { getAuthHeaders } = useAPI();
+  const { pullFromCalendar } = useTasks();
 
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarStatus | null>(null);
   const [calendars, setCalendars] = useState<CalendarOption[]>([]);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>('primary');
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [pullDateFrom, setPullDateFrom] = useState(todayStr());
+  const [pullDateTo, setPullDateTo] = useState(plusDays(7));
+  const [isPulling, setIsPulling] = useState(false);
 
   // Handle callback redirect from Google OAuth
   useEffect(() => {
@@ -92,6 +107,22 @@ export default function SettingsPage() {
     }
   };
 
+  const handlePull = async () => {
+    setIsPulling(true);
+    try {
+      const { imported, skipped } = await pullFromCalendar(pullDateFrom, pullDateTo);
+      if (imported === 0) {
+        toast.info(`No new events found (${skipped} already imported).`);
+      } else {
+        toast.success(`Imported ${imported} meeting${imported !== 1 ? 's' : ''} from Google Calendar.`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to pull from Google Calendar.');
+    } finally {
+      setIsPulling(false);
+    }
+  };
+
   if (!loggedIn) {
     return null;
   }
@@ -133,31 +164,69 @@ export default function SettingsPage() {
         )}
 
         {calendarStatus?.connected && calendars.length > 0 && (
-          <div className="space-y-3">
-            <label className="block text-sm font-medium text-gray-700">
-              Push meetings to
-            </label>
-            <div className="flex items-center gap-3">
-              <select
-                value={selectedCalendarId}
-                onChange={(e) => setSelectedCalendarId(e.target.value)}
-                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-              >
-                {calendars.map((cal) => (
-                  <option key={cal.id} value={cal.id}>
-                    {cal.summary}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={handleSaveCalendar}
-                disabled={isSaving}
-                className="shrink-0 inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isSaving ? 'Saving…' : 'Save'}
-              </button>
+          <>
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Push meetings to
+              </label>
+              <div className="flex items-center gap-3">
+                <select
+                  value={selectedCalendarId}
+                  onChange={(e) => setSelectedCalendarId(e.target.value)}
+                  className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                >
+                  {calendars.map((cal) => (
+                    <option key={cal.id} value={cal.id}>
+                      {cal.summary}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleSaveCalendar}
+                  disabled={isSaving}
+                  className="shrink-0 inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving…' : 'Save'}
+                </button>
+              </div>
             </div>
-          </div>
+
+            <div className="border-t border-gray-100 pt-4 space-y-3">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Pull from Google Calendar</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Import events as meetings. Already-imported events are skipped.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-gray-500 whitespace-nowrap">From</label>
+                  <input
+                    type="date"
+                    value={pullDateFrom}
+                    onChange={(e) => setPullDateFrom(e.target.value)}
+                    className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-gray-500 whitespace-nowrap">To</label>
+                  <input
+                    type="date"
+                    value={pullDateTo}
+                    onChange={(e) => setPullDateTo(e.target.value)}
+                    className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  />
+                </div>
+                <button
+                  onClick={handlePull}
+                  disabled={isPulling}
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {isPulling ? 'Importing…' : 'Import events'}
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
