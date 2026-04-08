@@ -39,7 +39,7 @@
 - [x] Recurring tasks need bi-weekly and quarterly options
 - [x] Users should be able to delete a single recurring task, all recurring tasks or all future recurring tasks
 - [x] Daily recurring tasks will need to be able to exclude weekends
-- [ ] Is there a programmatic way to automatically assign imported google calendar meetings to projects?
+- [x] Is there a programmatic way to automatically assign imported google calendar meetings to projects?
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
@@ -53,6 +53,7 @@
 - [x] Notes description should display markdown in weekly tracker page and be truncated to 2-3 lines per note
 - [x] Meeting and task section too short in daily log
 - [x] Weekly tracker should display 3 sections like a grid with meetings on the left
+- [ ] Meeting titles get cut off quickly in daily log page
 - [ ] Project colors should be assignable by user
 - [ ] Settings page should allow users to change account info (email, password)
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
@@ -67,7 +68,6 @@
 - [ ] Project-scoped tags
 - [ ] "Seen this week" indicators
 - [ ] Collapsible "Background reminders" section — visual distinction only, no behavior yet
-- [ ] Add dark mode
 
 ---
 
@@ -76,6 +76,7 @@
 - [x] Add recurring tasks/events (meetings)
 - [x] Meetings auto-done after day-of (frontend and backend)
 - [x] Meetings should have a time
+- [ ] Add dark mode
 - [ ] Implement deadlines
 - [x] Integration with Google Calendar (push meetings to calendar, timezone-aware)
   - [x] Pull events from Google Calendar into Work Smarter

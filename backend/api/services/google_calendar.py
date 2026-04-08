@@ -135,15 +135,35 @@ def _parse_google_event_datetime(dt_field: dict):
     return date_type.fromisoformat(dt_field["date"]), None
 
 
+def _match_project(title: str, projects) -> object | None:
+    """
+    Return the project whose name appears in *title* (case-insensitive).
+    If multiple names match, the longest (most specific) wins.
+    Returns None if no project name is found in the title.
+    """
+    title_lower = title.lower()
+    best = None
+    for project in projects:
+        name_lower = project.name.lower()
+        if name_lower in title_lower:
+            if best is None or len(name_lower) > len(best.name):
+                best = project
+    return best
+
+
 def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
     """
     Fetch events from the user's selected Google Calendar between date_from
     and date_to (inclusive) and create Task records for any that don't already
     exist (matched by google_event_id).
 
+    Project auto-assignment: if a project name (case-insensitive) appears in
+    the event title, the task is assigned to that project. The longest matching
+    project name wins when multiple match.
+
     Returns {"imported": N, "skipped": N, "tasks": [<serialized tasks>]}
     """
-    from api.models import Task
+    from api.models import Project, Task
 
     service, token_record = get_calendar_service(user)
     calendar_id = token_record.selected_calendar_id or "primary"
@@ -172,6 +192,7 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
         Task.objects.filter(user=user, google_event_id__isnull=False)
         .values_list("google_event_id", flat=True)
     )
+    user_projects = list(Project.objects.filter(user=user))
 
     imported = 0
     skipped = 0
@@ -193,9 +214,12 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
         begin_date, begin_time = _parse_google_event_datetime(start)
         _, end_time = _parse_google_event_datetime(end)
 
+        title = event.get("summary") or "(No title)"
+        project = _match_project(title, user_projects)
+
         task = Task.objects.create(
             user=user,
-            title=event.get("summary") or "(No title)",
+            title=title,
             description=event.get("description") or "",
             category="meeting",
             begin_date=begin_date,
@@ -203,6 +227,7 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
             end_time=end_time,
             google_event_id=event_id,
             is_done=False,
+            project=project,
         )
         created_tasks.append(task)
         existing_ids.add(event_id)
