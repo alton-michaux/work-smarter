@@ -32,6 +32,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (filters.begin_date) qs.set('begin_date', filters.begin_date);
     if (filters.end_date) qs.set('end_date', filters.end_date);
     if (filters.active_on) qs.set('active_on', filters.active_on);
+    if (filters.tz_offset !== undefined) qs.set('tz_offset', String(filters.tz_offset));
     return `${API_URL}/tasks/?${qs.toString()}`;
   };
 
@@ -40,7 +41,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const url = buildUrl({ ordering: '-begin_date' });
+      const url = buildUrl({ ordering: '-begin_date', tz_offset: -new Date().getTimezoneOffset() });
       const res = await fetch(url, { headers: getAuthHeaders() });
 
       if (res.status === 401) {
@@ -66,7 +67,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       setError(null);
 
       try {
-        const params: any = { ordering: "-begin_date", begin_date: begin, end_date: end };
+        const params: any = { ordering: "-begin_date", begin_date: begin, end_date: end, tz_offset: -new Date().getTimezoneOffset() };
 
         // Only include active_on if it’s a non-empty string
         if (typeof active_on === "string" && active_on.trim().length > 0) {
