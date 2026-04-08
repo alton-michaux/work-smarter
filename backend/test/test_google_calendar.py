@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from django.contrib.auth import get_user_model
 
-from api.models import GoogleCalendarToken, Task
-from api.services.google_calendar import _build_event_body, push_meeting, pull_events
+from api.models import GoogleCalendarToken, Project, Task
+from api.services.google_calendar import _build_event_body, _match_project, push_meeting, pull_events
 
 User = get_user_model()
 
@@ -288,6 +288,88 @@ class TestPullEventsService:
     def test_raises_when_no_token(self, get_user):
         with pytest.raises(ValueError, match="not connected"):
             pull_events(get_user, date(2026, 4, 10), date(2026, 4, 10))
+
+    @patch("api.services.google_calendar.build")
+    @patch("api.services.google_calendar._build_credentials")
+    def test_assigns_project_when_title_matches(self, mock_creds, mock_build, get_user):
+        _make_token(get_user)
+        project = Project.objects.create(user=get_user, name="Alpha")
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        mock_service.events.return_value.list.return_value.execute.return_value = {
+            "items": [
+                _gcal_event("evt-1", "Alpha team standup", "2026-04-10T09:00:00+00:00", "2026-04-10T09:30:00+00:00"),
+            ]
+        }
+
+        pull_events(get_user, date(2026, 4, 10), date(2026, 4, 10))
+
+        task = Task.objects.get(user=get_user, google_event_id="evt-1")
+        assert task.project == project
+
+    @patch("api.services.google_calendar.build")
+    @patch("api.services.google_calendar._build_credentials")
+    def test_no_project_assigned_when_no_match(self, mock_creds, mock_build, get_user):
+        _make_token(get_user)
+        Project.objects.create(user=get_user, name="Alpha")
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        mock_service.events.return_value.list.return_value.execute.return_value = {
+            "items": [
+                _gcal_event("evt-2", "Unrelated meeting", "2026-04-10T10:00:00+00:00", "2026-04-10T11:00:00+00:00"),
+            ]
+        }
+
+        pull_events(get_user, date(2026, 4, 10), date(2026, 4, 10))
+
+        task = Task.objects.get(user=get_user, google_event_id="evt-2")
+        assert task.project is None
+
+    @patch("api.services.google_calendar.build")
+    @patch("api.services.google_calendar._build_credentials")
+    def test_longest_project_name_wins_on_tie(self, mock_creds, mock_build, get_user):
+        _make_token(get_user)
+        Project.objects.create(user=get_user, name="Beta")
+        longer = Project.objects.create(user=get_user, name="Beta launch")
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        mock_service.events.return_value.list.return_value.execute.return_value = {
+            "items": [
+                _gcal_event("evt-3", "Beta launch planning", "2026-04-10T14:00:00+00:00", "2026-04-10T15:00:00+00:00"),
+            ]
+        }
+
+        pull_events(get_user, date(2026, 4, 10), date(2026, 4, 10))
+
+        task = Task.objects.get(user=get_user, google_event_id="evt-3")
+        assert task.project == longer
+
+
+# ---------------------------------------------------------------------------
+# _match_project unit tests
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+class TestMatchProject:
+    def test_case_insensitive_match(self, get_user):
+        project = Project.objects.create(user=get_user, name="Phoenix")
+        result = _match_project("PHOENIX quarterly review", [project])
+        assert result == project
+
+    def test_returns_none_when_no_match(self, get_user):
+        project = Project.objects.create(user=get_user, name="Phoenix")
+        result = _match_project("Completely unrelated", [project])
+        assert result is None
+
+    def test_returns_longest_match(self, get_user):
+        short = Project.objects.create(user=get_user, name="Data")
+        long = Project.objects.create(user=get_user, name="Data platform")
+        result = _match_project("Data platform migration sync", [short, long])
+        assert result == long
+
+    def test_returns_none_for_empty_projects(self, get_user):
+        result = _match_project("Some meeting", [])
+        assert result is None
 
 
 # ---------------------------------------------------------------------------
