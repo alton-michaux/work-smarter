@@ -29,6 +29,8 @@
 - [x] Redundant copy on projects page at the top of meetings and tasks containers
 - [x] Meetings are marked complete about 4 hours too early
 - [x] Marking parent task as done should also mark children as done
+- [x] Weird daily "Home" meeting keeps being imported even though I can't see it in my google calendar. Should check code for anything suspicious
+- [x] Meetings that should be recurring aren't imported as recurring, but as individual events
 
 ---
 
@@ -54,6 +56,7 @@
 - [x] Meeting and task section too short in daily log
 - [x] Weekly tracker should display 3 sections like a grid with meetings on the left
 - [ ] Meeting titles get cut off quickly in daily log page
+- [ ] "Title" and "Task" rows in meeting and task containers on weekly tracker page are unnecessary
 - [ ] Project colors should be assignable by user
 - [ ] Settings page should allow users to change account info (email, password)
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
@@ -80,6 +83,7 @@
 - [ ] Implement deadlines
 - [x] Integration with Google Calendar (push meetings to calendar, timezone-aware)
   - [x] Pull events from Google Calendar into Work Smarter
+  - [ ] Users should have the option to blacklist certain meetings from importing
   - [ ] Sync tasks with deadlines once deadlines are implemented
 - [ ] Resume features
 - [ ] AI resume analysis

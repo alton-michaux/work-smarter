@@ -58,6 +58,7 @@ class RecurringTask(models.Model):
     is_active = models.BooleanField(default=True)
     last_generated_at = models.DateField(null=True, blank=True)
     skip_weekends = models.BooleanField(default=False)
+    google_recurring_event_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
 class RecurringTaskException(models.Model):
     TYPE_SKIP = "skip"

@@ -135,17 +135,104 @@ def _parse_google_event_datetime(dt_field: dict):
     return date_type.fromisoformat(dt_field["date"]), None
 
 
-def _match_project(title: str, projects) -> object | None:
+_BYDAY_MAP = {"MO": 0, "TU": 1, "WE": 2, "TH": 3, "FR": 4, "SA": 5, "SU": 6}
+
+
+def _parse_rrule(rrule_string: str, start_date) -> dict:
     """
-    Return the project whose name appears in *title* (case-insensitive).
+    Parse a Google Calendar RRULE string into RecurringTask field values.
+    Returns a dict with 'frequency' and 'day_of_week'.
+    """
+    rule = rrule_string.replace("RRULE:", "")
+    parts = dict(p.split("=", 1) for p in rule.split(";") if "=" in p)
+
+    freq = parts.get("FREQ", "").lower()
+    interval = int(parts.get("INTERVAL", "1"))
+    byday = parts.get("BYDAY", "")
+
+    day_of_week = None
+    if byday:
+        # Strip ordinal prefixes like "1MO" → "MO"
+        day_code = "".join(c for c in byday[:3] if c.isalpha())[:2]
+        day_of_week = _BYDAY_MAP.get(day_code)
+
+    if freq == "daily":
+        frequency = "daily"
+    elif freq == "weekly" and interval == 2:
+        frequency = "biweekly"
+        if day_of_week is None:
+            day_of_week = start_date.weekday()
+    elif freq == "weekly":
+        frequency = "weekly"
+        if day_of_week is None:
+            day_of_week = start_date.weekday()
+    elif freq == "monthly" and interval == 3:
+        frequency = "quarterly"
+    elif freq == "monthly":
+        frequency = "monthly"
+    else:
+        frequency = "weekly"
+
+    return {"frequency": frequency, "day_of_week": day_of_week}
+
+
+def _fetch_recurring_task_map(service, calendar_id, recurring_event_ids: set, user, user_projects) -> dict:
+    """
+    For each Google recurring event ID, fetch the parent event, parse its RRULE,
+    and get_or_create a RecurringTask. Returns a dict mapping google_recurring_event_id → RecurringTask.
+    """
+    from api.models import RecurringTask
+
+    result = {}
+    for parent_id in recurring_event_ids:
+        try:
+            parent = service.events().get(calendarId=calendar_id, eventId=parent_id).execute()
+        except HttpError as e:
+            logger.warning(f"Could not fetch parent event {parent_id}: {e}")
+            continue
+
+        recurrence_rules = parent.get("recurrence", [])
+        rrule_string = next((r for r in recurrence_rules if r.startswith("RRULE:")), None)
+        if not rrule_string:
+            continue
+
+        start = parent.get("start", {})
+        start_date, _ = _parse_google_event_datetime(start)
+        title = parent.get("summary") or "(No title)"
+        description = parent.get("description") or ""
+        project = _match_project(title, user_projects, description)
+        rrule_fields = _parse_rrule(rrule_string, start_date)
+
+        rt, created = RecurringTask.objects.get_or_create(
+            google_recurring_event_id=parent_id,
+            defaults={
+                "user": user,
+                "title": title,
+                "category": "meeting",
+                "start_date": start_date,
+                "project": project,
+                "is_active": True,
+                **rrule_fields,
+            },
+        )
+        result[parent_id] = rt
+        if created:
+            logger.info(f"Created RecurringTask {rt.id} for Google recurring event {parent_id}")
+
+    return result
+
+
+def _match_project(title: str, projects, description: str = "") -> object | None:
+    """
+    Return the project whose name appears in *title* or *description* (case-insensitive).
     If multiple names match, the longest (most specific) wins.
-    Returns None if no project name is found in the title.
+    Returns None if no project name is found.
     """
-    title_lower = title.lower()
+    haystack = f"{title} {description}".lower()
     best = None
     for project in projects:
         name_lower = project.name.lower()
-        if name_lower in title_lower:
+        if name_lower in haystack:
             if best is None or len(name_lower) > len(best.name):
                 best = project
     return best
@@ -194,6 +281,21 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
     )
     user_projects = list(Project.objects.filter(user=user))
 
+    # Collect unique recurring parent IDs from new events so we can batch-fetch them
+    new_events = [
+        e for e in events
+        if e.get("id")
+        and e.get("status") != "cancelled"
+        and e.get("eventType", "default") == "default"
+        and e.get("id") not in existing_ids
+    ]
+    recurring_parent_ids = {
+        e["recurringEventId"] for e in new_events if e.get("recurringEventId")
+    }
+    recurring_task_map = _fetch_recurring_task_map(
+        service, calendar_id, recurring_parent_ids, user, user_projects
+    ) if recurring_parent_ids else {}
+
     imported = 0
     skipped = 0
     created_tasks = []
@@ -201,6 +303,10 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
     for event in events:
         event_id = event.get("id")
         if not event_id or event.get("status") == "cancelled":
+            skipped += 1
+            continue
+
+        if event.get("eventType", "default") != "default":
             skipped += 1
             continue
 
@@ -215,7 +321,9 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
         _, end_time = _parse_google_event_datetime(end)
 
         title = event.get("summary") or "(No title)"
-        project = _match_project(title, user_projects)
+        description = event.get("description") or ""
+        project = _match_project(title, user_projects, description)
+        recurring_task = recurring_task_map.get(event.get("recurringEventId"))
 
         task = Task.objects.create(
             user=user,
@@ -228,6 +336,7 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
             google_event_id=event_id,
             is_done=False,
             project=project,
+            recurring_task=recurring_task,
         )
         created_tasks.append(task)
         existing_ids.add(event_id)
