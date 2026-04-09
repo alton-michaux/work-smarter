@@ -55,16 +55,16 @@
 - [x] Notes description should display markdown in weekly tracker page and be truncated to 2-3 lines per note
 - [x] Meeting and task section too short in daily log
 - [x] Weekly tracker should display 3 sections like a grid with meetings on the left
-- [ ] Meeting titles get cut off quickly in daily log page
-- [ ] "Title" and "Task" rows in meeting and task containers on weekly tracker page are unnecessary
-- [ ] Project colors should be assignable by user
-- [ ] Settings page should allow users to change account info (email, password)
+- [x] Meeting titles get cut off quickly in daily log page
+- [x] "Title" and "Task" rows in meeting and task containers on weekly tracker page are unnecessary
+- [x] Project colors should be assignable by user
+- [x] Settings page should allow users to change account info (email, password)
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [x] Optimistic UI for toggles (daily log feels instant)
 - [x] Sort meetings in order by time in daily log (earliest first)
 - [x] Time select should be less granular (15 minute scale vs 60 minute scale)
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
-- [ ] Project → task creation shortcuts (preselect project when creating from project view)
+- [x] Project → task creation shortcuts (preselect project when creating from project view)
 - [x] Weekly summary header (X done / Y remaining)
 - [x] Micro polish: hover states, subtle transitions, keyboard nav
 - [x] Recurrence badges ("weekly", "ongoing")

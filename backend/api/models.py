@@ -37,6 +37,7 @@ class Resume(models.Model):
 class Project(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="projects", null=False, blank=False)
     name = models.CharField(max_length=100)
+    color = models.CharField(max_length=7, default='#3b82f6', blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
 class RecurringTask(models.Model):        
