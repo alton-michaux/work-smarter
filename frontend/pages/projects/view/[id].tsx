@@ -83,6 +83,14 @@ const ProjectShowPage = () => {
             </button>
 
             <button
+              onClick={() => router.push(`/tasks/create?project=${project.id}`)}
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition"
+              type="button"
+            >
+              + New Task
+            </button>
+
+            <button
               onClick={() => router.push("/dashboard")}
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
               type="button"

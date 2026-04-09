@@ -141,6 +141,7 @@ export type Project = {
   created: Date;
   id: number;
   name: string;
+  color?: string;
   tasks?: Task[];
   user?: number | User;
 };
