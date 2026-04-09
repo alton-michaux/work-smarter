@@ -504,6 +504,17 @@ class TestMatchProject:
         result = _match_project("Some meeting", [])
         assert result is None
 
+    def test_matches_project_name_in_description(self, get_user):
+        project = Project.objects.create(user=get_user, name="Phoenix")
+        result = _match_project("Weekly sync", [project], description="Updates for the Phoenix project")
+        assert result == project
+
+    def test_title_match_takes_priority_over_description_when_longer(self, get_user):
+        short = Project.objects.create(user=get_user, name="Data")
+        long = Project.objects.create(user=get_user, name="Data platform")
+        result = _match_project("Data platform review", [short, long], description="Data notes")
+        assert result == long
+
 
 # ---------------------------------------------------------------------------
 # pull endpoint

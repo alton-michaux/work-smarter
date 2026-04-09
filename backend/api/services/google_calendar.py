@@ -199,7 +199,8 @@ def _fetch_recurring_task_map(service, calendar_id, recurring_event_ids: set, us
         start = parent.get("start", {})
         start_date, _ = _parse_google_event_datetime(start)
         title = parent.get("summary") or "(No title)"
-        project = _match_project(title, user_projects)
+        description = parent.get("description") or ""
+        project = _match_project(title, user_projects, description)
         rrule_fields = _parse_rrule(rrule_string, start_date)
 
         rt, created = RecurringTask.objects.get_or_create(
@@ -221,17 +222,17 @@ def _fetch_recurring_task_map(service, calendar_id, recurring_event_ids: set, us
     return result
 
 
-def _match_project(title: str, projects) -> object | None:
+def _match_project(title: str, projects, description: str = "") -> object | None:
     """
-    Return the project whose name appears in *title* (case-insensitive).
+    Return the project whose name appears in *title* or *description* (case-insensitive).
     If multiple names match, the longest (most specific) wins.
-    Returns None if no project name is found in the title.
+    Returns None if no project name is found.
     """
-    title_lower = title.lower()
+    haystack = f"{title} {description}".lower()
     best = None
     for project in projects:
         name_lower = project.name.lower()
-        if name_lower in title_lower:
+        if name_lower in haystack:
             if best is None or len(name_lower) > len(best.name):
                 best = project
     return best
@@ -320,7 +321,8 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
         _, end_time = _parse_google_event_datetime(end)
 
         title = event.get("summary") or "(No title)"
-        project = _match_project(title, user_projects)
+        description = event.get("description") or ""
+        project = _match_project(title, user_projects, description)
         recurring_task = recurring_task_map.get(event.get("recurringEventId"))
 
         task = Task.objects.create(
