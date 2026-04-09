@@ -29,8 +29,8 @@
 - [x] Redundant copy on projects page at the top of meetings and tasks containers
 - [x] Meetings are marked complete about 4 hours too early
 - [x] Marking parent task as done should also mark children as done
-- [ ] Weird daily "Home" meeting keeps being imported even though I can't see it in my google calendar. Should check for anything suspicious
-- [ ] Meetings that should be recurring aren't imported as recurring, but as individual events
+- [x] Weird daily "Home" meeting keeps being imported even though I can't see it in my google calendar. Should check code for anything suspicious
+- [x] Meetings that should be recurring aren't imported as recurring, but as individual events
 
 ---
 
