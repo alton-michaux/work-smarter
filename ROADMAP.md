@@ -24,7 +24,13 @@
 - [x] Task index page does not always have access to projects — missing identifiers and blank dropdowns in task edit page
 - [x] Task and Meetings do not scroll on weekly tracker page, container just continues to grow to accomodate content
 - [x] There is no mitigation of large content on the projects page. If there are many tasks the page just keeps going. Not sure if infinite scroll, pagination or truncation would be the best option here. What do you think?
-- [ ] Logout requests take about 2 minutes to resolve on staging
+- [x] Logout requests take about 2 minutes to resolve on staging
+- [x] Logout button should always log users out and redirect to home page
+- [x] Redundant copy on projects page at the top of meetings and tasks containers
+- [x] Meetings are marked complete about 4 hours too early
+- [x] Marking parent task as done should also mark children as done
+- [x] Weird daily "Home" meeting keeps being imported even though I can't see it in my google calendar. Should check code for anything suspicious
+- [x] Meetings that should be recurring aren't imported as recurring, but as individual events
 
 ---
 
@@ -35,6 +41,7 @@
 - [x] Recurring tasks need bi-weekly and quarterly options
 - [x] Users should be able to delete a single recurring task, all recurring tasks or all future recurring tasks
 - [x] Daily recurring tasks will need to be able to exclude weekends
+- [x] Is there a programmatic way to automatically assign imported google calendar meetings to projects?
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
@@ -48,9 +55,14 @@
 - [x] Notes description should display markdown in weekly tracker page and be truncated to 2-3 lines per note
 - [x] Meeting and task section too short in daily log
 - [x] Weekly tracker should display 3 sections like a grid with meetings on the left
+- [ ] Meeting titles get cut off quickly in daily log page
+- [ ] "Title" and "Task" rows in meeting and task containers on weekly tracker page are unnecessary
 - [ ] Project colors should be assignable by user
+- [ ] Settings page should allow users to change account info (email, password)
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [x] Optimistic UI for toggles (daily log feels instant)
+- [x] Sort meetings in order by time in daily log (earliest first)
+- [x] Time select should be less granular (15 minute scale vs 60 minute scale)
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project → task creation shortcuts (preselect project when creating from project view)
 - [x] Weekly summary header (X done / Y remaining)
@@ -59,7 +71,6 @@
 - [ ] Project-scoped tags
 - [ ] "Seen this week" indicators
 - [ ] Collapsible "Background reminders" section — visual distinction only, no behavior yet
-- [ ] Add dark mode
 
 ---
 
@@ -67,10 +78,13 @@
 
 - [x] Add recurring tasks/events (meetings)
 - [x] Meetings auto-done after day-of (frontend and backend)
-- [ ] Meetings should have a time
+- [x] Meetings should have a time
+- [ ] Add dark mode
 - [ ] Implement deadlines
-- [ ] Add bi-weekly schedule to recurring events
-- [ ] Integration with Google Calendar
+- [x] Integration with Google Calendar (push meetings to calendar, timezone-aware)
+  - [x] Pull events from Google Calendar into Work Smarter
+  - [ ] Users should have the option to blacklist certain meetings from importing
+  - [ ] Sync tasks with deadlines once deadlines are implemented
 - [ ] Resume features
 - [ ] AI resume analysis
 

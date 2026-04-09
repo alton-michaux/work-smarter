@@ -50,11 +50,21 @@ export default function TaskForm({
 
   const selectClass = inputClass;
 
+  const roundToQuarterHour = (timeStr: string): string => {
+    if (!timeStr) return timeStr;
+    const [h, m] = timeStr.split(':').map(Number);
+    const rounded = Math.round(m / 15) * 15;
+    const finalHour = rounded === 60 ? (h + 1) % 24 : h;
+    const finalMin = rounded === 60 ? 0 : rounded;
+    return `${String(finalHour).padStart(2, '0')}:${String(finalMin).padStart(2, '0')}`;
+  };
+
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
+    const isTimeField = name === 'begin_time' || name === 'end_time';
     setTask((t: any) => ({
       ...t,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : (isTimeField ? roundToQuarterHour(value) : value),
     }));
   };
 
@@ -73,6 +83,7 @@ export default function TaskForm({
     setFormError("");
     if (!validate()) return;
 
+    const isMeeting = task.category === "meeting";
     const payload: any = {
       id: task.id,
       title: task.title,
@@ -81,6 +92,8 @@ export default function TaskForm({
       description: task.description ?? "",
       begin_date: task.begin_date,
       end_date: task.end_date ?? null,
+      begin_time: isMeeting ? (task.begin_time || null) : null,
+      end_time: isMeeting ? (task.end_time || null) : null,
       project: task.project === "" ? null : task.project ?? null,
       is_done: !!task.is_done,
       is_subtask: !!task.is_subtask,
@@ -203,6 +216,39 @@ export default function TaskForm({
             <p className="text-sm text-red-600 mt-1">{errors.begin_date}</p>
           ) : null}
         </div>
+
+        {task.category === "meeting" && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+              <input
+                type="time"
+                name="begin_time"
+                value={task.begin_time ?? ""}
+                onChange={handleChange}
+                step={900}
+                className={inputClass}
+              />
+              {!task.begin_time && (
+                <p className="mt-1 text-xs text-amber-600">
+                  No start time set — meeting won't appear in time order.
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+              <input
+                type="time"
+                name="end_time"
+                value={task.end_time ?? ""}
+                onChange={handleChange}
+                step={900}
+                className={inputClass}
+              />
+            </div>
+          </>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>

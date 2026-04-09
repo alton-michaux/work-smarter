@@ -5,9 +5,7 @@ import Button from "../ui/button"; // Add this import
 export default function Navbar() {
   const { loggedIn, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout()
-  }
+  const handleLogout = () => logout();
 
   return (
     <header className="flex justify-between items-center px-6 py-4 shadow-sm">
@@ -17,6 +15,7 @@ export default function Navbar() {
           loggedIn ? (
             <>
               <a href="/">Home</a>
+              <a href="/settings" className="text-gray-700 hover:text-blue-600">Settings</a>
               <Button variant="secondary" size="sm" onClick={handleLogout}>
                 Logout
               </Button>

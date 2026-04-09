@@ -32,6 +32,7 @@ export default function TaskTable({
 
   const dateLabel = (t: any) => String(t.begin_date ?? "").slice(0, 10);
 
+
   const recurrenceBadge = (t: AnyTask) => {
     const freq = (t as any).recurring_frequency;
     if (!freq || t.__collapsed) return null;
