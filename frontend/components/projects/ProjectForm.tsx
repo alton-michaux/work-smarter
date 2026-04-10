@@ -78,6 +78,43 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
       </div>
 
       <div>
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Description
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          value={project.description ?? ''}
+          onChange={handleChange}
+          rows={3}
+          placeholder="Optional project description…"
+          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="status"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Status
+        </label>
+        <select
+          id="status"
+          name="status"
+          value={project.status ?? 'active'}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+        >
+          <option value="active">Active</option>
+          <option value="complete">Complete</option>
+        </select>
+      </div>
+
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
         <div className="flex items-center gap-2 flex-wrap">
           {PRESET_COLORS.map((c) => (

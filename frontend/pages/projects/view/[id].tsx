@@ -57,12 +57,26 @@ const ProjectShowPage = () => {
         <div className="mb-8 flex items-start justify-between gap-6 shrink-0">
           <div className="min-w-0">
             <div className="text-xs uppercase tracking-wide text-gray-500">Project</div>
-            <h1 className="mt-1 text-2xl font-semibold text-gray-900 truncate">
-              {project.name}
-            </h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Review activity, meetings, and work items over time.
-            </p>
+            <div className="mt-1 flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl font-semibold text-gray-900 truncate">
+                {project.name}
+              </h1>
+              <span
+                className={[
+                  "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                  project.status === 'complete'
+                    ? "bg-gray-100 text-gray-600"
+                    : "bg-green-100 text-green-700",
+                ].join(" ")}
+              >
+                {project.status === 'complete' ? 'Complete' : 'Active'}
+              </span>
+            </div>
+            {project.description ? (
+              <p className="mt-2 text-sm text-gray-600">{project.description}</p>
+            ) : (
+              <p className="mt-2 text-sm text-gray-400 italic">No description.</p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-3">
