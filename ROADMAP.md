@@ -31,6 +31,7 @@
 - [x] Marking parent task as done should also mark children as done
 - [x] Weird daily "Home" meeting keeps being imported even though I can't see it in my google calendar. Should check code for anything suspicious
 - [x] Meetings that should be recurring aren't imported as recurring, but as individual events
+- [ ] Meeting should only show time in daily view
 
 ---
 
@@ -63,12 +64,19 @@
 - [x] Optimistic UI for toggles (daily log feels instant)
 - [x] Sort meetings in order by time in daily log (earliest first)
 - [x] Time select should be less granular (15 minute scale vs 60 minute scale)
-- [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [x] Project → task creation shortcuts (preselect project when creating from project view)
 - [x] Weekly summary header (X done / Y remaining)
 - [x] Micro polish: hover states, subtle transitions, keyboard nav
 - [x] Recurrence badges ("weekly", "ongoing")
+- [ ] Add status to project (indicates whether still active or complete)
+- [ ] Add description to project
+- [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project-scoped tags
+
+---
+
+(not sure if these make sense)
+
 - [ ] "Seen this week" indicators
 - [ ] Collapsible "Background reminders" section — visual distinction only, no behavior yet
 
@@ -79,12 +87,12 @@
 - [x] Add recurring tasks/events (meetings)
 - [x] Meetings auto-done after day-of (frontend and backend)
 - [x] Meetings should have a time
-- [ ] Add dark mode
 - [ ] Implement deadlines
-- [x] Integration with Google Calendar (push meetings to calendar, timezone-aware)
+- [ ] Integration with Google Calendar (push meetings to calendar, timezone-aware)
   - [x] Pull events from Google Calendar into Work Smarter
   - [ ] Users should have the option to blacklist certain meetings from importing
   - [ ] Sync tasks with deadlines once deadlines are implemented
+- [ ] Add dark mode
 - [ ] Resume features
 - [ ] AI resume analysis
 
