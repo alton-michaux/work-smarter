@@ -73,6 +73,13 @@ REST_FRAMEWORK = {
 }
 
 # --- REST Auth Customization ---
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': None,
+    'JWT_AUTH_REFRESH_COOKIE': None,
+    'USER_DETAILS_SERIALIZER': 'backend.adapters.WritableEmailUserSerializer',
+}
+
 REST_AUTH_REGISTER_SERIALIZERS = {
     'REGISTER_SERIALIZER': 'dj_rest_auth.registration.serializers.RegisterSerializer',
 }

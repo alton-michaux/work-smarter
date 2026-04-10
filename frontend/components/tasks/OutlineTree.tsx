@@ -69,7 +69,7 @@ function OutlineRow({
   const { projects } = useProjects();
   const priorityBorder = PRIORITY_BORDER[String(node.priority ?? '').toLowerCase()] ?? 'transparent';
   const projectObj = node.project != null ? projects.find(p => p.id === node.project) : null;
-  const pColor = projectObj ? projectColor(projectObj.id) : null;
+  const pColor = projectObj ? (projectObj.color ?? projectColor(projectObj.id)) : null;
 
   const submitSubtask = async () => {
     const title = subtaskTitle.trim();
@@ -139,14 +139,13 @@ function OutlineRow({
             className={[
               "block w-full text-left",
               "font-medium",
-              "truncate",
               isDone ? "text-gray-500 line-through" : "text-gray-900",
               "hover:text-blue-700",
               "focus:outline-none focus:ring-2 focus:ring-blue-200 rounded-sm",
             ].join(" ")}
             title={node.title}
           >
-            <span className="flex items-center gap-2 min-w-0">
+            <span className="flex items-center gap-1.5 min-w-0 overflow-hidden">
               {pColor && (
                 <span
                   className="shrink-0 inline-block w-2 h-2 rounded-full"

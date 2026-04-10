@@ -1,4 +1,5 @@
 from django.utils import timezone
+from datetime import timedelta, timezone as dt_timezone
 from rest_framework import serializers
 from .models import Resume, Task, Project, User, RecurringTask
 
@@ -41,9 +42,11 @@ class TaskSerializer(serializers.ModelSerializer):
         return obj.recurring_task is not None
 
     def get_effective_is_done(self, obj):
-        now = timezone.localtime()
+        tz_offset = self.context.get("tz_offset", 0)
+        user_tz = dt_timezone(timedelta(minutes=tz_offset))
+        now = timezone.now().astimezone(user_tz)
         today = now.date()
-        current_time = now.time()
+        current_time = now.time().replace(tzinfo=None)
 
         if obj.category == "meeting" and obj.begin_date is not None:
             if obj.begin_date < today:

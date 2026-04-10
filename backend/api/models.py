@@ -37,6 +37,7 @@ class Resume(models.Model):
 class Project(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="projects", null=False, blank=False)
     name = models.CharField(max_length=100)
+    color = models.CharField(max_length=7, default='#3b82f6', blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
 class RecurringTask(models.Model):        
@@ -58,6 +59,7 @@ class RecurringTask(models.Model):
     is_active = models.BooleanField(default=True)
     last_generated_at = models.DateField(null=True, blank=True)
     skip_weekends = models.BooleanField(default=False)
+    google_recurring_event_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
 class RecurringTaskException(models.Model):
     TYPE_SKIP = "skip"
