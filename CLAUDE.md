@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Work-Smarter is a fullstack task and resume management application with AI-powered analysis. It uses a Django REST Framework backend, Next.js frontend, and PostgreSQL database — all orchestrated via Docker Compose.
+Work-Smarter is a fullstack task and resume management application with AI-powered analysis. It uses a Django REST Framework backend, Next.js frontend, and PostgreSQL database — all orchestrated via Docker Compose. All project development objectives can be found in ROADMAP.md. This should be the starting point for every Claude session.
 
 ## Development Commands
 
