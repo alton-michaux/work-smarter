@@ -4,7 +4,7 @@ import { useAuth } from 'context/AuthContext';
 import ProjectForm from '../../components/projects/ProjectForm';
 import Spinner from 'components/shared/Spinner';
 
-const emptyProject = { name: '', user: '' };
+const emptyProject = { name: '', user: '', status: 'active' as const, description: '' };
 
 export default function ProjectCreatePage() {
   const router = useRouter();

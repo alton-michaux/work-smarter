@@ -186,8 +186,12 @@ function OutlineRow({
             <span className="uppercase tracking-wide">
               {(node.priority ?? '—').toString()}
             </span>
-            <span className="mx-2 text-gray-300">•</span>
-            <span>{node.begin_date ?? '—'}</span>
+            {type !== 'meeting' && (
+              <>
+                <span className="mx-2 text-gray-300">•</span>
+                <span>{node.begin_date ?? '—'}</span>
+              </>
+            )}
             {type === 'meeting' && node.begin_time && (
               <>
                 <span className="mx-2 text-gray-300">•</span>
