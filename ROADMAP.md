@@ -38,11 +38,12 @@
 ## Tweaks
 
 ### Backend
-- [x] Update tests for new functionality
 - [x] Recurring tasks need bi-weekly and quarterly options
 - [x] Users should be able to delete a single recurring task, all recurring tasks or all future recurring tasks
 - [x] Daily recurring tasks will need to be able to exclude weekends
 - [x] Is there a programmatic way to automatically assign imported google calendar meetings to projects?
+- [ ] Add status to project (indicates whether still active or complete)
+- [ ] Add description to project
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
@@ -68,8 +69,6 @@
 - [x] Weekly summary header (X done / Y remaining)
 - [x] Micro polish: hover states, subtle transitions, keyboard nav
 - [x] Recurrence badges ("weekly", "ongoing")
-- [ ] Add status to project (indicates whether still active or complete)
-- [ ] Add description to project
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project-scoped tags
 
@@ -103,3 +102,8 @@
 - [ ] Beef up account security
 - [ ] Tutorial section
 - [ ] About page
+
+
+## Ongoing (these actions need to be performed whenever a box in this file is checked)
+
+- [ ] Update tests
