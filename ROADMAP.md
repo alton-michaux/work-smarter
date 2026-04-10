@@ -106,4 +106,5 @@
 
 ## Ongoing (these actions need to be performed whenever a box in this file is checked)
 
-- [ ] Update tests
+- [ ] Update 
+- [ ] Ensure app is aligned with design principles
