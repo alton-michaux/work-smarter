@@ -32,7 +32,7 @@
 - [x] Weird daily "Home" meeting keeps being imported even though I can't see it in my google calendar. Should check code for anything suspicious
 - [x] Meetings that should be recurring aren't imported as recurring, but as individual events
 - [x] Meeting should only show time in daily view
-- [ ] Back buttons on show pages and import page redundant, no back button (or dashboard button) on daily log or weekly tracker page
+- [x] Back buttons on show pages and import page redundant, no back button (or dashboard button) on daily log or weekly tracker page
 
 ---
 
