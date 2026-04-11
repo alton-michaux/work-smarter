@@ -45,6 +45,7 @@ class Project(models.Model):
     color = models.CharField(max_length=7, default='#3b82f6', blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     description = models.TextField(blank=True, default='')
+    role = models.CharField(max_length=100, blank=True, default='')
     created = models.DateTimeField(auto_now_add=True)
 
 class RecurringTask(models.Model):        

@@ -31,7 +31,8 @@
 - [x] Marking parent task as done should also mark children as done
 - [x] Weird daily "Home" meeting keeps being imported even though I can't see it in my google calendar. Should check code for anything suspicious
 - [x] Meetings that should be recurring aren't imported as recurring, but as individual events
-- [ ] Meeting should only show time in daily view
+- [x] Meeting should only show time in daily view
+- [ ] Back buttons on show pages and import page redundant, no back button (or dashboard button) on daily log or weekly tracker page
 
 ---
 
@@ -42,8 +43,9 @@
 - [x] Users should be able to delete a single recurring task, all recurring tasks or all future recurring tasks
 - [x] Daily recurring tasks will need to be able to exclude weekends
 - [x] Is there a programmatic way to automatically assign imported google calendar meetings to projects?
-- [ ] Add status to project (indicates whether still active or complete)
-- [ ] Add description to project
+- [x] Add status to project (indicates whether still active or complete)
+- [x] Add description to project
+- [x] Add role to project
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
@@ -106,5 +108,5 @@
 
 ## Ongoing (these actions need to be performed whenever a box in this file is checked)
 
-- [ ] Update 
+- [ ] Update tests
 - [ ] Ensure app is aligned with design principles

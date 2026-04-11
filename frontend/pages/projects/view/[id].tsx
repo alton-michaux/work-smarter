@@ -61,16 +61,11 @@ const ProjectShowPage = () => {
               <h1 className="text-2xl font-semibold text-gray-900 truncate">
                 {project.name}
               </h1>
-              <span
-                className={[
-                  "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                  project.status === 'complete'
-                    ? "bg-gray-100 text-gray-600"
-                    : "bg-green-100 text-green-700",
-                ].join(" ")}
-              >
-                {project.status === 'complete' ? 'Complete' : 'Active'}
-              </span>
+              {project.role && (
+                <span className="inline-flex items-center rounded-full px-1.5 py-px text-[8px] font-semibold uppercase tracking-wide bg-blue-50 text-blue-700">
+                  {project.role}
+                </span>
+              )}
             </div>
             {project.description ? (
               <p className="mt-2 text-sm text-gray-600">{project.description}</p>

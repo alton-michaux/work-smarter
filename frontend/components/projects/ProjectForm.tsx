@@ -79,6 +79,23 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
 
       <div>
         <label
+          htmlFor="role"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Your Role
+        </label>
+        <input
+          id="role"
+          name="role"
+          value={project.role ?? ''}
+          onChange={handleChange}
+          placeholder="e.g. Tech Lead, Contributor, Stakeholder"
+          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+      </div>
+
+      <div>
+        <label
           htmlFor="description"
           className="block text-sm font-medium text-gray-700 mb-1"
         >

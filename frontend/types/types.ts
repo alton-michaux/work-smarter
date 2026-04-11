@@ -144,6 +144,7 @@ export type Project = {
   color?: string;
   status?: 'active' | 'complete';
   description?: string;
+  role?: string;
   tasks?: Task[];
   user?: number | User;
 };
@@ -153,6 +154,7 @@ export type NewProject = {
   user: number;
   status?: 'active' | 'complete';
   description?: string;
+  role?: string;
 };
 
 export type ProjectsContextType = {

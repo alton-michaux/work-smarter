@@ -104,32 +104,31 @@ export default function ProjectsPage() {
                       type="button"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-9 w-9 rounded-md bg-blue-50 flex items-center justify-center text-blue-700 text-sm font-semibold">
-                          {String(project.name ?? "P").trim().slice(0, 1).toUpperCase()}
+                        {/* Avatar with status dot */}
+                        <div className="relative shrink-0">
+                          <div className="h-9 w-9 rounded-md bg-blue-50 flex items-center justify-center text-blue-700 text-sm font-semibold">
+                            {String(project.name ?? "P").trim().slice(0, 1).toUpperCase()}
+                          </div>
+                          <span
+                            className={[
+                              "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white",
+                              project.status === 'complete' ? "bg-gray-400" : "bg-green-500",
+                            ].join(" ")}
+                            title={project.status === 'complete' ? 'Complete' : 'Active'}
+                          />
                         </div>
 
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <div className="text-sm font-semibold text-gray-900 truncate">
-                              {project.name}
-                            </div>
-                            <span
-                              className={[
-                                "shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
-                                project.status === 'complete'
-                                  ? "bg-gray-100 text-gray-500"
-                                  : "bg-green-100 text-green-700",
-                              ].join(" ")}
-                            >
-                              {project.status === 'complete' ? 'Complete' : 'Active'}
-                            </span>
+                          <div className="text-sm font-semibold text-gray-900 truncate">
+                            {project.name}
                           </div>
-                          <div className="mt-0.5 text-xs text-gray-500">
-                            {project.description
+                          <div className="mt-0.5 text-xs text-gray-500 truncate">
+                            {[project.role, project.description
                               ? project.description.length > 60
                                 ? project.description.slice(0, 60) + '…'
                                 : project.description
-                              : 'Open project'}
+                              : null
+                            ].filter(Boolean).join(' · ') || 'Open project'}
                           </div>
                         </div>
                       </div>
