@@ -114,6 +114,7 @@ class Task(models.Model):
 
     begin_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    deadline_date = models.DateField(null=True, blank=True)
     begin_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)

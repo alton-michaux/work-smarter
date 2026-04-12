@@ -195,6 +195,22 @@ const TaskShowPage = () => {
               </div>
             ) : null}
 
+            {task.deadline_date ? (
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-gray-500">Deadline</dt>
+                <dd className={(() => {
+                  const today = new Date(); today.setHours(0, 0, 0, 0);
+                  const d = new Date(task.deadline_date + 'T00:00:00');
+                  const diff = Math.ceil((d.getTime() - today.getTime()) / 86400000);
+                  if (!task.is_done && diff < 0) return 'font-medium text-red-600';
+                  if (!task.is_done && diff <= 3) return 'font-medium text-amber-600';
+                  return 'text-gray-900';
+                })()}>
+                  {task.deadline_date}
+                </dd>
+              </div>
+            ) : null}
+
             {task.category === 'meeting' && (
               <div className="flex items-center justify-between gap-3">
                 <dt className="text-gray-500">Calendar Sync</dt>
