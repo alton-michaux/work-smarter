@@ -38,6 +38,7 @@ export type Task = {
   project?: number;
   begin_date: string;
   end_date: string;
+  deadline_date?: string | null;
   begin_time?: string | null;
   end_time?: string | null;
 
@@ -53,6 +54,7 @@ export type Task = {
 export type CreateTaskPayload = {
   title: string;
   begin_date?: string | null;
+  deadline_date?: string | null;
   category?: string | null;
   project?: number | null;
 

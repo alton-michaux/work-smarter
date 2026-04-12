@@ -20,6 +20,20 @@ function projectColor(id: number) {
   return PROJECT_COLORS[id % PROJECT_COLORS.length];
 }
 
+function deadlineStatus(
+  deadlineDate: string | null | undefined,
+  isDone: boolean
+): 'overdue' | 'soon' | null {
+  if (!deadlineDate || isDone) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const deadline = new Date(deadlineDate + 'T00:00:00');
+  const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / 86400000);
+  if (diffDays < 0) return 'overdue';
+  if (diffDays <= 3) return 'soon';
+  return null;
+}
+
 function formatTime(timeStr?: string | null): string | null {
   if (!timeStr) return null;
   const [h, m] = timeStr.split(':').map(Number);
@@ -201,6 +215,23 @@ function OutlineRow({
                 </span>
               </>
             )}
+            {node.deadline_date && (() => {
+              const st = deadlineStatus(node.deadline_date, isDone);
+              return (
+                <>
+                  <span className="mx-2 text-gray-300">•</span>
+                  <span
+                    className={
+                      st === 'overdue' ? 'text-red-600 font-medium' :
+                      st === 'soon'    ? 'text-amber-600 font-medium' :
+                                         'text-gray-500'
+                    }
+                  >
+                    ⚑ {node.deadline_date}
+                  </span>
+                </>
+              );
+            })()}
           </div>
 
           {/* Inline Add Subtask */}
