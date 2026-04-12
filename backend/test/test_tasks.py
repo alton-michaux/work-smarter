@@ -959,3 +959,125 @@ def test_marking_parent_done_cascades_to_children(auth_client, get_user):
     assert child2.is_done is True
     # already-done child is untouched (end_date not overwritten)
     assert already_done_child.is_done is True
+
+
+# -----------------------
+# Deadline Date Tests
+# -----------------------
+
+@pytest.mark.django_db
+def test_deadline_date_default_is_null(auth_client, tasks_list_url):
+    """Tasks created without a deadline return null for deadline_date."""
+    res = auth_client.post(tasks_list_url, task_payload(), format="json")
+    assert res.status_code == 201, res.data
+    assert res.data["deadline_date"] is None
+
+
+@pytest.mark.django_db
+def test_deadline_date_stored_and_returned(auth_client, tasks_list_url):
+    """A deadline set on create is persisted and returned by the API."""
+    res = auth_client.post(
+        tasks_list_url,
+        task_payload(deadline_date="2026-12-31"),
+        format="json",
+    )
+    assert res.status_code == 201, res.data
+    assert res.data["deadline_date"] == "2026-12-31"
+
+    task_id = res.data["id"]
+    res = auth_client.get(f"/api/tasks/{task_id}/")
+    assert res.status_code == 200
+    assert res.data["deadline_date"] == "2026-12-31"
+
+
+@pytest.mark.django_db
+def test_deadline_date_can_be_set_via_patch(auth_client, get_user, create_task):
+    """PATCH can add a deadline to an existing task."""
+    task = create_task(title="No deadline yet", begin_date=date.today(), user=get_user)
+    assert task.deadline_date is None
+
+    res = auth_client.patch(
+        task_detail_url(task.id),
+        {"deadline_date": "2026-06-01"},
+        format="json",
+    )
+    assert res.status_code == 200
+    assert res.data["deadline_date"] == "2026-06-01"
+
+    task.refresh_from_db()
+    assert task.deadline_date == date(2026, 6, 1)
+
+
+@pytest.mark.django_db
+def test_deadline_date_can_be_cleared_via_patch(auth_client, get_user):
+    """PATCH can remove a deadline by setting it to null."""
+    task = Task.objects.create(
+        user=get_user,
+        title="Has a deadline",
+        begin_date=date.today(),
+        deadline_date=date(2026, 6, 1),
+        category="task",
+    )
+
+    res = auth_client.patch(
+        task_detail_url(task.id),
+        {"deadline_date": None},
+        format="json",
+    )
+    assert res.status_code == 200
+    assert res.data["deadline_date"] is None
+
+    task.refresh_from_db()
+    assert task.deadline_date is None
+
+
+@pytest.mark.django_db
+def test_deadline_date_survives_marking_done(auth_client, get_user):
+    """Completing a task does not clear its deadline (unlike end_date)."""
+    task = Task.objects.create(
+        user=get_user,
+        title="Task with deadline",
+        begin_date=date.today(),
+        deadline_date=date(2026, 12, 31),
+        category="task",
+    )
+
+    res = auth_client.patch(
+        task_detail_url(task.id),
+        {"is_done": True},
+        format="json",
+    )
+    assert res.status_code == 200
+    assert res.data["is_done"] is True
+    assert res.data["deadline_date"] == "2026-12-31"
+
+    task.refresh_from_db()
+    assert task.deadline_date == date(2026, 12, 31)
+    assert task.end_date == date.today()  # end_date stamped; deadline untouched
+
+
+@pytest.mark.django_db
+def test_deadline_date_survives_marking_undone(auth_client, get_user):
+    """Un-completing a task clears end_date but leaves deadline intact."""
+    task = Task.objects.create(
+        user=get_user,
+        title="Done task with deadline",
+        begin_date=date.today(),
+        deadline_date=date(2026, 12, 31),
+        end_date=date.today(),
+        is_done=True,
+        category="task",
+    )
+
+    res = auth_client.patch(
+        task_detail_url(task.id),
+        {"is_done": False},
+        format="json",
+    )
+    assert res.status_code == 200
+    assert res.data["end_date"] is None
+    assert res.data["deadline_date"] == "2026-12-31"
+
+    task.refresh_from_db()
+    assert task.end_date is None
+    assert task.deadline_date == date(2026, 12, 31)

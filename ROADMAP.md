@@ -88,7 +88,7 @@
 - [x] Add recurring tasks/events (meetings)
 - [x] Meetings auto-done after day-of (frontend and backend)
 - [x] Meetings should have a time
-- [ ] Implement deadlines
+- [x] Implement deadlines
 - [ ] Integration with Google Calendar (push meetings to calendar, timezone-aware)
   - [x] Pull events from Google Calendar into Work Smarter
   - [ ] Users should have the option to blacklist certain meetings from importing
