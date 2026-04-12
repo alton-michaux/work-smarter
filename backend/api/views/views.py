@@ -1,4 +1,5 @@
 from rest_framework import viewsets, status, filters
+from django.http import FileResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -298,32 +299,79 @@ class UserViewSet(viewsets.ModelViewSet):
 class ResumeViewSet(viewsets.ViewSet):
     parser_classes = (MultiPartParser, FormParser)
 
+    ALLOWED_CONTENT_TYPES = {
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+    }
+
+    def _get_resume_or_404(self, request, pk):
+        try:
+            return Resume.objects.get(pk=pk, user=request.user)
+        except Resume.DoesNotExist:
+            return None
+
+    def list(self, request):
+        try:
+            resumes = Resume.objects.filter(user=request.user).order_by('-uploaded_at')
+            serializer = ResumeSerializer(resumes, many=True, context={'request': request})
+            return Response(serializer.data)
+        except Exception as e:
+            logger.warning(f"Error in ResumeViewSet.list: {e}")
+            return Response({"error": "An error occurred while retrieving resumes."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def create(self, request):
         try:
             file = request.FILES.get('file')
             if not file:
                 return Response({"error": "No file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
 
-            resume = Resume(file=file, user=request.user)  # ✅ attach user
+            content_type = file.content_type
+            if content_type not in self.ALLOWED_CONTENT_TYPES:
+                return Response(
+                    {"error": "Invalid file type. Only PDF and Word documents are accepted."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            title = request.data.get('title', '').strip() or file.name
+            resume = Resume(file=file, user=request.user, title=title)
             resume.save()
 
-            openai.api_key = request.data.get('api_key')
-            response = openai.Completion.create(
-                engine="text-davinci-003",
-                prompt=f"Pretend that you are a recruiter. Please analyze this resume: {file.name}",
-                max_tokens=150
-            )
-
-            return Response({"suggestions": response.choices[0].text.strip()}, status=status.HTTP_201_CREATED)
+            serializer = ResumeSerializer(resume, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.warning(f"Error in ResumeViewSet.create: {e}")
-            return Response({"error": "An error occurred while processing the resume."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": "An error occurred while uploading the resume."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def list(self, request):
+    def retrieve(self, request, pk=None):
+        resume = self._get_resume_or_404(request, pk)
+        if resume is None:
+            return Response({"error": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = ResumeSerializer(resume, context={'request': request})
+        return Response(serializer.data)
+
+    def destroy(self, request, pk=None):
+        resume = self._get_resume_or_404(request, pk)
+        if resume is None:
+            return Response({"error": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)
         try:
-            resumes = Resume.objects.filter(user=request.user)
-            serializer = ResumeSerializer(resumes, many=True)
-            return Response(serializer.data)
+            resume.file.delete(save=False)
+            resume.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
-            logger.warning(f"Error in ResumeViewSet.list: {e}")
-            return Response({"error": "An error occurred while retrieving resumes."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.warning(f"Error in ResumeViewSet.destroy: {e}")
+            return Response({"error": "An error occurred while deleting the resume."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['get'])
+    def download(self, request, pk=None):
+        resume = self._get_resume_or_404(request, pk)
+        if resume is None:
+            return Response({"error": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            file_handle = resume.file.open('rb')
+            filename = resume.file.name.split('/')[-1]
+            response = FileResponse(file_handle, as_attachment=True, filename=filename)
+            return response
+        except Exception as e:
+            logger.warning(f"Error in ResumeViewSet.download: {e}")
+            return Response({"error": "An error occurred while downloading the resume."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

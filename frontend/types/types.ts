@@ -418,3 +418,22 @@ export type LoginPayload = {
 export type ApiError = {
   [key: string]: string[]; // Example: { "email": ["This field is required."] }
 };
+
+//------RESUME-------//
+
+export type Resume = {
+  id: number;
+  title: string;
+  file: string;
+  uploaded_at: string;
+};
+
+export type ResumesContextType = {
+  resumes: Resume[];
+  isLoading: boolean;
+  error: string | null;
+  fetchResumes: () => Promise<void>;
+  uploadResume: (file: File, title: string) => Promise<void>;
+  deleteResume: (id: number) => Promise<void>;
+  downloadResume: (id: number, filename: string) => Promise<void>;
+};

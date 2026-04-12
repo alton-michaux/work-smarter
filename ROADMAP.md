@@ -94,10 +94,10 @@
   - [x] Users should have the option to blacklist certain meetings from importing
   - [x] Sync tasks with deadlines once deadlines are implemented
 - [ ] Add dark mode
-- [ ] Resume
-  - [ ] User can have an attached resume model(s)
-  - [ ] User should be able to upload or create from scratch
-  - [ ] User should also be able to download resume
+- [x] Resume
+  - [x] User can have an attached resume model(s)
+  - [x] User should be able to upload or create from scratch
+  - [x] User should also be able to download resume
 - [ ] AI resume analysis
 
 

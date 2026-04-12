@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from api.views.views import ProjectViewSet, TaskViewSet, UserViewSet, RecurringTaskViewSet
+from api.views.views import ProjectViewSet, TaskViewSet, UserViewSet, RecurringTaskViewSet, ResumeViewSet
 from api.views.upload.views_import import ImportTasksCSVView, ImportTasksTXTView
 from api.views.upload.views_import_csv_spec import ImportTasksCSVSpecView
 from api.views.download.views_export import ExportTasksCSV
@@ -27,6 +27,7 @@ router.register(r'projects', ProjectViewSet, basename='project')
 router.register(r'tasks', TaskViewSet, basename='task')
 router.register(r"recurring-tasks", RecurringTaskViewSet, basename="recurring-task")
 router.register(r'user', UserViewSet, basename='user')
+router.register(r'resumes', ResumeViewSet, basename='resume')
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -1,6 +1,7 @@
 import { AuthProvider } from '../context/AuthContext';
 import { ProjectsProvider } from '../context/ProjectsContext';
 import { TasksProvider } from '../context/TasksContext';
+import { ResumesProvider } from '../context/ResumesContext';
 import { APIProvider } from '../context/APIContext';
 import { SystemsProvider } from '../context/SystemsContext'
 import Navbar from '../components/shared/Navbar';
@@ -18,7 +19,9 @@ function MyApp({ Component, pageProps }) {
               <main className="flex-1 min-h-0" >
                 <ProjectsProvider>
                   <TasksProvider>
-                    <Component {...pageProps} />
+                    <ResumesProvider>
+                      <Component {...pageProps} />
+                    </ResumesProvider>
                   </TasksProvider>
                 </ProjectsProvider>
               </main>

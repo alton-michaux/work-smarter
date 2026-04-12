@@ -158,6 +158,29 @@ function Dashboard() {
                   </span>
                 </div>
               </button>
+
+              {/* Resume */}
+              <button
+                onClick={go("/resume")}
+                className="group rounded-md border border-gray-200 bg-white p-5 text-left hover:border-gray-300 hover:shadow-sm transition"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-gray-500">
+                      Career
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-gray-900">
+                      Resume
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600">
+                      Upload and manage your resumes.
+                    </div>
+                  </div>
+                  <span className="text-gray-300 group-hover:text-gray-400 transition">
+                    →
+                  </span>
+                </div>
+              </button>
             </div>
           </div>
 
