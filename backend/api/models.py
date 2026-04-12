@@ -26,6 +26,25 @@ class GoogleCalendarToken(models.Model):
     def __str__(self):
         return f"{self.user}'s Google Calendar Token"
 
+
+class CalendarBlacklist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="calendar_blacklist")
+    google_event_id = models.CharField(max_length=255)
+    title = models.CharField(max_length=500, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "google_event_id"],
+                name="uniq_blacklist_user_event",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user} — blacklisted {self.google_event_id}"
+
+
 class Resume(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="resume", null=False, blank=False)
     file = models.FileField(upload_to='resumes/')
@@ -136,6 +155,7 @@ class Task(models.Model):
     
     carry_over = models.BooleanField(default=True)
     google_event_id = models.CharField(max_length=255, null=True, blank=True)
+    deadline_event_id = models.CharField(max_length=255, null=True, blank=True)
     recurring_task = models.ForeignKey(
         RecurringTask,
         null=True,

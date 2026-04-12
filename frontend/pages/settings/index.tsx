@@ -4,7 +4,7 @@ import { useAuth } from 'context/AuthContext';
 import { useAPI } from 'context/APIContext';
 import { useTasks } from 'context/TasksContext';
 import { toast } from 'sonner';
-import { GoogleCalendarStatus } from 'types/types';
+import { CalendarBlacklistEntry, GoogleCalendarStatus } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -51,6 +51,9 @@ export default function SettingsPage() {
   const [pullDateTo, setPullDateTo] = useState(plusDays(7));
   const [isPulling, setIsPulling] = useState(false);
 
+  const [blacklist, setBlacklist] = useState<CalendarBlacklistEntry[]>([]);
+  const [isLoadingBlacklist, setIsLoadingBlacklist] = useState(false);
+
   // Handle callback redirect from Google OAuth
   useEffect(() => {
     if (router.query.calendar_connected === 'true') {
@@ -76,7 +79,7 @@ export default function SettingsPage() {
       .catch(() => {});
   }, [loggedIn]);
 
-  // Fetch calendar list when connected
+  // Fetch calendar list and blacklist when connected
   useEffect(() => {
     if (!calendarStatus?.connected) return;
 
@@ -84,6 +87,13 @@ export default function SettingsPage() {
       .then((r) => r.json())
       .then((data: CalendarOption[]) => setCalendars(data))
       .catch(() => {});
+
+    setIsLoadingBlacklist(true);
+    fetch(`${API_URL}/calendar/blacklist/list/`, { headers: getAuthHeaders() })
+      .then((r) => r.json())
+      .then((data: CalendarBlacklistEntry[]) => setBlacklist(data))
+      .catch(() => {})
+      .finally(() => setIsLoadingBlacklist(false));
   }, [calendarStatus?.connected]);
 
   const handleConnect = async () => {
@@ -136,6 +146,23 @@ export default function SettingsPage() {
       toast.error(err.message || 'Failed to pull from Google Calendar.');
     } finally {
       setIsPulling(false);
+    }
+  };
+
+  const handleRemoveBlacklist = async (id: number) => {
+    try {
+      const res = await fetch(`${API_URL}/calendar/blacklist/${id}/`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        setBlacklist((prev) => prev.filter((e) => e.id !== id));
+        toast.success('Removed from blacklist.');
+      } else {
+        toast.error('Failed to remove from blacklist.');
+      }
+    } catch {
+      toast.error('Failed to remove from blacklist.');
     }
   };
 
@@ -360,6 +387,39 @@ export default function SettingsPage() {
                   {isPulling ? 'Importing…' : 'Import events'}
                 </button>
               </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4 space-y-3">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Import Blacklist</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Events listed here will never be imported. Use "Never import again" on a meeting task to add entries.
+                </p>
+              </div>
+              {isLoadingBlacklist ? (
+                <p className="text-xs text-gray-400">Loading…</p>
+              ) : blacklist.length === 0 ? (
+                <p className="text-xs text-gray-400">No events blacklisted.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {blacklist.map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="flex items-center justify-between gap-3 rounded-md border border-gray-200 px-3 py-2 text-sm"
+                    >
+                      <span className="truncate text-gray-800">
+                        {entry.title || entry.google_event_id}
+                      </span>
+                      <button
+                        onClick={() => handleRemoveBlacklist(entry.id)}
+                        className="shrink-0 text-xs text-red-600 hover:text-red-800"
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </>
         )}

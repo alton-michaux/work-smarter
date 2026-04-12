@@ -11,6 +11,9 @@ from api.views.views_calendar import (
     GoogleCalendarListView,
     GoogleCalendarSelectView,
     GoogleCalendarPullView,
+    BlacklistEventView,
+    BlacklistListView,
+    PushDeadlineView,
 )
 
 # JWT views
@@ -41,4 +44,8 @@ urlpatterns = [
     path('calendar/calendars/', GoogleCalendarListView.as_view(), name='calendar-list'),
     path('calendar/select/', GoogleCalendarSelectView.as_view(), name='calendar-select'),
     path('calendar/pull/', GoogleCalendarPullView.as_view(), name='calendar-pull'),
+    path('calendar/blacklist/', BlacklistEventView.as_view(), name='calendar-blacklist-add'),
+    path('calendar/blacklist/list/', BlacklistListView.as_view(), name='calendar-blacklist-list'),
+    path('calendar/blacklist/<int:pk>/', BlacklistListView.as_view(), name='calendar-blacklist-delete'),
+    path('calendar/push-deadline/<int:task_id>/', PushDeadlineView.as_view(), name='calendar-push-deadline'),
 ]
