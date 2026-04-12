@@ -1,7 +1,7 @@
 from django.utils import timezone
 from datetime import timedelta, timezone as dt_timezone
 from rest_framework import serializers
-from .models import Resume, Task, Project, User, RecurringTask
+from .models import Resume, Task, Project, User, RecurringTask, CalendarBlacklist
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -150,6 +150,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "recurring_frequency",
             "is_recurring",
             "google_event_id",
+            "deadline_event_id",
         ]
         extra_kwargs = {
             "user": {"read_only": True},
@@ -161,6 +162,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "begin_time": {"required": False, "allow_null": True},
             "end_time": {"required": False, "allow_null": True},
             "google_event_id": {"read_only": True},
+            "deadline_event_id": {"read_only": True},
         }
         
 class RecurringTaskSerializer(serializers.ModelSerializer):
@@ -211,3 +213,9 @@ class ResumeSerializer(serializers.ModelSerializer):
 class ResumeAnalysisSerializer(serializers.Serializer):
     suggestions = serializers.ListField(child=serializers.CharField())  # List of suggestions from analysis
     score = serializers.FloatField()  # Score indicating the quality of the resume
+
+class CalendarBlacklistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CalendarBlacklist
+        fields = ["id", "google_event_id", "title", "created_at"]
+        read_only_fields = ["id", "created_at"]
