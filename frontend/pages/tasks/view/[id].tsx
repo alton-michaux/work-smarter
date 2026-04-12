@@ -14,12 +14,14 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const TaskShowPage = () => {
   const router = useRouter();
   const { id } = router.query;
-  const { tasks, deleteTask, pushToCalendar, isLoading } = useTasks();
+  const { tasks, deleteTask, pushToCalendar, pushDeadlineToCalendar, blacklistEvent, isLoading } = useTasks();
   const { getAuthHeaders } = useAPI();
   const { loggedIn } = useAuth();
 
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarStatus | null>(null);
   const [isPushing, setIsPushing] = useState(false);
+  const [isSyncingDeadline, setIsSyncingDeadline] = useState(false);
+  const [isBlacklisting, setIsBlacklisting] = useState(false);
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -72,6 +74,35 @@ const TaskShowPage = () => {
     }
   };
 
+  const handlePushDeadline = async () => {
+    if (!task) return;
+    setIsSyncingDeadline(true);
+    try {
+      await pushDeadlineToCalendar(task.id);
+      toast.success(task.deadline_event_id ? 'Deadline re-synced to Google Calendar.' : 'Deadline synced to Google Calendar.');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to sync deadline.');
+    } finally {
+      setIsSyncingDeadline(false);
+    }
+  };
+
+  const handleBlacklist = async () => {
+    if (!task?.google_event_id) return;
+    if (!confirm('Never import this event again?\n\nIt will be added to your blacklist. You can remove it from Settings.')) return;
+    const shouldDelete = confirm('Also delete this task from Work Smarter?\n\nClick Cancel to keep the task.');
+    setIsBlacklisting(true);
+    try {
+      await blacklistEvent(task.google_event_id, task.title, shouldDelete);
+      toast.success('Event added to blacklist.');
+      if (shouldDelete) router.push('/tasks');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to blacklist event.');
+    } finally {
+      setIsBlacklisting(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this occurence?\n If this is a recurring event, all past and future occurences will be deleted as well")) return;
 
@@ -99,6 +130,24 @@ const TaskShowPage = () => {
               className="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               {isPushing ? 'Syncing…' : task.google_event_id ? 'Re-sync to Calendar' : 'Push to Calendar'}
+            </button>
+          )}
+          {task.deadline_date && calendarStatus?.connected && (
+            <button
+              onClick={handlePushDeadline}
+              disabled={isSyncingDeadline}
+              className="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {isSyncingDeadline ? 'Syncing…' : task.deadline_event_id ? 'Re-sync deadline' : 'Sync deadline to Calendar'}
+            </button>
+          )}
+          {task.category === 'meeting' && task.google_event_id && (
+            <button
+              onClick={handleBlacklist}
+              disabled={isBlacklisting}
+              className="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {isBlacklisting ? 'Blacklisting…' : 'Never import again'}
             </button>
           )}
           {/* replace with your Button later */}
@@ -216,6 +265,20 @@ const TaskShowPage = () => {
                 <dt className="text-gray-500">Calendar Sync</dt>
                 <dd className="text-gray-900">
                   {task.google_event_id ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-green-700">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
+                      Synced
+                    </span>
+                  ) : 'Not synced'}
+                </dd>
+              </div>
+            )}
+
+            {task.deadline_date && (
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-gray-500">Deadline Sync</dt>
+                <dd className="text-gray-900">
+                  {task.deadline_event_id ? (
                     <span className="inline-flex items-center gap-1 text-xs text-green-700">
                       <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
                       Synced

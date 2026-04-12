@@ -47,6 +47,7 @@ export type Task = {
   recurring_frequency?: string | null;
 
   google_event_id?: string | null;
+  deadline_event_id?: string | null;
 
   user: number;
 };
@@ -102,6 +103,8 @@ export type TasksContextType = {
   fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
   pushToCalendar: (taskId: number) => Promise<Task>;
+  pushDeadlineToCalendar: (taskId: number) => Promise<Task>;
+  blacklistEvent: (googleEventId: string, title: string, deleteTask?: boolean) => Promise<void>;
   pullFromCalendar: (dateFrom: string, dateTo: string) => Promise<{ imported: number; skipped: number }>;
   isLoading: boolean;
   error: string | null;
@@ -110,6 +113,13 @@ export type TasksContextType = {
 export type GoogleCalendarStatus = {
   connected: boolean;
   selected_calendar_id: string | null;
+};
+
+export type CalendarBlacklistEntry = {
+  id: number;
+  google_event_id: string;
+  title: string;
+  created_at: string;
 };
 
 export type DeleteTaskOptions = { deleteSeries?: boolean; deleteFuture?: boolean };
