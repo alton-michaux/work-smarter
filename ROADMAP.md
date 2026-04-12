@@ -89,10 +89,10 @@
 - [x] Meetings auto-done after day-of (frontend and backend)
 - [x] Meetings should have a time
 - [x] Implement deadlines
-- [ ] Integration with Google Calendar (push meetings to calendar, timezone-aware)
+- [x] Integration with Google Calendar (push meetings to calendar, timezone-aware)
   - [x] Pull events from Google Calendar into Work Smarter
-  - [ ] Users should have the option to blacklist certain meetings from importing
-  - [ ] Sync tasks with deadlines once deadlines are implemented
+  - [x] Users should have the option to blacklist certain meetings from importing
+  - [x] Sync tasks with deadlines once deadlines are implemented
 - [ ] Add dark mode
 - [ ] Resume features
 - [ ] AI resume analysis
