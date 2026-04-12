@@ -33,6 +33,27 @@ export default function TaskTable({
   const dateLabel = (t: any) => String(t.begin_date ?? "").slice(0, 10);
 
 
+  const deadlineBadge = (t: AnyTask) => {
+    const dl = (t as any).deadline_date as string | null | undefined;
+    if (!dl || isDone(t)) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const deadline = new Date(dl + 'T00:00:00');
+    const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / 86400000);
+    if (diffDays > 3) return null;
+    return (
+      <span
+        className={`shrink-0 text-[11px] px-2 py-0.5 rounded border whitespace-nowrap ${
+          diffDays < 0
+            ? 'bg-red-50 text-red-600 border-red-200'
+            : 'bg-amber-50 text-amber-600 border-amber-200'
+        }`}
+        title={diffDays < 0 ? `Overdue (due ${dl})` : `Due ${dl}`}
+      >
+        ⚑ {diffDays < 0 ? 'Overdue' : diffDays === 0 ? 'Due today' : `Due in ${diffDays}d`}
+      </span>
+    );
+  };
+
   const recurrenceBadge = (t: AnyTask) => {
     const freq = (t as any).recurring_frequency;
     if (!freq || t.__collapsed) return null;
@@ -64,14 +85,6 @@ export default function TaskTable({
       <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`} children={(
         <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
             <table className="w-full text-sm table-fixed">
-              <thead className="text-[11px] text-gray-600">
-                <tr className="border-b">
-                  <th className="px-3 py-1.5 text-left uppercase tracking-wide">
-                    Title
-                  </th>
-                </tr>
-              </thead>
-
               <tbody>
                 {meetingsToRender.map((t: AnyTask) => (
                   <tr
@@ -102,6 +115,7 @@ export default function TaskTable({
                         {/* Weekly: show subtask progress badge on parent rows */}
                         {progressBadge(t)}
                         {recurrenceBadge(t)}
+                        {deadlineBadge(t)}
 
                         {t.__collapsed ? (
                           <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
@@ -129,14 +143,6 @@ export default function TaskTable({
       <SectionPanel title="WORK" right={`${workToRender.length} total`} children={(
         <div className={`${sectionMaxHeightClass(workToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
           <table className="w-full text-sm table-fixed">
-            <thead className="text-[11px] text-gray-600">
-              <tr className="border-b">
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide">
-                  Task
-                </th>
-              </tr>
-            </thead>
-
             <tbody>
               {workToRender.map((t: AnyTask) => (
                 <tr
@@ -161,6 +167,7 @@ export default function TaskTable({
                       {/* Weekly: show subtask progress badge on parent rows */}
                       {progressBadge(t)}
                       {recurrenceBadge(t)}
+                      {deadlineBadge(t)}
 
                       {t.__collapsed ? (
                         <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">

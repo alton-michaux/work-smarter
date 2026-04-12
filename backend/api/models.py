@@ -35,8 +35,17 @@ class Resume(models.Model):
         return f"{self.user}'s Resume"
     
 class Project(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('complete', 'Complete'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="projects", null=False, blank=False)
     name = models.CharField(max_length=100)
+    color = models.CharField(max_length=7, default='#3b82f6', blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    description = models.TextField(blank=True, default='')
+    role = models.CharField(max_length=100, blank=True, default='')
     created = models.DateTimeField(auto_now_add=True)
 
 class RecurringTask(models.Model):        
@@ -58,6 +67,7 @@ class RecurringTask(models.Model):
     is_active = models.BooleanField(default=True)
     last_generated_at = models.DateField(null=True, blank=True)
     skip_weekends = models.BooleanField(default=False)
+    google_recurring_event_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
 class RecurringTaskException(models.Model):
     TYPE_SKIP = "skip"
@@ -104,6 +114,7 @@ class Task(models.Model):
 
     begin_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    deadline_date = models.DateField(null=True, blank=True)
     begin_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)

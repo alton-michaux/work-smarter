@@ -92,6 +92,7 @@ export default function TaskForm({
       description: task.description ?? "",
       begin_date: task.begin_date,
       end_date: task.end_date ?? null,
+      deadline_date: task.deadline_date ?? null,
       begin_time: isMeeting ? (task.begin_time || null) : null,
       end_time: isMeeting ? (task.end_time || null) : null,
       project: task.project === "" ? null : task.project ?? null,
@@ -215,6 +216,19 @@ export default function TaskForm({
           {errors.begin_date ? (
             <p className="text-sm text-red-600 mt-1">{errors.begin_date}</p>
           ) : null}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Deadline <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <input
+            type="date"
+            name="deadline_date"
+            value={task.deadline_date ?? ""}
+            onChange={handleChange}
+            className={inputClass}
+          />
         </div>
 
         {task.category === "meeting" && (

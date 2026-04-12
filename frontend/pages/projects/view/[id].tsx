@@ -57,29 +57,38 @@ const ProjectShowPage = () => {
         <div className="mb-8 flex items-start justify-between gap-6 shrink-0">
           <div className="min-w-0">
             <div className="text-xs uppercase tracking-wide text-gray-500">Project</div>
-            <h1 className="mt-1 text-2xl font-semibold text-gray-900 truncate">
-              {project.name}
-            </h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Review activity, meetings, and work items over time.
-            </p>
+            <div className="mt-1 flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl font-semibold text-gray-900 truncate">
+                {project.name}
+              </h1>
+              {project.role && (
+                <span className="inline-flex items-center rounded-full px-1.5 py-px text-[8px] font-semibold uppercase tracking-wide bg-blue-50 text-blue-700">
+                  {project.role}
+                </span>
+              )}
+            </div>
+            {project.description ? (
+              <p className="mt-2 text-sm text-gray-600">{project.description}</p>
+            ) : (
+              <p className="mt-2 text-sm text-gray-400 italic">No description.</p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => router.back()}
-              className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-              type="button"
-            >
-              ← Back
-            </button>
-
             <button
               onClick={() => router.push("/projects")}
               className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
               type="button"
             >
               All Projects
+            </button>
+
+            <button
+              onClick={() => router.push(`/tasks/create?project=${project.id}`)}
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition"
+              type="button"
+            >
+              + New Task
             </button>
 
             <button

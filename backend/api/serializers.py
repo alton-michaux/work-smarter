@@ -12,6 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     begin_date = serializers.DateField(required=False, allow_null=True, default=None)
     end_date = serializers.DateField(required=False, allow_null=True, default=None)
+    deadline_date = serializers.DateField(required=False, allow_null=True, default=None)
     begin_time = serializers.TimeField(required=False, allow_null=True, default=None)
     end_time = serializers.TimeField(required=False, allow_null=True, default=None)
 
@@ -130,6 +131,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "user",
             "begin_date",
             "end_date",
+            "deadline_date",
             "begin_time",
             "end_time",
             "project",
@@ -155,6 +157,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "recurring_task": {"required": False, "allow_null": True},
             "begin_date": {"required": False, "allow_null": True},
             "end_date": {"required": False, "allow_null": True},
+            "deadline_date": {"required": False, "allow_null": True},
             "begin_time": {"required": False, "allow_null": True},
             "end_time": {"required": False, "allow_null": True},
             "google_event_id": {"read_only": True},

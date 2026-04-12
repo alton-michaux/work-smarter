@@ -20,6 +20,20 @@ function projectColor(id: number) {
   return PROJECT_COLORS[id % PROJECT_COLORS.length];
 }
 
+function deadlineStatus(
+  deadlineDate: string | null | undefined,
+  isDone: boolean
+): 'overdue' | 'soon' | null {
+  if (!deadlineDate || isDone) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const deadline = new Date(deadlineDate + 'T00:00:00');
+  const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / 86400000);
+  if (diffDays < 0) return 'overdue';
+  if (diffDays <= 3) return 'soon';
+  return null;
+}
+
 function formatTime(timeStr?: string | null): string | null {
   if (!timeStr) return null;
   const [h, m] = timeStr.split(':').map(Number);
@@ -69,7 +83,7 @@ function OutlineRow({
   const { projects } = useProjects();
   const priorityBorder = PRIORITY_BORDER[String(node.priority ?? '').toLowerCase()] ?? 'transparent';
   const projectObj = node.project != null ? projects.find(p => p.id === node.project) : null;
-  const pColor = projectObj ? projectColor(projectObj.id) : null;
+  const pColor = projectObj ? (projectObj.color ?? projectColor(projectObj.id)) : null;
 
   const submitSubtask = async () => {
     const title = subtaskTitle.trim();
@@ -139,14 +153,13 @@ function OutlineRow({
             className={[
               "block w-full text-left",
               "font-medium",
-              "truncate",
               isDone ? "text-gray-500 line-through" : "text-gray-900",
               "hover:text-blue-700",
               "focus:outline-none focus:ring-2 focus:ring-blue-200 rounded-sm",
             ].join(" ")}
             title={node.title}
           >
-            <span className="flex items-center gap-2 min-w-0">
+            <span className="flex items-center gap-1.5 min-w-0 overflow-hidden">
               {pColor && (
                 <span
                   className="shrink-0 inline-block w-2 h-2 rounded-full"
@@ -187,8 +200,12 @@ function OutlineRow({
             <span className="uppercase tracking-wide">
               {(node.priority ?? '—').toString()}
             </span>
-            <span className="mx-2 text-gray-300">•</span>
-            <span>{node.begin_date ?? '—'}</span>
+            {type !== 'meeting' && (
+              <>
+                <span className="mx-2 text-gray-300">•</span>
+                <span>{node.begin_date ?? '—'}</span>
+              </>
+            )}
             {type === 'meeting' && node.begin_time && (
               <>
                 <span className="mx-2 text-gray-300">•</span>
@@ -198,6 +215,23 @@ function OutlineRow({
                 </span>
               </>
             )}
+            {node.deadline_date && (() => {
+              const st = deadlineStatus(node.deadline_date, isDone);
+              return (
+                <>
+                  <span className="mx-2 text-gray-300">•</span>
+                  <span
+                    className={
+                      st === 'overdue' ? 'text-red-600 font-medium' :
+                      st === 'soon'    ? 'text-amber-600 font-medium' :
+                                         'text-gray-500'
+                    }
+                  >
+                    ⚑ {node.deadline_date}
+                  </span>
+                </>
+              );
+            })()}
           </div>
 
           {/* Inline Add Subtask */}

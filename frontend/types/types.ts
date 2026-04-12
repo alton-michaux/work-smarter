@@ -38,6 +38,7 @@ export type Task = {
   project?: number;
   begin_date: string;
   end_date: string;
+  deadline_date?: string | null;
   begin_time?: string | null;
   end_time?: string | null;
 
@@ -53,6 +54,7 @@ export type Task = {
 export type CreateTaskPayload = {
   title: string;
   begin_date?: string | null;
+  deadline_date?: string | null;
   category?: string | null;
   project?: number | null;
 
@@ -141,6 +143,10 @@ export type Project = {
   created: Date;
   id: number;
   name: string;
+  color?: string;
+  status?: 'active' | 'complete';
+  description?: string;
+  role?: string;
   tasks?: Task[];
   user?: number | User;
 };
@@ -148,6 +154,9 @@ export type Project = {
 export type NewProject = {
   name: string;
   user: number;
+  status?: 'active' | 'complete';
+  description?: string;
+  role?: string;
 };
 
 export type ProjectsContextType = {
