@@ -71,13 +71,13 @@
 - [x] Weekly summary header (X done / Y remaining)
 - [x] Micro polish: hover states, subtle transitions, keyboard nav
 - [x] Recurrence badges ("weekly", "ongoing")
-- [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
-- [ ] Project-scoped tags
 
 ---
 
-(not sure if these make sense)
+### De-scoped/low priority
 
+- [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
+- [ ] Project-scoped tags
 - [ ] "Seen this week" indicators
 - [ ] Collapsible "Background reminders" section — visual distinction only, no behavior yet
 
