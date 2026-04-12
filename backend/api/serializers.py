@@ -208,7 +208,8 @@ class ProjectSerializer(serializers.ModelSerializer):
 class ResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
-        fields = '__all__'  # Include all fields from the Resume model
+        fields = ['id', 'title', 'file', 'uploaded_at']
+        read_only_fields = ['id', 'uploaded_at']
 
 class ResumeAnalysisSerializer(serializers.Serializer):
     suggestions = serializers.ListField(child=serializers.CharField())  # List of suggestions from analysis
