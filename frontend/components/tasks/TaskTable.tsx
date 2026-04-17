@@ -44,8 +44,8 @@ export default function TaskTable({
       <span
         className={`shrink-0 text-[11px] px-2 py-0.5 rounded border whitespace-nowrap ${
           diffDays < 0
-            ? 'bg-red-50 text-red-600 border-red-200'
-            : 'bg-amber-50 text-amber-600 border-amber-200'
+            ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
+            : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800'
         }`}
         title={diffDays < 0 ? `Overdue (due ${dl})` : `Due ${dl}`}
       >
@@ -58,7 +58,7 @@ export default function TaskTable({
     const freq = (t as any).recurring_frequency;
     if (!freq || t.__collapsed) return null;
     return (
-      <span className="text-[11px] px-2 py-0.5 rounded bg-purple-50 text-purple-500 border border-purple-200 whitespace-nowrap">
+      <span className="text-[11px] px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/20 text-purple-500 dark:text-purple-400 border border-purple-200 dark:border-purple-800 whitespace-nowrap">
         ↻ {freq}
       </span>
     );
@@ -70,7 +70,7 @@ export default function TaskTable({
 
     return (
       <span
-        className="text-[11px] px-2 py-0.5 rounded border text-gray-500 whitespace-nowrap"
+        className="text-[11px] px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 whitespace-nowrap"
         title="Subtask progress"
       >
         {prog.done}/{prog.total}
@@ -83,17 +83,17 @@ export default function TaskTable({
       {/* MEETINGS */}
       <div className="lg:col-span-3">
       <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`} children={(
-        <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
+        <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50/40 dark:bg-blue-900/10`}>
             <table className="w-full text-sm table-fixed">
               <tbody>
                 {meetingsToRender.map((t: AnyTask) => (
                   <tr
                     key={t.id}
-                    className={`border-b last:border-b-0 transition-colors duration-150 hover:bg-white/60 ${
+                    className={`border-b last:border-b-0 transition-colors duration-150 hover:bg-white/60 dark:hover:bg-white/5 ${
                       isDone(t)
                         ? isAutoDoneMeeting(t)
-                          ? "bg-blue-50/60"
-                          : "bg-green-50"
+                          ? "bg-blue-50/60 dark:bg-blue-900/20"
+                          : "bg-green-50 dark:bg-green-900/20"
                         : ""
                     }`}
                   >
@@ -104,8 +104,8 @@ export default function TaskTable({
                         <span
                           className={`min-w-0 truncate font-medium leading-tight ${
                             isDone(t)
-                              ? "text-gray-500 line-through"
-                              : "text-gray-900"
+                              ? "text-gray-500 dark:text-gray-500 line-through"
+                              : "text-gray-900 dark:text-gray-100"
                           }`}
                           title={t.title}
                         >
@@ -118,7 +118,7 @@ export default function TaskTable({
                         {deadlineBadge(t)}
 
                         {t.__collapsed ? (
-                          <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
+                          <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 whitespace-nowrap">
                             Daily ↻ ({t.__occurrenceCount ?? 1}x)
                           </span>
                         ) : null}
@@ -130,7 +130,7 @@ export default function TaskTable({
             </table>
 
             {!meetingsToRender.length && (
-              <div className="px-4 py-3 text-sm text-gray-500">
+              <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                 No meetings this week.
               </div>
             )}
@@ -141,14 +141,14 @@ export default function TaskTable({
       {/* WORK */}
       <div className="lg:col-span-6">
       <SectionPanel title="WORK" right={`${workToRender.length} total`} children={(
-        <div className={`${sectionMaxHeightClass(workToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
+        <div className={`${sectionMaxHeightClass(workToRender.length)} overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50/40 dark:bg-blue-900/10`}>
           <table className="w-full text-sm table-fixed">
             <tbody>
               {workToRender.map((t: AnyTask) => (
                 <tr
                   key={t.id}
-                  className={`font-medium border-b last:border-b-0 transition-colors duration-150 hover:bg-white ${
-                    isDone(t) ? "bg-green-50" : ""
+                  className={`font-medium border-b last:border-b-0 transition-colors duration-150 hover:bg-white dark:hover:bg-white/5 ${
+                    isDone(t) ? "bg-green-50 dark:bg-green-900/20" : ""
                   }`}
                 >
                   <td className="px-3 py-1.5">
@@ -156,8 +156,8 @@ export default function TaskTable({
                       <div
                         className={`font-medium truncate leading-tight ${
                           isDone(t)
-                            ? "text-gray-500 line-through"
-                            : "text-gray-900"
+                            ? "text-gray-500 dark:text-gray-500 line-through"
+                            : "text-gray-900 dark:text-gray-100"
                         }`}
                         title={t.title}
                       >
@@ -170,7 +170,7 @@ export default function TaskTable({
                       {deadlineBadge(t)}
 
                       {t.__collapsed ? (
-                        <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
+                        <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 whitespace-nowrap">
                           Daily ↻ ({t.__occurrenceCount ?? 1}x)
                         </span>
                       ) : null}
@@ -182,7 +182,7 @@ export default function TaskTable({
 
               {!workToRender.length && (
                 <tr>
-                  <td colSpan={1} className="px-4 py-3 text-sm text-gray-500">
+                  <td colSpan={1} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                     No work items this week.
                   </td>
                 </tr>
@@ -196,7 +196,7 @@ export default function TaskTable({
       {/* NOTES */}
       <div className="lg:col-span-3">
       <SectionPanel title="NOTES" right="Ongoing" children={(
-        <div className={`${sectionMaxHeightClass(notes.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
+        <div className={`${sectionMaxHeightClass(notes.length)} overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50/40 dark:bg-blue-900/10`}>
           {notes.length ? (
             <div className="space-y-3">
               {notes.map((n: any) => (
@@ -211,7 +211,7 @@ export default function TaskTable({
               ))}
             </div>
           ) : (
-            <div className="px-4 py-3 text-sm text-gray-500">No notes.</div>
+            <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">No notes.</div>
           )}
         </div>
       )} />

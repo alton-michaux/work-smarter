@@ -75,22 +75,22 @@ const TasksPage = () => {
   }, [selectedDate]); // keeping your existing behavior
 
   return (
-    <div className="h-screen bg-gray-50 px-4 overflow-hidden">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 px-4 overflow-hidden">
       <div className="mx-auto w-full max-w-6xl h-full">
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm h-full flex flex-col overflow-hidden">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm h-full flex flex-col overflow-hidden">
           {/* ───────────────── Sticky Header ───────────────── */}
-          <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm isolate">
+          <div className="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm isolate">
             <div className="px-6 py-4">
               {/* Title row */}
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <h1 className="text-lg font-semibold text-gray-900">
+                  <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Daily Log
                   </h1>
                   {selectedDate && (
-                    <p className="mt-1 text-sm text-gray-600">
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                       Showing{' '}
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-gray-900 dark:text-gray-100">
                         {selectedDate}
                       </span>
                     </p>
@@ -104,7 +104,7 @@ const TasksPage = () => {
                       type="date"
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-[160px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      className="w-[160px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
                     />
                   </div>
                 )}
@@ -135,7 +135,7 @@ const TasksPage = () => {
           {/* ───────────────── Content ───────────────── */}
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-6 pt-6 pb-6">
             {error && (
-              <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <div className="mb-4 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-sm text-red-700 dark:text-red-400">
                 {error}
               </div>
             )}
@@ -143,8 +143,8 @@ const TasksPage = () => {
             {!selectedDate ? (
               <p className="text-gray-600 text-center">Loading…</p>
             ) : !isLoading && dailyTasks.length === 0 ? (
-              <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-8 text-center">
-                <p className="text-sm text-gray-700">
+              <div className="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 px-4 py-8 text-center">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
                   No entries for{' '}
                   <span className="font-medium">{selectedDate}</span>.
                 </p>
@@ -189,7 +189,7 @@ const TasksPage = () => {
           </div>
 
           {/* ───────────────── Bottom Navigation (outside scroll) ───────────────── */}
-          <div className="shrink-0 border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+          <div className="shrink-0 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
             <button
               onClick={() => router.push('/tasks/tracker')}
               className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
@@ -198,7 +198,7 @@ const TasksPage = () => {
             </button>
             <button
               onClick={() => router.push('/dashboard')}
-              className="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              className="inline-flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
             >
               Dashboard
             </button>

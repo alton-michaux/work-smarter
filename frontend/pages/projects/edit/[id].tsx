@@ -22,7 +22,7 @@ export default function ProjectEditPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Edit Project</h1>
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6 text-center">Edit Project</h1>
       {isLoading ? (
         <div className="flex justify-center py-8">
           <Spinner />
@@ -30,7 +30,7 @@ export default function ProjectEditPage() {
       ) : (
         <ProjectForm initialProject={project} user={user} onSubmit={handleUpdate} submitLabel="Update" />
       )}
-      <button className="text-gray-500 text-sm hover:underline" onClick={() => router.push(`/projects/view/${id}`)} style={{ marginTop: 12 }}>Cancel</button>
+      <button className="text-gray-500 dark:text-gray-400 text-sm hover:underline" onClick={() => router.push(`/projects/view/${id}`)} style={{ marginTop: 12 }}>Cancel</button>
     </div>
   );
 }

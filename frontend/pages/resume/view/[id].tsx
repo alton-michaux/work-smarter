@@ -84,16 +84,16 @@ export default function ResumeViewPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <p className="text-sm text-gray-400">Loading...</p>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-sm text-gray-400 dark:text-gray-500">Loading...</p>
       </div>
     );
   }
 
   if (!resume) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <p className="text-sm text-gray-400">Resume not found.</p>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-sm text-gray-400 dark:text-gray-500">Resume not found.</p>
       </div>
     );
   }
@@ -101,23 +101,23 @@ export default function ResumeViewPage() {
   const canPreview = isPdf(resume.file);
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-12">
       <div className="max-w-5xl mx-auto px-6">
 
         <button
           onClick={() => router.push('/resume')}
-          className="mb-6 text-sm text-gray-500 hover:text-gray-700 transition"
+          className="mb-6 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
           type="button"
         >
           &larr; All Resumes
         </button>
 
         {/* Header */}
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-6 mb-6">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 mb-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">{resume.title}</h1>
-              <p className="mt-1 text-xs text-gray-400">Uploaded {formatDate(resume.uploaded_at)}</p>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{resume.title}</h1>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Uploaded {formatDate(resume.uploaded_at)}</p>
             </div>
             <div className="flex gap-2 shrink-0">
               <button
@@ -129,7 +129,7 @@ export default function ResumeViewPage() {
               </button>
               <button
                 onClick={handleDelete}
-                className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 transition"
+                className="rounded-md border border-red-200 dark:border-red-800 px-4 py-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
                 type="button"
               >
                 Delete
@@ -140,10 +140,10 @@ export default function ResumeViewPage() {
 
         {/* Preview */}
         {canPreview ? (
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
             {previewLoading ? (
               <div className="flex items-center justify-center" style={{ height: '80vh' }}>
-                <p className="text-sm text-gray-400">Loading preview...</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Loading preview...</p>
               </div>
             ) : blobUrl ? (
               <iframe
@@ -154,7 +154,7 @@ export default function ResumeViewPage() {
               />
             ) : (
               <div className="flex flex-col items-center justify-center gap-4 p-10 text-center" style={{ height: '80vh' }}>
-                <p className="text-sm text-gray-500">Preview could not be loaded.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Preview could not be loaded.</p>
                 <button
                   onClick={handleDownload}
                   className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
@@ -166,8 +166,8 @@ export default function ResumeViewPage() {
             )}
           </div>
         ) : (
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-10 text-center">
-            <p className="text-sm text-gray-500">Preview is not available for Word documents.</p>
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-10 text-center">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Preview is not available for Word documents.</p>
             <button
               onClick={handleDownload}
               className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
