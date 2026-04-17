@@ -135,7 +135,7 @@ const TasksPage = () => {
           {/* ───────────────── Content ───────────────── */}
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-6 pt-6 pb-6">
             {error && (
-              <div className="mb-4 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+              <div className="mb-4 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900 dark:bg-opacity-20 px-3 py-2 text-sm text-red-700 dark:text-red-400">
                 {error}
               </div>
             )}

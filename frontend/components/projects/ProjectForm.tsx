@@ -53,7 +53,7 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
       className="max-w-md mx-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4"
     >
       {formError ? (
-        <div className="rounded border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm px-4 py-2">
+        <div className="rounded border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900 dark:bg-opacity-20 text-red-700 dark:text-red-400 text-sm px-4 py-2">
           {formError}
         </div>
       ) : null}
