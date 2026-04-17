@@ -93,7 +93,7 @@
   - [x] Pull events from Google Calendar into Work Smarter
   - [x] Users should have the option to blacklist certain meetings from importing
   - [x] Sync tasks with deadlines once deadlines are implemented
-- [ ] Add dark mode
+- [x] Add dark mode
 - [ ] Make tasks searchable
 - [x] Resume
   - [x] User can have an attached resume model(s)
@@ -104,7 +104,7 @@
 
 ## User-facing (go-live features)
 
-- [ ] Account show/edit page
+- [x] Account show/edit page
 - [ ] Beef up account security
 - [ ] Tutorial section
 - [ ] About page
