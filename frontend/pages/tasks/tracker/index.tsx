@@ -81,27 +81,27 @@ export default function TaskTrackerPage() {
   if (!selectedWeek) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">
-      <div className="w-full max-w-6xl bg-white rounded-lg shadow">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center px-4 py-10">
+      <div className="w-full max-w-6xl bg-white dark:bg-gray-800 rounded-lg shadow">
 
         {/* Sticky header */}
-        <div className="sticky top-0 z-20 bg-white border-b">
+        <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="p-8 pb-6">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                 Weekly Task Tracker
               </h1>
               <div className="flex gap-2">
                 <button
                   onClick={() => router.push('/tasks')}
-                  className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                  className="rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
                   type="button"
                 >
                   Daily Log
                 </button>
                 <button
                   onClick={() => router.push('/dashboard')}
-                  className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                  className="rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
                   type="button"
                 >
                   Dashboard
@@ -115,7 +115,7 @@ export default function TaskTrackerPage() {
             />
 
             {!isLoading && (
-              <div className="mt-3 flex justify-center gap-4 text-sm text-gray-500">
+              <div className="mt-3 flex justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                 <span className="text-green-600 font-medium">{weekSummary.done} done</span>
                 <span>·</span>
                 <span>{weekSummary.remaining} remaining</span>

@@ -10,7 +10,7 @@ export default function MarkdownBody({ value, emptyText = "No notes yet." }: Mar
   }
 
   return (
-    <div className="prose prose-sm max-w-none">
+    <div className="prose prose-sm max-w-none dark:prose-invert">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
     </div>
   );

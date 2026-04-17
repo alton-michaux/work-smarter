@@ -22,18 +22,18 @@ export default function ConfirmDeleteRecurringModal({
       />
 
       {/* Dialog */}
-      <div className="relative mx-auto mt-32 w-full max-w-md rounded-lg bg-white shadow-lg">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+      <div className="relative mx-auto mt-32 w-full max-w-md rounded-lg bg-white dark:bg-gray-800 shadow-lg">
+        <div className="p-4 border-b dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
         </div>
 
-        <div className="p-4 text-sm text-gray-700">
+        <div className="p-4 text-sm text-gray-700 dark:text-gray-300">
           {body}
         </div>
 
-        <div className="p-4 border-t flex justify-end gap-2 flex-wrap">
+        <div className="p-4 border-t dark:border-gray-700 flex justify-end gap-2 flex-wrap">
           <button
-            className="px-3 py-2 rounded-md border text-gray-700 hover:bg-gray-50"
+            className="px-3 py-2 rounded-md border dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
             onClick={onClose}
             type="button"
           >
@@ -41,7 +41,7 @@ export default function ConfirmDeleteRecurringModal({
           </button>
 
           <button
-            className="px-3 py-2 rounded-md border text-gray-800 hover:bg-gray-50"
+            className="px-3 py-2 rounded-md border dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
             onClick={onDeleteOccurrence}
             type="button"
           >

@@ -11,16 +11,16 @@ const Home = () => {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {loggedIn ? (
         <main className="mx-auto max-w-4xl px-6 py-16">
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
             {/* Header */}
-            <div className="border-b border-gray-100 px-8 py-6">
-              <h1 className="text-2xl font-semibold text-gray-900">
+            <div className="border-b border-gray-100 dark:border-gray-700 px-8 py-6">
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                 Welcome back
               </h1>
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 You’re signed in. Choose your next step.
               </p>
             </div>
@@ -37,7 +37,7 @@ const Home = () => {
 
                 <button
                   onClick={() => router.push("/tasks")}
-                  className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+                  className="inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
                 >
                   Open Tasks
                 </button>
@@ -46,7 +46,7 @@ const Home = () => {
               <div className="mt-8 flex justify-end">
                 <button
                   onClick={() => router.push("/logout")}
-                  className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:underline transition"
+                  className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:underline transition"
                 >
                   Log out
                 </button>
@@ -54,8 +54,8 @@ const Home = () => {
             </div>
 
             {/* Bottom hint */}
-            <div className="border-t border-gray-100 px-8 py-4">
-              <p className="text-xs text-gray-500">
+            <div className="border-t border-gray-100 dark:border-gray-700 px-8 py-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Go to the dashboard for an overview of your work or dive straight in and go to your daily task log.
               </p>
             </div>

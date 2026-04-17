@@ -45,7 +45,7 @@ export default function TaskForm({
   }, [initialTask]);
 
   const inputClass =
-    "w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 " +
+    "w-full rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 " +
     "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
 
   const selectClass = inputClass;
@@ -153,7 +153,7 @@ export default function TaskForm({
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-8">
       {formError ? (
-        <div className="rounded-md border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-2">
+        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm px-4 py-2">
           {formError}
         </div>
       ) : null}
@@ -161,7 +161,7 @@ export default function TaskForm({
       {/* Basics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
           <input
             name="title"
             value={task.title ?? ""}
@@ -172,7 +172,7 @@ export default function TaskForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
           <select
             name="category"
             value={task.category ?? ""}
@@ -188,7 +188,7 @@ export default function TaskForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
           <select
             name="priority"
             value={task.priority ?? ""}
@@ -205,7 +205,7 @@ export default function TaskForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
           <input
             type="date"
             name="begin_date"
@@ -219,7 +219,7 @@ export default function TaskForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Deadline <span className="text-gray-400 font-normal">(optional)</span>
           </label>
           <input
@@ -234,7 +234,7 @@ export default function TaskForm({
         {task.category === "meeting" && (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Time</label>
               <input
                 type="time"
                 name="begin_time"
@@ -251,7 +251,7 @@ export default function TaskForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Time</label>
               <input
                 type="time"
                 name="end_time"
@@ -265,7 +265,7 @@ export default function TaskForm({
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project</label>
           <select
             name="project"
             value={task.project ?? ""}
@@ -288,11 +288,11 @@ export default function TaskForm({
       </div>
 
       {/* Options */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3">Options</h2>
+      <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Options</h2>
 
         <div className="flex flex-wrap gap-6 justify-around">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
             <input
               type="checkbox"
               name="is_done"
@@ -314,7 +314,7 @@ export default function TaskForm({
             Is Subtask
           </label> */}
 
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
             <input
               type="checkbox"
               name="carry_over"
@@ -330,8 +330,8 @@ export default function TaskForm({
       {/* Notes */}
       <div className="space-y-3">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-gray-900">Notes</h2>
-          <span className="text-xs text-gray-500">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notes</h2>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             Markdown supported: lists, checkboxes, code blocks.
           </span>
         </div>
@@ -344,16 +344,16 @@ export default function TaskForm({
       </div>
 
       {/* Recurrence */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+      <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">Recurrence</h2>
-            <p className="text-xs text-gray-500 mt-1">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recurrence</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Automatically create occurrences on a schedule.
             </p>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700 select-none">
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 select-none">
             <input
               type="checkbox"
               checked={recurrence.repeats}
@@ -362,14 +362,14 @@ export default function TaskForm({
               }
               className="h-4 w-4"
             />
-            <span className="font-medium text-gray-900">Repeats</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">Repeats</span>
           </label>
         </div>
 
         {recurrence.repeats ? (
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Frequency
               </label>
               <select
@@ -389,7 +389,7 @@ export default function TaskForm({
 
             {recurrence.frequency === "daily" ? (
               <div className="flex items-center gap-2">
-                <label className="flex items-center gap-2 text-sm text-gray-700 select-none">
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 select-none">
                   <input
                     type="checkbox"
                     checked={recurrence.skip_weekends}
@@ -403,7 +403,7 @@ export default function TaskForm({
               </div>
             ) : (recurrence.frequency === "weekly" || recurrence.frequency === "biweekly") ? (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Day of week
                 </label>
                 <select
@@ -430,7 +430,7 @@ export default function TaskForm({
             )}
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Start date
               </label>
               <input
@@ -444,14 +444,14 @@ export default function TaskForm({
             </div>
           </div>
         ) : (
-          <div className="mt-4 text-sm text-gray-600">
-            Turn on <span className="font-medium text-gray-900">Repeats</span> to set a schedule.
+          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            Turn on <span className="font-medium text-gray-900 dark:text-gray-100">Repeats</span> to set a schedule.
           </div>
         )}
       </div>
 
       {/* Actions */}
-      <div className="sticky bottom-0 -mx-6 border-t border-gray-200 bg-white/90 backdrop-blur px-6 py-4">
+      <div className="sticky bottom-0 -mx-6 border-t border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 backdrop-blur px-6 py-4">
         <div className="flex items-center justify-between">
           <Link href="/tasks">
             <Button type="button" variant="secondary">

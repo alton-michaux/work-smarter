@@ -118,7 +118,7 @@ const TaskShowPage = () => {
     <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
       {/* Top bar */}
       <div className="flex items-center justify-between">
-        <a href="/tasks" className="text-sm text-gray-600 hover:text-blue-600">
+        <a href="/tasks" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
           ← All Tasks
         </a>
 
@@ -127,7 +127,7 @@ const TaskShowPage = () => {
             <button
               onClick={handlePushToCalendar}
               disabled={isPushing}
-              className="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
             >
               {isPushing ? 'Syncing…' : task.google_event_id ? 'Re-sync to Calendar' : 'Push to Calendar'}
             </button>
@@ -136,7 +136,7 @@ const TaskShowPage = () => {
             <button
               onClick={handlePushDeadline}
               disabled={isSyncingDeadline}
-              className="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
             >
               {isSyncingDeadline ? 'Syncing…' : task.deadline_event_id ? 'Re-sync deadline' : 'Sync deadline to Calendar'}
             </button>
@@ -145,7 +145,7 @@ const TaskShowPage = () => {
             <button
               onClick={handleBlacklist}
               disabled={isBlacklisting}
-              className="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
             >
               {isBlacklisting ? 'Blacklisting…' : 'Never import again'}
             </button>
@@ -153,7 +153,7 @@ const TaskShowPage = () => {
           {/* replace with your Button later */}
           <a
             onClick={() => handleEdit()}
-            className="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
           >
             Edit
           </a>
@@ -167,15 +167,15 @@ const TaskShowPage = () => {
       </div>
 
       {/* Header */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-3">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6 space-y-3">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-xl font-semibold text-gray-900 truncate">
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 truncate">
               {task.title}
             </h1>
 
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
-              <span className="inline-flex items-center rounded-full border border-gray-200 px-2 py-0.5">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <span className="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-600 px-2 py-0.5">
                 {task.is_done ? "Done" : "Open"}
               </span>
               <span>•</span>
@@ -198,10 +198,10 @@ const TaskShowPage = () => {
       {/* Content + Details */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Markdown description */}
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-gray-900">Notes</h2>
-            <span className="text-xs text-gray-500">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notes</h2>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               Task #{task.id}
             </span>
           </div>
@@ -210,50 +210,50 @@ const TaskShowPage = () => {
         </div>
 
         {/* Details */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-          <h2 className="text-sm font-semibold text-gray-900 mb-4">Details</h2>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Details</h2>
 
           <dl className="space-y-3 text-sm">
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-500">Status</dt>
-              <dd className="text-gray-900">{task.is_done ? "Done" : "Open"}</dd>
+              <dt className="text-gray-500 dark:text-gray-400">Status</dt>
+              <dd className="text-gray-900 dark:text-gray-100">{task.is_done ? "Done" : "Open"}</dd>
             </div>
 
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-500">Carry Over</dt>
-              <dd className="text-gray-900">{task.carry_over ? "Yes" : "No"}</dd>
+              <dt className="text-gray-500 dark:text-gray-400">Carry Over</dt>
+              <dd className="text-gray-900 dark:text-gray-100">{task.carry_over ? "Yes" : "No"}</dd>
             </div>
 
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-gray-500">Subtask</dt>
-              <dd className="text-gray-900">{task.is_subtask ? "Yes" : "No"}</dd>
+              <dt className="text-gray-500 dark:text-gray-400">Subtask</dt>
+              <dd className="text-gray-900 dark:text-gray-100">{task.is_subtask ? "Yes" : "No"}</dd>
             </div>
 
             {/* Add your dates if available */}
             {task.begin_date ? (
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-gray-500">Begin</dt>
-                <dd className="text-gray-900">{task.begin_date}</dd>
+                <dt className="text-gray-500 dark:text-gray-400">Begin</dt>
+                <dd className="text-gray-900 dark:text-gray-100">{task.begin_date}</dd>
               </div>
             ) : null}
 
             {task.end_date ? (
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-gray-500">End</dt>
-                <dd className="text-gray-900">{task.end_date}</dd>
+                <dt className="text-gray-500 dark:text-gray-400">End</dt>
+                <dd className="text-gray-900 dark:text-gray-100">{task.end_date}</dd>
               </div>
             ) : null}
 
             {task.deadline_date ? (
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-gray-500">Deadline</dt>
+                <dt className="text-gray-500 dark:text-gray-400">Deadline</dt>
                 <dd className={(() => {
                   const today = new Date(); today.setHours(0, 0, 0, 0);
                   const d = new Date(task.deadline_date + 'T00:00:00');
                   const diff = Math.ceil((d.getTime() - today.getTime()) / 86400000);
-                  if (!task.is_done && diff < 0) return 'font-medium text-red-600';
-                  if (!task.is_done && diff <= 3) return 'font-medium text-amber-600';
-                  return 'text-gray-900';
+                  if (!task.is_done && diff < 0) return 'font-medium text-red-600 dark:text-red-400';
+                  if (!task.is_done && diff <= 3) return 'font-medium text-amber-600 dark:text-amber-400';
+                  return 'text-gray-900 dark:text-gray-100';
                 })()}>
                   {task.deadline_date}
                 </dd>
@@ -262,8 +262,8 @@ const TaskShowPage = () => {
 
             {task.category === 'meeting' && (
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-gray-500">Calendar Sync</dt>
-                <dd className="text-gray-900">
+                <dt className="text-gray-500 dark:text-gray-400">Calendar Sync</dt>
+                <dd className="text-gray-900 dark:text-gray-100">
                   {task.google_event_id ? (
                     <span className="inline-flex items-center gap-1 text-xs text-green-700">
                       <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
@@ -276,8 +276,8 @@ const TaskShowPage = () => {
 
             {task.deadline_date && (
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-gray-500">Deadline Sync</dt>
-                <dd className="text-gray-900">
+                <dt className="text-gray-500 dark:text-gray-400">Deadline Sync</dt>
+                <dd className="text-gray-900 dark:text-gray-100">
                   {task.deadline_event_id ? (
                     <span className="inline-flex items-center gap-1 text-xs text-green-700">
                       <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
@@ -291,8 +291,8 @@ const TaskShowPage = () => {
             {/* Keep IDs de-emphasized if you must show them */}
             {task.user ? (
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-gray-500">User</dt>
-                <dd className="text-gray-900">{task.user}</dd>
+                <dt className="text-gray-500 dark:text-gray-400">User</dt>
+                <dd className="text-gray-900 dark:text-gray-100">{task.user}</dd>
               </div>
             ) : null}
           </dl>

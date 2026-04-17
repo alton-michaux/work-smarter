@@ -24,13 +24,13 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-12">
       <div className="max-w-5xl mx-auto px-6">
         {/* Header */}
         <div className="mb-10 flex items-start justify-between gap-6">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Projects</h1>
-            <p className="mt-2 text-sm text-gray-600">
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Projects</h1>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Your workspace. Open a project to view meetings, tasks, and activity.
             </p>
           </div>
@@ -46,7 +46,7 @@ export default function ProjectsPage() {
 
             <button
               onClick={() => router.push("/dashboard")}
-              className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              className="rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
               type="button"
             >
               Dashboard
@@ -55,12 +55,12 @@ export default function ProjectsPage() {
         </div>
 
         {/* Body */}
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
-            <div className="text-xs uppercase tracking-wide text-gray-500">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+          <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 px-6 py-4">
+            <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
               Workspace
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
               {results.length} total
             </div>
           </div>
@@ -93,14 +93,14 @@ export default function ProjectsPage() {
               </div>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-200">
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
               {results.map((project: any) => (
                 <li key={project.id} className="px-6 py-4">
                   <div className="flex items-center justify-between gap-4">
                     {/* Clickable main area */}
                     <button
                       onClick={() => handleProjectClick(project.id)}
-                      className="min-w-0 flex-1 text-left rounded-md px-3 py-2 hover:bg-gray-50 transition"
+                      className="min-w-0 flex-1 text-left rounded-md px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                       type="button"
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -111,7 +111,7 @@ export default function ProjectsPage() {
                           </div>
                           <span
                             className={[
-                              "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white",
+                              "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-gray-800",
                               project.status === 'complete' ? "bg-gray-400" : "bg-green-500",
                             ].join(" ")}
                             title={project.status === 'complete' ? 'Complete' : 'Active'}
@@ -119,10 +119,10 @@ export default function ProjectsPage() {
                         </div>
 
                         <div className="min-w-0">
-                          <div className="text-sm font-semibold text-gray-900 truncate">
+                          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                             {project.name}
                           </div>
-                          <div className="mt-0.5 text-xs text-gray-500 truncate">
+                          <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 truncate">
                             {[project.role, project.description
                               ? project.description.length > 60
                                 ? project.description.slice(0, 60) + '…'
@@ -138,7 +138,7 @@ export default function ProjectsPage() {
                     <div className="flex shrink-0 items-center gap-2">
                       <button
                         onClick={() => handleEdit(project.id)}
-                        className="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition"
+                        className="rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
                         type="button"
                       >
                         Edit
@@ -146,7 +146,7 @@ export default function ProjectsPage() {
 
                       <button
                         onClick={() => handleDelete(project.id)}
-                        className="rounded-md border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 transition"
+                        className="rounded-md border border-red-200 dark:border-red-800 bg-white dark:bg-gray-700 px-3 py-2 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
                         type="button"
                       >
                         Delete
