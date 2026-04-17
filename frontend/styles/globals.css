@@ -12,3 +12,24 @@ html.dark body {
   background-color: #111827; /* gray-900 */
   color-scheme: dark;
 }
+
+/* prose-invert polyfill — @tailwindcss/typography v0.4 doesn't support it */
+.dark .prose {
+  color: #d1d5db; /* gray-300 */
+}
+.dark .prose strong {
+  color: #f3f4f6; /* gray-100 */
+}
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4 {
+  color: #f3f4f6; /* gray-100 */
+}
+.dark .prose a {
+  color: #93c5fd; /* blue-300 */
+}
+.dark .prose code {
+  color: #e5e7eb; /* gray-200 */
+  background-color: #374151; /* gray-700 */
+}

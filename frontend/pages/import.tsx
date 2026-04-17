@@ -115,8 +115,8 @@ export default function ImportPage() {
                       file:mr-4 file:py-2 file:px-4
                       file:rounded-md file:border-0
                       file:text-sm file:font-semibold
-                      file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400
-                      hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
+                      file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-400
+                      hover:file:bg-blue-100 dark:hover:file:bg-blue-900"
                   />
 
                   {fileMeta && (
@@ -183,7 +183,7 @@ export default function ImportPage() {
 
                 {/* Error */}
                 {error && (
-                  <div className="mt-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-800 dark:text-red-300">
+                  <div className="mt-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900 dark:bg-opacity-20 px-4 py-3 text-sm text-red-800 dark:text-red-300">
                     {error}
                   </div>
                 )}
@@ -221,7 +221,7 @@ export default function ImportPage() {
                   </ul>
                 </div>
 
-                <div className="mt-6 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 px-4 py-3">
+                <div className="mt-6 rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 px-4 py-3">
                   <div className="text-sm font-semibold text-blue-900 dark:text-blue-300">Tip</div>
                   <div className="mt-1 text-sm text-blue-900 dark:text-blue-200">
                     Start with a dry run first. Once it validates cleanly, turn it off to import for real.

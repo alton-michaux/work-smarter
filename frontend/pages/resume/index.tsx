@@ -120,7 +120,7 @@ export default function ResumePage() {
                 type="file"
                 accept=".pdf,.doc,.docx"
                 onChange={handleFileChange}
-                className="text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 dark:file:bg-blue-900/30 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
+                className="text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 dark:file:bg-blue-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900"
               />
             </div>
             <div>
@@ -173,7 +173,7 @@ export default function ResumePage() {
                     </button>
                     <button
                       onClick={() => handleDelete(resume.id)}
-                      className="rounded-md border border-red-100 dark:border-red-800 px-3 py-1.5 text-xs font-medium text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                      className="rounded-md border border-red-100 dark:border-red-800 px-3 py-1.5 text-xs font-medium text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-800 transition"
                       type="button"
                     >
                       Delete

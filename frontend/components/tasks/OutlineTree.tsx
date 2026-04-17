@@ -114,10 +114,10 @@ function OutlineRow({
         "border-b border-gray-100 dark:border-gray-700 last:border-b-0",
         "px-4",
         "py-2.5",
-        "hover:bg-gray-50/70 dark:hover:bg-gray-700/50",
+        "hover:bg-gray-50 dark:hover:bg-gray-700",
         "transition-colors",
         "flex items-start justify-between gap-4",
-        "focus-within:bg-gray-50/70 dark:focus-within:bg-gray-700/50",
+        "focus-within:bg-gray-50 dark:focus-within:bg-gray-700",
       ].join(" ")}
       style={{
         paddingLeft: 16 + effectiveDepth * 18,
@@ -186,7 +186,7 @@ function OutlineRow({
 
               {node.category === 'meeting' && node.google_event_id && (
                 <span
-                  className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
+                  className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-900 dark:bg-opacity-20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
                   title="Synced to Google Calendar"
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />

@@ -153,7 +153,7 @@ export default function TaskForm({
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-8">
       {formError ? (
-        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm px-4 py-2">
+        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900 dark:bg-opacity-20 text-red-700 dark:text-red-400 text-sm px-4 py-2">
           {formError}
         </div>
       ) : null}

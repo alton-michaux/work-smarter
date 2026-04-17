@@ -146,7 +146,7 @@ export default function ProjectsPage() {
 
                       <button
                         onClick={() => handleDelete(project.id)}
-                        className="rounded-md border border-red-200 dark:border-red-800 bg-white dark:bg-gray-700 px-3 py-2 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                        className="rounded-md border border-red-200 dark:border-red-800 bg-white dark:bg-gray-700 px-3 py-2 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-800 transition"
                         type="button"
                       >
                         Delete

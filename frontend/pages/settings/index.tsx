@@ -329,7 +329,7 @@ export default function SettingsPage() {
           </div>
 
           {calendarStatus?.connected ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 dark:bg-green-900/20 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 dark:bg-green-900 dark:bg-opacity-20 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
               <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
               Connected
             </span>

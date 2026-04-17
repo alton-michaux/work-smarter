@@ -116,7 +116,7 @@ function Dashboard() {
               {/* Imports */}
               <button
                 onClick={go("/import")}
-                className="group rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-5 text-left hover:shadow-sm transition"
+                className="group rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 p-5 text-left hover:shadow-sm transition"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -139,7 +139,7 @@ function Dashboard() {
               {/* Exports */}
               <button
                 onClick={handleDownload}
-                className="group rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-5 text-left hover:shadow-sm transition"
+                className="group rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 p-5 text-left hover:shadow-sm transition"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
