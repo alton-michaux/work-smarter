@@ -29,14 +29,16 @@ export default function TaskCreatePage() {
   const initialTask = useMemo(() => {
     const qTitle = typeof router.query.title === 'string' ? router.query.title : '';
     const qDate = typeof router.query.date === 'string' ? router.query.date : '';
+    const qProject = typeof router.query.project === 'string' ? Number(router.query.project) : '';
 
     return {
       ...emptyTask,
       title: qTitle || emptyTask.title,
       begin_date: qDate || undefined,
       end_date: qDate || undefined,
+      project: qProject || emptyTask.project,
     };
-  }, [router.query.title, router.query.date]);
+  }, [router.query.title, router.query.date, router.query.project]);
 
   const { projects } = useProjects();
 

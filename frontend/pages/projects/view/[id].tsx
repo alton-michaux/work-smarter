@@ -83,6 +83,14 @@ const ProjectShowPage = () => {
             </button>
 
             <button
+              onClick={() => router.push(`/tasks/create?project=${project.id}`)}
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition"
+              type="button"
+            >
+              + New Task
+            </button>
+
+            <button
               onClick={() => router.push("/dashboard")}
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
               type="button"
@@ -124,8 +132,6 @@ const ProjectShowPage = () => {
 
             <div className="max-h-[50vh] overflow-y-auto [scrollbar-gutter:stable] p-6">
               <ProjectTimelineSection
-                title="UPCOMING MEETINGS"
-                summaryRight={`${insights.meetings.length} upcoming`}
                 emptyText="No upcoming meetings for this project."
                 grouped={insights.meetingsGrouped}
                 iconFor={() => "🗓️"}
@@ -146,8 +152,6 @@ const ProjectShowPage = () => {
 
             <div className="max-h-[50vh] overflow-y-auto [scrollbar-gutter:stable] p-6">
               <ProjectTimelineSection
-                title="WORK"
-                summaryRight={`${insights.workTotal} total • ${insights.workDone} done • ${insights.workOpen} open`}
                 emptyText="No work items logged for this project."
                 grouped={insights.workGrouped}
                 iconFor={(t: any) => (t.is_done ? "☑" : "☐")}

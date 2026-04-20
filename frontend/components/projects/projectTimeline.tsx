@@ -21,10 +21,12 @@ export default function ProjectTimelineSection<T extends TaskLike>({
 
   return (
     <section>
-      <div className="flex items-baseline justify-between mb-3">
-        <h2 className="text-xs font-bold tracking-widest text-gray-500">{title}</h2>
-        {summaryRight ? <div className="text-xs text-gray-400">{summaryRight}</div> : null}
-      </div>
+      {(title || summaryRight) && (
+        <div className="flex items-baseline justify-between mb-3">
+          {title && <h2 className="text-xs font-bold tracking-widest text-gray-500">{title}</h2>}
+          {summaryRight && <div className="text-xs text-gray-400">{summaryRight}</div>}
+        </div>
+      )}
 
       {grouped.sortedDays.length === 0 ? (
         <div className="text-sm text-gray-500 rounded border bg-white px-4 py-3">

@@ -2,6 +2,11 @@ import { useState } from 'react';
 import Button from "../ui/button";
 import { useRouter } from "next/router";
 
+const PRESET_COLORS = [
+  '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4',
+  '#f97316', '#84cc16', '#14b8a6', '#6366f1',
+];
+
 export default function ProjectForm({ initialProject, onSubmit, submitLabel = "Save", user }) {
   const [project, setProject] = useState(initialProject);
 
@@ -70,6 +75,35 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
         {errors.name ? (
           <p className="text-sm text-red-600 mt-1">{errors.name}</p>
         ) : null}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+        <div className="flex items-center gap-2 flex-wrap">
+          {PRESET_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setProject(p => ({ ...p, color: c }))}
+              className="w-6 h-6 rounded-full border-2 transition-transform hover:scale-110"
+              style={{
+                backgroundColor: c,
+                borderColor: project.color === c ? '#1f2937' : 'transparent',
+              }}
+              title={c}
+            />
+          ))}
+          <input
+            type="color"
+            value={project.color ?? '#3b82f6'}
+            onChange={(e) => setProject(p => ({ ...p, color: e.target.value }))}
+            className="w-6 h-6 rounded cursor-pointer border border-gray-300"
+            title="Custom color"
+          />
+        </div>
+      </div>
+
+      <div>
         {/* Hidden userId field with associated (hidden) label */}
         <label
           htmlFor="user"

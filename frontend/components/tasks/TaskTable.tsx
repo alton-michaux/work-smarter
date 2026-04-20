@@ -64,14 +64,6 @@ export default function TaskTable({
       <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`} children={(
         <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
             <table className="w-full text-sm table-fixed">
-              <thead className="text-[11px] text-gray-600">
-                <tr className="border-b">
-                  <th className="px-3 py-1.5 text-left uppercase tracking-wide">
-                    Title
-                  </th>
-                </tr>
-              </thead>
-
               <tbody>
                 {meetingsToRender.map((t: AnyTask) => (
                   <tr
@@ -129,14 +121,6 @@ export default function TaskTable({
       <SectionPanel title="WORK" right={`${workToRender.length} total`} children={(
         <div className={`${sectionMaxHeightClass(workToRender.length)} overflow-auto rounded-lg border bg-blue-50/40`}>
           <table className="w-full text-sm table-fixed">
-            <thead className="text-[11px] text-gray-600">
-              <tr className="border-b">
-                <th className="px-3 py-1.5 text-left uppercase tracking-wide">
-                  Task
-                </th>
-              </tr>
-            </thead>
-
             <tbody>
               {workToRender.map((t: AnyTask) => (
                 <tr
