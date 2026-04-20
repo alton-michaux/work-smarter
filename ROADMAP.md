@@ -75,9 +75,15 @@
 - [x] Meetings should have a time
 - [ ] Implement deadlines
 - [x] Integration with Google Calendar (push meetings to calendar, timezone-aware)
-  - [ ] Pull events from Google Calendar into Work Smarter
-  - [ ] Sync tasks with deadlines once deadlines are implemented
-- [ ] Resume features
+  - [x] Pull events from Google Calendar into Work Smarter
+  - [x] Users should have the option to blacklist certain meetings from importing
+  - [x] Sync tasks with deadlines once deadlines are implemented
+- [ ] Add dark mode
+- [x] Resume
+  - [x] User can have an attached resume model(s)
+  - [x] User should be able to upload or create from scratch
+  - [x] User should also be able to download resume
+  - [ ] Build Resume from linkedin profile(?)
 - [ ] AI resume analysis
 
 
