@@ -31,8 +31,9 @@
 - [x] Marking parent task as done should also mark children as done
 - [x] Weird daily "Home" meeting keeps being imported even though I can't see it in my google calendar. Should check code for anything suspicious
 - [x] Meetings that should be recurring aren't imported as recurring, but as individual events
-- [ ] Meeting should only show time in daily view
-- [ ] Dark mode not applied in all forms
+- [x] Meeting should only show time in daily view
+- [ ] Meeting project color is not visible because there is not enough room
+- [ ] Dark mode not applied in all forms (create)
 
 ---
 
@@ -69,8 +70,8 @@
 - [x] Weekly summary header (X done / Y remaining)
 - [x] Micro polish: hover states, subtle transitions, keyboard nav
 - [x] Recurrence badges ("weekly", "ongoing")
-- [ ] Add status to project (indicates whether still active or complete)
-- [ ] Add description to project
+- [x] Add status to project (indicates whether still active or complete)
+- [s] Add description to project
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project-scoped tags
 
@@ -88,7 +89,7 @@
 - [x] Add recurring tasks/events (meetings)
 - [x] Meetings auto-done after day-of (frontend and backend)
 - [x] Meetings should have a time
-- [ ] Implement deadlines
+- [x] Implement deadlines
 - [x] Integration with Google Calendar (push meetings to calendar, timezone-aware)
   - [x] Pull events from Google Calendar into Work Smarter
   - [x] Users should have the option to blacklist certain meetings from importing
@@ -99,6 +100,7 @@
   - [x] User should be able to upload or create from scratch
   - [x] User should also be able to download resume
   - [ ] Build Resume from linkedin profile(?)
+- [ ] Log in with LinkedIn/Google (social auth)
 - [ ] AI resume analysis
 
 
