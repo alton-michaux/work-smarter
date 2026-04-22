@@ -36,3 +36,5 @@ dbdata/
 db/data/__pycache__/
 
 node_modules
+
+media/
