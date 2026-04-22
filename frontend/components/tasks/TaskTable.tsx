@@ -2,6 +2,16 @@ import { useRouter } from "next/router";
 import NoteCard from "components/notes/NoteCard";
 import { AnyTask, TrackerProps } from "types/types";
 import { SectionPanel, sectionMaxHeightClass } from "components/ui/trackerSection";
+import { useProjects } from "context/ProjectsContext";
+
+const PROJECT_COLORS = [
+  '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4',
+  '#f97316', '#84cc16', '#14b8a6', '#6366f1',
+];
+
+function projectColor(id: number) {
+  return PROJECT_COLORS[id % PROJECT_COLORS.length];
+}
 
 type SubtaskProgress = { done: number; total: number };
 
@@ -19,6 +29,7 @@ export default function TaskTable({
    * @returns True if the task's effective_is_done or is_done property is truthy, false otherwise
    */
   const router = useRouter();
+  const { projects } = useProjects();
   const isDone = (t: any) => Boolean(t.effective_is_done ?? t.is_done);
   const isAutoDoneMeeting = (t: any) => t.effective_is_done && !t.is_done;
 
@@ -100,6 +111,20 @@ export default function TaskTable({
                     <td className="px-3 py-1.5">
                       <div className="min-w-0 flex items-center gap-2">
                         <span className="text-sm leading-tight">🗓️</span>
+
+                        {(() => {
+                          const proj = (t as any).project != null
+                            ? projects.find(p => p.id === (t as any).project)
+                            : null;
+                          const color = proj ? (proj.color ?? projectColor(proj.id)) : null;
+                          return color ? (
+                            <span
+                              className="shrink-0 inline-block w-2 h-2 rounded-full"
+                              style={{ backgroundColor: color }}
+                              title={proj?.name}
+                            />
+                          ) : null;
+                        })()}
 
                         <span
                           className={`min-w-0 truncate font-medium leading-tight ${
