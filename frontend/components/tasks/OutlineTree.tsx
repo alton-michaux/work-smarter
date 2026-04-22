@@ -20,6 +20,20 @@ function projectColor(id: number) {
   return PROJECT_COLORS[id % PROJECT_COLORS.length];
 }
 
+function deadlineStatus(
+  deadlineDate: string | null | undefined,
+  isDone: boolean
+): 'overdue' | 'soon' | null {
+  if (!deadlineDate || isDone) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const deadline = new Date(deadlineDate + 'T00:00:00');
+  const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / 86400000);
+  if (diffDays < 0) return 'overdue';
+  if (diffDays <= 3) return 'soon';
+  return null;
+}
+
 function formatTime(timeStr?: string | null): string | null {
   if (!timeStr) return null;
   const [h, m] = timeStr.split(':').map(Number);
@@ -69,7 +83,7 @@ function OutlineRow({
   const { projects } = useProjects();
   const priorityBorder = PRIORITY_BORDER[String(node.priority ?? '').toLowerCase()] ?? 'transparent';
   const projectObj = node.project != null ? projects.find(p => p.id === node.project) : null;
-  const pColor = projectObj ? projectColor(projectObj.id) : null;
+  const pColor = projectObj ? (projectObj.color ?? projectColor(projectObj.id)) : null;
 
   const submitSubtask = async () => {
     const title = subtaskTitle.trim();
@@ -97,13 +111,13 @@ function OutlineRow({
     <li
       className={[
         "group relative",
-        "border-b border-gray-100 last:border-b-0",
+        "border-b border-gray-100 dark:border-gray-700 last:border-b-0",
         "px-4",
         "py-2.5",
-        "hover:bg-gray-50/70",
+        "hover:bg-gray-50 dark:hover:bg-gray-700",
         "transition-colors",
         "flex items-start justify-between gap-4",
-        "focus-within:bg-gray-50/70",
+        "focus-within:bg-gray-50 dark:focus-within:bg-gray-700",
       ].join(" ")}
       style={{
         paddingLeft: 16 + effectiveDepth * 18,
@@ -139,14 +153,13 @@ function OutlineRow({
             className={[
               "block w-full text-left",
               "font-medium",
-              "truncate",
-              isDone ? "text-gray-500 line-through" : "text-gray-900",
+              isDone ? "text-gray-500 dark:text-gray-500 line-through" : "text-gray-900 dark:text-gray-100",
               "hover:text-blue-700",
               "focus:outline-none focus:ring-2 focus:ring-blue-200 rounded-sm",
             ].join(" ")}
             title={node.title}
           >
-            <span className="flex items-center gap-2 min-w-0">
+            <span className="flex items-center gap-1.5 min-w-0 overflow-hidden">
               {pColor && (
                 <span
                   className="shrink-0 inline-block w-2 h-2 rounded-full"
@@ -158,7 +171,7 @@ function OutlineRow({
 
               {!isSubtask && childCount > 0 && (
                 <span
-                  className="shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-gray-200 bg-white text-gray-600"
+                  className="shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300"
                   title="Subtask progress"
                 >
                   {doneChildCount}/{childCount}
@@ -166,14 +179,14 @@ function OutlineRow({
               )}
 
               {node.is_recurring && (
-                <span className="shrink-0 text-[11px] text-gray-400" title="Recurring">
+                <span className="shrink-0 text-[11px] text-gray-400 dark:text-gray-500" title="Recurring">
                   🔁
                 </span>
               )}
 
               {node.category === 'meeting' && node.google_event_id && (
                 <span
-                  className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200"
+                  className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-900 dark:bg-opacity-20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
                   title="Synced to Google Calendar"
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
@@ -183,21 +196,42 @@ function OutlineRow({
             </span>
           </button>
 
-          <div className="mt-1 text-xs text-gray-500">
+          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             <span className="uppercase tracking-wide">
               {(node.priority ?? '—').toString()}
             </span>
-            <span className="mx-2 text-gray-300">•</span>
-            <span>{node.begin_date ?? '—'}</span>
+            {type !== 'meeting' && (
+              <>
+                <span className="mx-2 text-gray-300 dark:text-gray-600">•</span>
+                <span>{node.begin_date ?? '—'}</span>
+              </>
+            )}
             {type === 'meeting' && node.begin_time && (
               <>
-                <span className="mx-2 text-gray-300">•</span>
+                <span className="mx-2 text-gray-300 dark:text-gray-600">•</span>
                 <span>
                   {formatTime(node.begin_time)}
                   {node.end_time ? ` – ${formatTime(node.end_time)}` : ''}
                 </span>
               </>
             )}
+            {node.deadline_date && (() => {
+              const st = deadlineStatus(node.deadline_date, isDone);
+              return (
+                <>
+                  <span className="mx-2 text-gray-300 dark:text-gray-600">•</span>
+                  <span
+                    className={
+                      st === 'overdue' ? 'text-red-600 dark:text-red-400 font-medium' :
+                      st === 'soon'    ? 'text-amber-600 dark:text-amber-400 font-medium' :
+                                         'text-gray-500 dark:text-gray-400'
+                    }
+                  >
+                    ⚑ {node.deadline_date}
+                  </span>
+                </>
+              );
+            })()}
           </div>
 
           {/* Inline Add Subtask */}
@@ -205,7 +239,7 @@ function OutlineRow({
             <div className="mt-2 pl-7">
               <div className="flex items-center gap-2">
                 <input
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="New subtask…"
                   value={subtaskTitle}
                   onChange={(e) => setSubtaskTitle(e.target.value)}
@@ -217,7 +251,7 @@ function OutlineRow({
                   autoFocus
                 />
                 <button
-                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+                  className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
                   disabled={saving || !subtaskTitle.trim() || !onAddSubtask}
                   onClick={submitSubtask}
                   type="button"
@@ -225,7 +259,7 @@ function OutlineRow({
                   Add
                 </button>
               </div>
-              <div className="mt-1 text-xs text-gray-400">
+              <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                 Enter to save • Esc to cancel
               </div>
             </div>
@@ -238,7 +272,7 @@ function OutlineRow({
         {!isSubtask && type === 'task' && (
           <button
             onClick={() => setShowSubtask((v) => !v)}
-            className="text-sm text-gray-500 hover:text-gray-900"
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
             type="button"
           >
             + Subtask
@@ -247,7 +281,7 @@ function OutlineRow({
 
         <button
           onClick={() => onEdit(Number(node.id))}
-          className="text-sm text-amber-700 hover:text-amber-900"
+          className="text-sm text-amber-700 dark:text-amber-500 hover:text-amber-900 dark:hover:text-amber-400"
           type="button"
         >
           Edit

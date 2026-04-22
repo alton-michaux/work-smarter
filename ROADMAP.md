@@ -31,17 +31,23 @@
 - [x] Marking parent task as done should also mark children as done
 - [x] Weird daily "Home" meeting keeps being imported even though I can't see it in my google calendar. Should check code for anything suspicious
 - [x] Meetings that should be recurring aren't imported as recurring, but as individual events
+- [x] Meeting should only show time in daily view
+- [ ] Meeting project color is not visible because there is not enough room
+- [ ] Dark mode not applied in all forms (create)
+- [x] Back buttons on show pages and import page redundant, no back button (or dashboard button) on daily log or weekly tracker page
 
 ---
 
 ## Tweaks
 
 ### Backend
-- [x] Update tests for new functionality
 - [x] Recurring tasks need bi-weekly and quarterly options
 - [x] Users should be able to delete a single recurring task, all recurring tasks or all future recurring tasks
 - [x] Daily recurring tasks will need to be able to exclude weekends
 - [x] Is there a programmatic way to automatically assign imported google calendar meetings to projects?
+- [x] Add status to project (indicates whether still active or complete)
+- [x] Add description to project
+- [x] Add role to project
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
@@ -55,20 +61,32 @@
 - [x] Notes description should display markdown in weekly tracker page and be truncated to 2-3 lines per note
 - [x] Meeting and task section too short in daily log
 - [x] Weekly tracker should display 3 sections like a grid with meetings on the left
-- [ ] Meeting titles get cut off quickly in daily log page
-- [ ] "Title" and "Task" rows in meeting and task containers on weekly tracker page are unnecessary
-- [ ] Project colors should be assignable by user
-- [ ] Settings page should allow users to change account info (email, password)
+- [x] Meeting titles get cut off quickly in daily log page
+- [x] "Title" and "Task" rows in meeting and task containers on weekly tracker page are unnecessary
+- [x] Project colors should be assignable by user
+- [x] Settings page should allow users to change account info (email, password)
 - [x] Past meetings should not show in the project page. Current and future meetings should sort (current first to furthest in the future)
 - [x] Optimistic UI for toggles (daily log feels instant)
 - [x] Sort meetings in order by time in daily log (earliest first)
 - [x] Time select should be less granular (15 minute scale vs 60 minute scale)
-- [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
-- [ ] Project → task creation shortcuts (preselect project when creating from project view)
+- [x] Project → task creation shortcuts (preselect project when creating from project view)
 - [x] Weekly summary header (X done / Y remaining)
 - [x] Micro polish: hover states, subtle transitions, keyboard nav
 - [x] Recurrence badges ("weekly", "ongoing")
+- [x] Add status to project (indicates whether still active or complete)
+- [s] Add description to project
+
+---
+
+### De-scoped/low priority
+
+- [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project-scoped tags
+
+---
+
+(not sure if these make sense)
+
 - [ ] "Seen this week" indicators
 - [ ] Collapsible "Background reminders" section — visual distinction only, no behavior yet
 
@@ -79,19 +97,31 @@
 - [x] Add recurring tasks/events (meetings)
 - [x] Meetings auto-done after day-of (frontend and backend)
 - [x] Meetings should have a time
-- [ ] Add dark mode
-- [ ] Implement deadlines
+- [x] Implement deadlines
 - [x] Integration with Google Calendar (push meetings to calendar, timezone-aware)
   - [x] Pull events from Google Calendar into Work Smarter
-  - [ ] Users should have the option to blacklist certain meetings from importing
-  - [ ] Sync tasks with deadlines once deadlines are implemented
-- [ ] Resume features
+  - [x] Users should have the option to blacklist certain meetings from importing
+  - [x] Sync tasks with deadlines once deadlines are implemented
+- [x] Add dark mode
+- [x] Resume
+  - [x] User can have an attached resume model(s)
+  - [x] User should be able to upload or create from scratch
+  - [x] User should also be able to download resume
+  - [ ] Build Resume from linkedin profile(?)
+- [ ] Make tasks searchable
+- [ ] Log in with LinkedIn/Google (social auth)
 - [ ] AI resume analysis
 
 
 ## User-facing (go-live features)
 
-- [ ] Account show/edit page
+- [x] Account show/edit page
 - [ ] Beef up account security
 - [ ] Tutorial section
 - [ ] About page
+
+
+## Ongoing (these actions need to be performed whenever a box in this file is checked)
+
+- [ ] Update tests
+- [ ] Ensure app is aligned with design principles

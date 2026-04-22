@@ -250,7 +250,7 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
 
     Returns {"imported": N, "skipped": N, "tasks": [<serialized tasks>]}
     """
-    from api.models import Project, Task
+    from api.models import CalendarBlacklist, Project, Task
 
     service, token_record = get_calendar_service(user)
     calendar_id = token_record.selected_calendar_id or "primary"
@@ -279,6 +279,10 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
         Task.objects.filter(user=user, google_event_id__isnull=False)
         .values_list("google_event_id", flat=True)
     )
+    blacklisted_ids = set(
+        CalendarBlacklist.objects.filter(user=user)
+        .values_list("google_event_id", flat=True)
+    )
     user_projects = list(Project.objects.filter(user=user))
 
     # Collect unique recurring parent IDs from new events so we can batch-fetch them
@@ -288,6 +292,10 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
         and e.get("status") != "cancelled"
         and e.get("eventType", "default") == "default"
         and e.get("id") not in existing_ids
+<<<<<<< HEAD
+=======
+        and e.get("id") not in blacklisted_ids
+>>>>>>> dev
     ]
     recurring_parent_ids = {
         e["recurringEventId"] for e in new_events if e.get("recurringEventId")
@@ -310,7 +318,11 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
             skipped += 1
             continue
 
+<<<<<<< HEAD
         if event_id in existing_ids:
+=======
+        if event_id in existing_ids or event_id in blacklisted_ids:
+>>>>>>> dev
             skipped += 1
             continue
 
@@ -344,3 +356,46 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
         logger.info(f"Pulled Google Calendar event {event_id} as task {task.id} for user {user.id}")
 
     return {"imported": imported, "skipped": skipped, "tasks": created_tasks}
+
+
+def push_deadline(task, user) -> str:
+    """
+    Push (or update) the task's deadline_date as an all-day Google Calendar event.
+    Returns the Google Calendar event ID.
+    Raises ValueError if deadline_date is missing or calendar not connected.
+    Raises HttpError on Google API errors.
+    """
+    if task.deadline_date is None:
+        raise ValueError("Task must have a deadline_date to sync to Google Calendar.")
+
+    service, token_record = get_calendar_service(user)
+    calendar_id = token_record.selected_calendar_id or "primary"
+
+    date_str = str(task.deadline_date)
+    event_body = {
+        "summary": f"Deadline: {task.title}",
+        "description": task.description or "",
+        "start": {"date": date_str},
+        "end": {"date": date_str},
+    }
+
+    try:
+        if task.deadline_event_id:
+            event = (
+                service.events()
+                .update(calendarId=calendar_id, eventId=task.deadline_event_id, body=event_body)
+                .execute()
+            )
+            logger.info(f"Updated deadline Calendar event {event['id']} for task {task.id}")
+        else:
+            event = (
+                service.events()
+                .insert(calendarId=calendar_id, body=event_body)
+                .execute()
+            )
+            logger.info(f"Created deadline Calendar event {event['id']} for task {task.id}")
+    except HttpError as e:
+        logger.error(f"Google Calendar API error pushing deadline for task {task.id}: {e}")
+        raise
+
+    return event["id"]

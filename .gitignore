@@ -12,6 +12,7 @@ backend/coverage.xml
 backend/htmlcov/
 backend/.venv/
 backend/venv/
+backend/media/
 backend/.env
 backend/.DS_Store
 __pycache__/
@@ -35,3 +36,5 @@ dbdata/
 db/data/__pycache__/
 
 node_modules
+
+media/

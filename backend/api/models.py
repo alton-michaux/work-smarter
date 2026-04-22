@@ -26,8 +26,28 @@ class GoogleCalendarToken(models.Model):
     def __str__(self):
         return f"{self.user}'s Google Calendar Token"
 
+
+class CalendarBlacklist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="calendar_blacklist")
+    google_event_id = models.CharField(max_length=255)
+    title = models.CharField(max_length=500, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "google_event_id"],
+                name="uniq_blacklist_user_event",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user} — blacklisted {self.google_event_id}"
+
+
 class Resume(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="resume", null=False, blank=False)
+    title = models.CharField(max_length=200, blank=True, default='')
     file = models.FileField(upload_to='resumes/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
@@ -35,8 +55,17 @@ class Resume(models.Model):
         return f"{self.user}'s Resume"
     
 class Project(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('complete', 'Complete'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="projects", null=False, blank=False)
     name = models.CharField(max_length=100)
+    color = models.CharField(max_length=7, default='#3b82f6', blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    description = models.TextField(blank=True, default='')
+    role = models.CharField(max_length=100, blank=True, default='')
     created = models.DateTimeField(auto_now_add=True)
 
 class RecurringTask(models.Model):        
@@ -105,6 +134,7 @@ class Task(models.Model):
 
     begin_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    deadline_date = models.DateField(null=True, blank=True)
     begin_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
@@ -126,6 +156,7 @@ class Task(models.Model):
     
     carry_over = models.BooleanField(default=True)
     google_event_id = models.CharField(max_length=255, null=True, blank=True)
+    deadline_event_id = models.CharField(max_length=255, null=True, blank=True)
     recurring_task = models.ForeignKey(
         RecurringTask,
         null=True,

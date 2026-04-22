@@ -4,7 +4,7 @@ import { useAuth } from 'context/AuthContext';
 import ProjectForm from '../../components/projects/ProjectForm';
 import Spinner from 'components/shared/Spinner';
 
-const emptyProject = { name: '', user: '' };
+const emptyProject = { name: '', user: '', status: 'active' as const, description: '' };
 
 export default function ProjectCreatePage() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export default function ProjectCreatePage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Create Project</h1>
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6 text-center">Create Project</h1>
       {isLoading ? (
         <div className="flex justify-center py-8">
           <Spinner />
