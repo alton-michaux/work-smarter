@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from django.contrib.auth import get_user_model
 
-from api.models import GoogleCalendarToken, Project, RecurringTask, Task
-from api.services.google_calendar import _build_event_body, _match_project, _parse_rrule, push_meeting, pull_events
+from api.models import CalendarBlacklist, GoogleCalendarToken, Project, RecurringTask, Task
+from api.services.google_calendar import _build_event_body, _match_project, _parse_rrule, push_meeting, pull_events, push_deadline
 
 User = get_user_model()
 

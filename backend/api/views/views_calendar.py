@@ -10,9 +10,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.models import GoogleCalendarToken
-from api.serializers import TaskSerializer
-from api.services.google_calendar import list_user_calendars, pull_events
+from django.db import IntegrityError
+from django.shortcuts import get_object_or_404
+
+from api.models import CalendarBlacklist, GoogleCalendarToken, Task
+from api.serializers import CalendarBlacklistSerializer, TaskSerializer
+from api.services.google_calendar import list_user_calendars, pull_events, push_deadline
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
@@ -201,3 +204,68 @@ class GoogleCalendarPullView(APIView):
             "skipped": result["skipped"],
             "tasks": serialized_tasks,
         }, status=status.HTTP_200_OK)
+
+
+class BlacklistEventView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        google_event_id = request.data.get("google_event_id")
+        if not google_event_id:
+            return Response({"error": "google_event_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        title = request.data.get("title", "")
+        delete_task = bool(request.data.get("delete_task", False))
+
+        try:
+            entry = CalendarBlacklist.objects.create(
+                user=request.user,
+                google_event_id=google_event_id,
+                title=title,
+            )
+        except IntegrityError:
+            return Response({"error": "Already blacklisted."}, status=status.HTTP_409_CONFLICT)
+
+        if delete_task:
+            Task.objects.filter(user=request.user, google_event_id=google_event_id).delete()
+
+        return Response(CalendarBlacklistSerializer(entry).data, status=status.HTTP_201_CREATED)
+
+
+class BlacklistListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        entries = CalendarBlacklist.objects.filter(user=request.user).order_by("-created_at")
+        return Response(CalendarBlacklistSerializer(entries, many=True).data)
+
+    def delete(self, request, pk):
+        entry = get_object_or_404(CalendarBlacklist, pk=pk, user=request.user)
+        entry.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PushDeadlineView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, task_id):
+        task = get_object_or_404(Task, pk=task_id, user=request.user)
+
+        if task.deadline_date is None:
+            return Response({"error": "Task has no deadline_date set."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            event_id = push_deadline(task, request.user)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except HttpError as e:
+            logger.error(f"Google Calendar API error pushing deadline for task {task_id}: {e}")
+            return Response({"error": "Google Calendar API error."}, status=status.HTTP_502_BAD_GATEWAY)
+        except Exception as e:
+            logger.error(f"Unexpected error pushing deadline for task {task_id}: {e}")
+            return Response({"error": "Unexpected error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        task.deadline_event_id = event_id
+        task.save(update_fields=["deadline_event_id"])
+
+        return Response(TaskSerializer(task, context={"request": request}).data, status=status.HTTP_200_OK)

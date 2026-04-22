@@ -1,7 +1,7 @@
 from django.utils import timezone
 from datetime import timedelta, timezone as dt_timezone
 from rest_framework import serializers
-from .models import Resume, Task, Project, User, RecurringTask
+from .models import Resume, Task, Project, User, RecurringTask, CalendarBlacklist
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,6 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     begin_date = serializers.DateField(required=False, allow_null=True, default=None)
     end_date = serializers.DateField(required=False, allow_null=True, default=None)
+    deadline_date = serializers.DateField(required=False, allow_null=True, default=None)
     begin_time = serializers.TimeField(required=False, allow_null=True, default=None)
     end_time = serializers.TimeField(required=False, allow_null=True, default=None)
 
@@ -130,6 +131,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "user",
             "begin_date",
             "end_date",
+            "deadline_date",
             "begin_time",
             "end_time",
             "project",
@@ -148,6 +150,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "recurring_frequency",
             "is_recurring",
             "google_event_id",
+            "deadline_event_id",
         ]
         extra_kwargs = {
             "user": {"read_only": True},
@@ -155,9 +158,11 @@ class TaskSerializer(serializers.ModelSerializer):
             "recurring_task": {"required": False, "allow_null": True},
             "begin_date": {"required": False, "allow_null": True},
             "end_date": {"required": False, "allow_null": True},
+            "deadline_date": {"required": False, "allow_null": True},
             "begin_time": {"required": False, "allow_null": True},
             "end_time": {"required": False, "allow_null": True},
             "google_event_id": {"read_only": True},
+            "deadline_event_id": {"read_only": True},
         }
         
 class RecurringTaskSerializer(serializers.ModelSerializer):
@@ -203,8 +208,15 @@ class ProjectSerializer(serializers.ModelSerializer):
 class ResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
-        fields = '__all__'  # Include all fields from the Resume model
+        fields = ['id', 'title', 'file', 'uploaded_at']
+        read_only_fields = ['id', 'uploaded_at']
 
 class ResumeAnalysisSerializer(serializers.Serializer):
     suggestions = serializers.ListField(child=serializers.CharField())  # List of suggestions from analysis
     score = serializers.FloatField()  # Score indicating the quality of the resume
+
+class CalendarBlacklistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CalendarBlacklist
+        fields = ["id", "google_event_id", "title", "created_at"]
+        read_only_fields = ["id", "created_at"]

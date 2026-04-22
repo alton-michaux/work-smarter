@@ -397,6 +397,48 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     return { imported: result.imported, skipped: result.skipped };
   };
 
+  const pushDeadlineToCalendar = async (taskId: number): Promise<Task> => {
+    if (!loggedIn) throw new Error('Not logged in');
+
+    const res = await fetch(`${API_URL}/calendar/push-deadline/${taskId}/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.error || 'Failed to sync deadline to Google Calendar');
+    }
+
+    const updated: Task = await res.json();
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updated } : t)));
+    return updated;
+  };
+
+  const blacklistEvent = async (
+    googleEventId: string,
+    title: string,
+    deleteTask: boolean = false
+  ): Promise<void> => {
+    if (!loggedIn) throw new Error('Not logged in');
+
+    const res = await fetch(`${API_URL}/calendar/blacklist/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ google_event_id: googleEventId, title, delete_task: deleteTask }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      // 409 means already blacklisted — treat as success
+      if (res.status !== 409) throw new Error(data?.error || 'Failed to blacklist event');
+    }
+
+    if (deleteTask) {
+      setTasks((prev) => prev.filter((t) => t.google_event_id !== googleEventId));
+    }
+  };
+
   const pushToCalendar = async (taskId: number): Promise<Task> => {
     if (!loggedIn) throw new Error('Not logged in');
 
@@ -432,6 +474,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         fetchRecurringTemplate,
         toggleTaskDone,
         pushToCalendar,
+        pushDeadlineToCalendar,
+        blacklistEvent,
         pullFromCalendar,
         isLoading,
         error,

@@ -34,17 +34,20 @@
 - [x] Meeting should only show time in daily view
 - [ ] Meeting project color is not visible because there is not enough room
 - [ ] Dark mode not applied in all forms (create)
+- [x] Back buttons on show pages and import page redundant, no back button (or dashboard button) on daily log or weekly tracker page
 
 ---
 
 ## Tweaks
 
 ### Backend
-- [x] Update tests for new functionality
 - [x] Recurring tasks need bi-weekly and quarterly options
 - [x] Users should be able to delete a single recurring task, all recurring tasks or all future recurring tasks
 - [x] Daily recurring tasks will need to be able to exclude weekends
 - [x] Is there a programmatic way to automatically assign imported google calendar meetings to projects?
+- [x] Add status to project (indicates whether still active or complete)
+- [x] Add description to project
+- [x] Add role to project
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
@@ -72,6 +75,11 @@
 - [x] Recurrence badges ("weekly", "ongoing")
 - [x] Add status to project (indicates whether still active or complete)
 - [s] Add description to project
+
+---
+
+### De-scoped/low priority
+
 - [ ] Carry-over logic visualization (ghost tasks / "rolled from yesterday")
 - [ ] Project-scoped tags
 
@@ -100,13 +108,20 @@
   - [x] User should be able to upload or create from scratch
   - [x] User should also be able to download resume
   - [ ] Build Resume from linkedin profile(?)
+- [ ] Make tasks searchable
 - [ ] Log in with LinkedIn/Google (social auth)
 - [ ] AI resume analysis
 
 
 ## User-facing (go-live features)
 
-- [ ] Account show/edit page
+- [x] Account show/edit page
 - [ ] Beef up account security
 - [ ] Tutorial section
 - [ ] About page
+
+
+## Ongoing (these actions need to be performed whenever a box in this file is checked)
+
+- [ ] Update tests
+- [ ] Ensure app is aligned with design principles

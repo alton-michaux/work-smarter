@@ -162,6 +162,13 @@ USE_TZ = True
 # --- Static Files ---
 STATIC_URL = '/static/'
 
+# --- Media Files (uploaded resumes etc.) ---
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# --- OpenAI (used for future AI resume analysis) ---
+OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
+
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
 CORS_ALLOW_CREDENTIALS = True

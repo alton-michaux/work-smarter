@@ -17,11 +17,11 @@ export default function NoteCard({
 
   const border =
     variant === 'dashed'
-      ? 'border-dashed border-gray-300'
-      : 'border-gray-200';
+      ? 'border-dashed border-gray-300 dark:border-gray-600'
+      : 'border-gray-200 dark:border-gray-700';
 
   return (
-    <div className={`w-full rounded-lg border bg-gray-50 px-4 py-3 transition-colors duration-150 ${border} ${onView ? 'hover:bg-white cursor-pointer' : ''}`}>
+    <div className={`w-full rounded-lg border bg-gray-50 dark:bg-gray-700 px-4 py-3 transition-colors duration-150 ${border} ${onView ? 'hover:bg-white dark:hover:bg-gray-600 cursor-pointer' : ''}`}>
       <div className="flex items-start justify-between gap-4">
         <button
           type="button"
@@ -29,7 +29,7 @@ export default function NoteCard({
           className="flex items-start gap-2 min-w-0 text-left w-full"
         >
           {note.is_done && (
-            <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400 my-auto">
+            <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 my-auto">
               done
             </span>
           )}
@@ -37,7 +37,7 @@ export default function NoteCard({
           <div className="min-w-0">
             <h3
               className={`text-sm font-semibold truncate ${
-                note.is_done ? 'text-gray-500' : 'text-gray-800'
+                note.is_done ? 'text-gray-500 dark:text-gray-500' : 'text-gray-800 dark:text-gray-300'
               }`}
             >
               {note.title}
@@ -56,7 +56,7 @@ export default function NoteCard({
               </div>
             )}
             {showMeta && (date || priority) ? (
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {priority}
                 {priority && date ? ' • ' : ''}
                 {date}

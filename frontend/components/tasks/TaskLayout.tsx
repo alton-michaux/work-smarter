@@ -5,14 +5,14 @@ import { TaskLayoutProps, PanelProps } from "types/types";
 function SectionPanel({ title, right, children, className = "" }: PanelProps) {
   return (
     <section
-      className={`rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col ${className}`}
+      className={`rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm flex flex-col ${className}`}
       style={{ height: 'calc(100vh - 350px)' }}
     >
-      <div className="shrink-0 flex items-baseline justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
-        <h2 className="text-[11px] font-semibold tracking-widest text-gray-600">
+      <div className="shrink-0 flex items-baseline justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-t-lg">
+        <h2 className="text-[11px] font-semibold tracking-widest text-gray-600 dark:text-gray-400">
           {title}
         </h2>
-        {right ? <div className="text-xs text-gray-400">{right}</div> : null}
+        {right ? <div className="text-xs text-gray-400 dark:text-gray-500">{right}</div> : null}
       </div>
       <div className="flex-1 overflow-y-auto">
         {children}
@@ -45,7 +45,7 @@ export function TaskLayout({
                 onDelete={onDelete}
               />
             ) : (
-              <div className="px-4 py-3 text-sm text-gray-500">
+              <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                 No meetings.
               </div>
             )}
@@ -66,7 +66,7 @@ export function TaskLayout({
                 onToggleDone={onToggleDone}
               />
             ) : (
-              <div className="px-4 py-3 text-sm text-gray-500">
+              <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                 No tasks.
               </div>
             )}

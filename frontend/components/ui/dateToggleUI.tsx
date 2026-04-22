@@ -13,7 +13,7 @@ export const DateToggleUI = ({
     : "h-11 px-4 text-sm";
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-2">
+    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2">
       <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200">
         {last7Days.map((d) => {
           const isActive = d.key === selectedDate;
@@ -32,7 +32,7 @@ export const DateToggleUI = ({
                 "transition-colors duration-150",
                 isActive
                   ? "bg-blue-600 text-white ring-1 ring-blue-600"
-                  : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200",
+                  : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600",
               ].join(" ")}
             >
               {d.label}

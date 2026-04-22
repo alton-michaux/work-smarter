@@ -50,17 +50,17 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-md mx-auto bg-white p-6 rounded-lg shadow space-y-4"
+      className="max-w-md mx-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4"
     >
       {formError ? (
-        <div className="rounded border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-2">
+        <div className="rounded border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900 dark:bg-opacity-20 text-red-700 dark:text-red-400 text-sm px-4 py-2">
           {formError}
         </div>
       ) : null}
       <div>
         <label
           htmlFor="name"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
           Project Name
         </label>
@@ -70,7 +70,7 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
           value={project.name}
           onChange={handleChange}
           required
-          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
         />
         {errors.name ? (
           <p className="text-sm text-red-600 mt-1">{errors.name}</p>
@@ -78,7 +78,61 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+        <label
+          htmlFor="role"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
+          Your Role
+        </label>
+        <input
+          id="role"
+          name="role"
+          value={project.role ?? ''}
+          onChange={handleChange}
+          placeholder="e.g. Tech Lead, Contributor, Stakeholder"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
+          Description
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          value={project.description ?? ''}
+          onChange={handleChange}
+          rows={3}
+          placeholder="Optional project description…"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="status"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
+          Status
+        </label>
+        <select
+          id="status"
+          name="status"
+          value={project.status ?? 'active'}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          <option value="active">Active</option>
+          <option value="complete">Complete</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</label>
         <div className="flex items-center gap-2 flex-wrap">
           {PRESET_COLORS.map((c) => (
             <button
@@ -97,7 +151,7 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
             type="color"
             value={project.color ?? '#3b82f6'}
             onChange={(e) => setProject(p => ({ ...p, color: e.target.value }))}
-            className="w-6 h-6 rounded cursor-pointer border border-gray-300"
+            className="w-6 h-6 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
             title="Custom color"
           />
         </div>
@@ -120,7 +174,7 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
         />
       </div>
 
-      <div className="sticky bottom-0 -mx-6 mt-8 border-t border-gray-200 bg-white/90 backdrop-blur px-6 py-4">
+      <div className="sticky bottom-0 -mx-6 mt-8 border-t border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 backdrop-blur px-6 py-4">
         <div className="flex items-center justify-between">
           <Button
             variant="primary"

@@ -38,6 +38,7 @@ export type Task = {
   project?: number;
   begin_date: string;
   end_date: string;
+  deadline_date?: string | null;
   begin_time?: string | null;
   end_time?: string | null;
 
@@ -46,6 +47,7 @@ export type Task = {
   recurring_frequency?: string | null;
 
   google_event_id?: string | null;
+  deadline_event_id?: string | null;
 
   user: number;
 };
@@ -53,6 +55,7 @@ export type Task = {
 export type CreateTaskPayload = {
   title: string;
   begin_date?: string | null;
+  deadline_date?: string | null;
   category?: string | null;
   project?: number | null;
 
@@ -100,6 +103,8 @@ export type TasksContextType = {
   fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
   pushToCalendar: (taskId: number) => Promise<Task>;
+  pushDeadlineToCalendar: (taskId: number) => Promise<Task>;
+  blacklistEvent: (googleEventId: string, title: string, deleteTask?: boolean) => Promise<void>;
   pullFromCalendar: (dateFrom: string, dateTo: string) => Promise<{ imported: number; skipped: number }>;
   isLoading: boolean;
   error: string | null;
@@ -108,6 +113,13 @@ export type TasksContextType = {
 export type GoogleCalendarStatus = {
   connected: boolean;
   selected_calendar_id: string | null;
+};
+
+export type CalendarBlacklistEntry = {
+  id: number;
+  google_event_id: string;
+  title: string;
+  created_at: string;
 };
 
 export type DeleteTaskOptions = { deleteSeries?: boolean; deleteFuture?: boolean };
@@ -142,6 +154,9 @@ export type Project = {
   id: number;
   name: string;
   color?: string;
+  status?: 'active' | 'complete';
+  description?: string;
+  role?: string;
   tasks?: Task[];
   user?: number | User;
 };
@@ -149,6 +164,9 @@ export type Project = {
 export type NewProject = {
   name: string;
   user: number;
+  status?: 'active' | 'complete';
+  description?: string;
+  role?: string;
 };
 
 export type ProjectsContextType = {
@@ -399,4 +417,23 @@ export type LoginPayload = {
 
 export type ApiError = {
   [key: string]: string[]; // Example: { "email": ["This field is required."] }
+};
+
+//------RESUME-------//
+
+export type Resume = {
+  id: number;
+  title: string;
+  file: string;
+  uploaded_at: string;
+};
+
+export type ResumesContextType = {
+  resumes: Resume[];
+  isLoading: boolean;
+  error: string | null;
+  fetchResumes: () => Promise<void>;
+  uploadResume: (file: File, title: string) => Promise<void>;
+  deleteResume: (id: number) => Promise<void>;
+  downloadResume: (id: number, filename: string) => Promise<void>;
 };
