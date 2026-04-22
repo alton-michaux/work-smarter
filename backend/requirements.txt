@@ -113,7 +113,7 @@ pytest-cov==6.2.1
 pytest-django==4.11.1
 python-dateutil==2.9.0.post0
 python-debian==0.1.36
-python-dotenv==1.0.0
+python-dotenv==1.2.2
 pytz==2025.2
 pyudorandom==1.0.0
 PyYAML==5.3.1
