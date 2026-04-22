@@ -292,10 +292,7 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
         and e.get("status") != "cancelled"
         and e.get("eventType", "default") == "default"
         and e.get("id") not in existing_ids
-<<<<<<< HEAD
-=======
         and e.get("id") not in blacklisted_ids
->>>>>>> dev
     ]
     recurring_parent_ids = {
         e["recurringEventId"] for e in new_events if e.get("recurringEventId")
@@ -318,11 +315,7 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
             skipped += 1
             continue
 
-<<<<<<< HEAD
-        if event_id in existing_ids:
-=======
         if event_id in existing_ids or event_id in blacklisted_ids:
->>>>>>> dev
             skipped += 1
             continue
 
