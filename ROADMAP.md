@@ -34,7 +34,7 @@
 - [x] Meeting should only show time in daily view
 - [x] Dark mode not applied in all forms (create)
 - [x] Back buttons on show pages and import page redundant, no back button (or dashboard button) on daily log or weekly tracker page
-- [ ] Meeting project color is not visible because there is not enough room, also meeting time wraps onto next line - there's basically not enough space for all of the information being displayed for meetings on the daily log page
+- [x] Meeting project color is not visible because there is not enough room, also meeting time wraps onto next line - there's basically not enough space for all of the information being displayed for meetings on the daily log page
 
 ---
 
@@ -75,8 +75,8 @@
 - [x] Recurrence badges ("weekly", "ongoing")
 - [x] Add status to project (indicates whether still active or complete)
 - [s] Add description to project
-- [ ] Add a logo
-- [ ] Make navbar and footer sticky
+- [x] Add a logo
+- [x] Make navbar and footer sticky
 
 ---
 

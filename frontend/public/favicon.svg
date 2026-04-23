@@ -1,0 +1,24 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Work Smarter icon">
+  <title>Work Smarter</title>
+
+  <!-- Simplified node mark optimized for small sizes -->
+  <g transform="translate(16, 16)">
+    <!-- Outer nodes (4, simplified from 6 for clarity at small size) -->
+    <circle cx="0" cy="-11" r="2" fill="#B5D4F4"/>
+    <circle cx="10" cy="-5" r="2" fill="#B5D4F4"/>
+    <circle cx="10" cy="5" r="2" fill="#B5D4F4"/>
+    <circle cx="0" cy="11" r="2" fill="#B5D4F4"/>
+    <circle cx="-10" cy="5" r="2" fill="#B5D4F4"/>
+    <circle cx="-10" cy="-5" r="2" fill="#B5D4F4"/>
+    <!-- Connectors -->
+    <line x1="0" y1="-9" x2="0" y2="-5" stroke="#378ADD" stroke-width="0.8" stroke-linecap="round"/>
+    <line x1="8" y1="-4" x2="4" y2="-2" stroke="#378ADD" stroke-width="0.8" stroke-linecap="round"/>
+    <line x1="8" y1="4" x2="4" y2="2" stroke="#378ADD" stroke-width="0.8" stroke-linecap="round"/>
+    <line x1="0" y1="9" x2="0" y2="5" stroke="#378ADD" stroke-width="0.8" stroke-linecap="round"/>
+    <line x1="-8" y1="4" x2="-4" y2="2" stroke="#378ADD" stroke-width="0.8" stroke-linecap="round"/>
+    <line x1="-8" y1="-4" x2="-4" y2="-2" stroke="#378ADD" stroke-width="0.8" stroke-linecap="round"/>
+    <!-- Central node -->
+    <circle cx="0" cy="0" r="5" fill="#185FA5"/>
+    <circle cx="0" cy="0" r="2" fill="white"/>
+  </g>
+</svg>

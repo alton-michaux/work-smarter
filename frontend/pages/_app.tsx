@@ -16,9 +16,9 @@ function MyApp({ Component, pageProps }) {
       <AuthProvider>
         <APIProvider>
           <SystemsProvider>
-            <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 transition-colors duration-200">
+            <div className="h-screen flex flex-col bg-white dark:bg-gray-900 transition-colors duration-200 overflow-hidden">
               <Navbar />
-                <main className="flex-1 min-h-0" >
+                <main className="flex-1 min-h-0 overflow-y-auto">
                   <ProjectsProvider>
                     <TasksProvider>
                       <ResumesProvider>

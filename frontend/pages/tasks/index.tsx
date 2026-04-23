@@ -75,7 +75,7 @@ const TasksPage = () => {
   }, [selectedDate]); // keeping your existing behavior
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 px-4 overflow-hidden">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 px-4 overflow-hidden">
       <div className="mx-auto w-full max-w-6xl h-full">
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm h-full flex flex-col overflow-hidden">
           {/* ───────────────── Sticky Header ───────────────── */}
