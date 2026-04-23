@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import Spinner from 'components/shared/Spinner';
-import Button from "../components/ui/button"; // Add this import
+import Button from "../components/ui/button";
+
+const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace(/\/api$/, '');
 
 const Register = () => {
   const { register, isLoading, error } = useAuth(); // <-- get error from context
@@ -104,7 +106,7 @@ const Register = () => {
           </div>
           <div className="mt-4 flex flex-col gap-3">
             <a
-              href="/accounts/google/login/"
+              href={`${BACKEND_URL}/accounts/google/login/`}
               className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -116,7 +118,7 @@ const Register = () => {
               Continue with Google
             </a>
             <a
-              href="/accounts/linkedin_oauth2/login/"
+              href={`${BACKEND_URL}/accounts/linkedin_oauth2/login/`}
               className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
             >
               <svg className="w-4 h-4 fill-[#0A66C2]" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
