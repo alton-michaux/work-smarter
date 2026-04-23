@@ -1,4 +1,7 @@
+import os
 from datetime import datetime, timedelta, timezone as dt_timezone, date as date_type
+
+os.environ.setdefault('OAUTHLIB_RELAX_TOKEN_SCOPE', '1')
 
 from django.conf import settings
 from django.shortcuts import redirect
