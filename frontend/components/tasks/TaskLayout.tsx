@@ -5,8 +5,7 @@ import { TaskLayoutProps, PanelProps } from "types/types";
 function SectionPanel({ title, right, children, className = "" }: PanelProps) {
   return (
     <section
-      className={`rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm flex flex-col ${className}`}
-      style={{ height: 'calc(100vh - 350px)' }}
+      className={`rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm flex flex-col h-full ${className}`}
     >
       <div className="shrink-0 flex items-baseline justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-t-lg">
         <h2 className="text-[11px] font-semibold tracking-widest text-gray-600 dark:text-gray-400">
@@ -32,9 +31,9 @@ export function TaskLayout({
   const tasksCount = sections.tasks?.length ?? 0;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-      {/* LEFT: Meetings */}
-      <div className="lg:col-span-4">
+    <div className="h-full flex flex-col lg:flex-row gap-6">
+      {/* LEFT: Meetings ~1/3 */}
+      <div className="min-h-[200px] lg:min-h-0 lg:w-[34%] lg:shrink-0 min-w-0">
         <SectionPanel title="MEETINGS" right={`${meetingsCount} total`}>
           <div className="p-3">
             {meetingsCount ? (
@@ -53,8 +52,8 @@ export function TaskLayout({
         </SectionPanel>
       </div>
 
-      {/* RIGHT: Tasks */}
-      <div className="lg:col-span-8">
+      {/* RIGHT: Tasks ~2/3 */}
+      <div className="min-h-[200px] lg:min-h-0 flex-1 min-w-0">
         <SectionPanel title="TASKS" right={`${tasksCount} total`}>
           <div className="p-3">
             {tasksCount ? (
