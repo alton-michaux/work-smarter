@@ -31,9 +31,9 @@ export function TaskLayout({
   const tasksCount = sections.tasks?.length ?? 0;
 
   return (
-    <div className="h-full flex flex-col lg:flex-row gap-6">
+    <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6">
       {/* LEFT: Meetings ~1/3 */}
-      <div className="min-h-[200px] lg:min-h-0 lg:w-[34%] lg:shrink-0 min-w-0">
+      <div className="min-h-[200px] lg:min-h-0 lg:w-[34%] lg:shrink-0 min-w-0 lg:h-full">
         <SectionPanel title="MEETINGS" right={`${meetingsCount} total`}>
           <div className="p-3">
             {meetingsCount ? (
@@ -53,7 +53,7 @@ export function TaskLayout({
       </div>
 
       {/* RIGHT: Tasks ~2/3 */}
-      <div className="min-h-[200px] lg:min-h-0 flex-1 min-w-0">
+      <div className="min-h-[200px] lg:min-h-0 flex-1 min-w-0 lg:h-full">
         <SectionPanel title="TASKS" right={`${tasksCount} total`}>
           <div className="p-3">
             {tasksCount ? (
