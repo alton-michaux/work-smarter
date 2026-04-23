@@ -75,6 +75,8 @@
 - [x] Recurrence badges ("weekly", "ongoing")
 - [x] Add status to project (indicates whether still active or complete)
 - [s] Add description to project
+- [ ] Add a logo
+- [ ] Make navbar and footer sticky
 
 ---
 
