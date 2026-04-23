@@ -22,6 +22,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from backend.adapters import EmailTokenObtainPairSerializer
 
 router = DefaultRouter()
 router.register(r'projects', ProjectViewSet, basename='project')
@@ -41,7 +42,7 @@ urlpatterns = [
     path('import/csv/', ImportTasksCSVView.as_view(), name="import-tasks-csv"),
     path('export/csv/', ExportTasksCSV.as_view(), name='export-tasks-csv'),
     # JWT endpoints
-    path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/login/', TokenObtainPairView.as_view(serializer_class=EmailTokenObtainPairSerializer), name='token_obtain_pair'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # Google Calendar
     path('calendar/oauth/init/', GoogleOAuthInitView.as_view(), name='calendar-oauth-init'),
