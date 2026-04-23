@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from api.views.views import ProjectViewSet, TaskViewSet, UserViewSet, RecurringTaskViewSet, ResumeViewSet
+from api.views.views import ProjectViewSet, TaskViewSet, UserViewSet, RecurringTaskViewSet, ResumeViewSet, DeleteAccountView
 from api.views.upload.views_import import ImportTasksCSVView, ImportTasksTXTView
 from api.views.upload.views_import_csv_spec import ImportTasksCSVSpecView
 from api.views.download.views_export import ExportTasksCSV
@@ -54,4 +54,5 @@ urlpatterns = [
     path('calendar/blacklist/list/', BlacklistListView.as_view(), name='calendar-blacklist-list'),
     path('calendar/blacklist/<int:pk>/', BlacklistListView.as_view(), name='calendar-blacklist-delete'),
     path('calendar/push-deadline/<int:task_id>/', PushDeadlineView.as_view(), name='calendar-push-deadline'),
+    path('auth/account/delete/', DeleteAccountView.as_view(), name='account-delete'),
 ]
