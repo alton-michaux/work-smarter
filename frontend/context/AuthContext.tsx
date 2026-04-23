@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const login = async (form: { username: string; password: string }) => {
+  const login = async (form: { email: string; password: string }) => {
     setError(null);
     setIsLoading(true);
     try {
