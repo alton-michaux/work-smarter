@@ -162,7 +162,7 @@ function OutlineRow({
             <span className="flex items-center gap-1.5 min-w-0 overflow-hidden">
               {pColor && (
                 <span
-                  className="shrink-0 inline-block w-2 h-2 rounded-full"
+                  className="shrink-0 inline-block w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: pColor }}
                   title={projectObj?.name}
                 />
@@ -196,40 +196,37 @@ function OutlineRow({
             </span>
           </button>
 
-          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            <span className="uppercase tracking-wide">
+          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-gray-500 dark:text-gray-400">
+            <span className="whitespace-nowrap uppercase tracking-wide">
               {(node.priority ?? '—').toString()}
             </span>
             {type !== 'meeting' && (
-              <>
-                <span className="mx-2 text-gray-300 dark:text-gray-600">•</span>
-                <span>{node.begin_date ?? '—'}</span>
-              </>
+              <span className="whitespace-nowrap">
+                <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
+                {node.begin_date ?? '—'}
+              </span>
             )}
             {type === 'meeting' && node.begin_time && (
-              <>
-                <span className="mx-2 text-gray-300 dark:text-gray-600">•</span>
-                <span>
-                  {formatTime(node.begin_time)}
-                  {node.end_time ? ` – ${formatTime(node.end_time)}` : ''}
-                </span>
-              </>
+              <span className="whitespace-nowrap">
+                <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
+                {formatTime(node.begin_time)}
+                {node.end_time ? ` – ${formatTime(node.end_time)}` : ''}
+              </span>
             )}
             {node.deadline_date && (() => {
               const st = deadlineStatus(node.deadline_date, isDone);
               return (
-                <>
-                  <span className="mx-2 text-gray-300 dark:text-gray-600">•</span>
-                  <span
-                    className={
-                      st === 'overdue' ? 'text-red-600 dark:text-red-400 font-medium' :
-                      st === 'soon'    ? 'text-amber-600 dark:text-amber-400 font-medium' :
-                                         'text-gray-500 dark:text-gray-400'
-                    }
-                  >
-                    ⚑ {node.deadline_date}
-                  </span>
-                </>
+                <span
+                  className={[
+                    'whitespace-nowrap',
+                    st === 'overdue' ? 'text-red-600 dark:text-red-400 font-medium' :
+                    st === 'soon'    ? 'text-amber-600 dark:text-amber-400 font-medium' :
+                                       'text-gray-500 dark:text-gray-400',
+                  ].join(' ')}
+                >
+                  <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
+                  ⚑ {node.deadline_date}
+                </span>
               );
             })()}
           </div>
