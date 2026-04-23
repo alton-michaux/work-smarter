@@ -161,7 +161,7 @@ const TasksPage = () => {
                 </p>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 h-full">
+              <div className="flex-1 min-h-0 flex flex-col">
                 <TaskLayout
                   sections={sections}
                   onView={handleTaskClick}
