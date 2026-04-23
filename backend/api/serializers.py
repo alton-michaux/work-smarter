@@ -1,7 +1,7 @@
 from django.utils import timezone
 from datetime import timedelta, timezone as dt_timezone
 from rest_framework import serializers
-from .models import Resume, Task, Project, User, RecurringTask, CalendarBlacklist
+from .models import Resume, Task, Project, User, RecurringTask, CalendarBlacklist, ResumeProfile, WorkExperience, Education, Skill
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -220,3 +220,32 @@ class CalendarBlacklistSerializer(serializers.ModelSerializer):
         model = CalendarBlacklist
         fields = ["id", "google_event_id", "title", "created_at"]
         read_only_fields = ["id", "created_at"]
+
+
+class WorkExperienceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkExperience
+        fields = ["id", "title", "company", "location", "start_date", "end_date", "is_current", "description"]
+
+
+class EducationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Education
+        fields = ["id", "school", "degree", "field_of_study", "start_date", "end_date"]
+
+
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = ["id", "name"]
+
+
+class ResumeProfileSerializer(serializers.ModelSerializer):
+    work_experiences = WorkExperienceSerializer(many=True, read_only=True)
+    educations = EducationSerializer(many=True, read_only=True)
+    skills = SkillSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ResumeProfile
+        fields = ["id", "headline", "summary", "location", "photo_url", "linkedin_url", "work_experiences", "educations", "skills"]
+        read_only_fields = ["id"]

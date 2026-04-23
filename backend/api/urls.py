@@ -15,6 +15,7 @@ from api.views.views_calendar import (
     BlacklistListView,
     PushDeadlineView,
 )
+from api.views.views_resume_profile import ResumeProfileViewSet, WorkExperienceViewSet, EducationViewSet, SkillViewSet
 
 # JWT views
 from rest_framework_simplejwt.views import (
@@ -28,6 +29,10 @@ router.register(r'tasks', TaskViewSet, basename='task')
 router.register(r"recurring-tasks", RecurringTaskViewSet, basename="recurring-task")
 router.register(r'user', UserViewSet, basename='user')
 router.register(r'resumes', ResumeViewSet, basename='resume')
+router.register(r'resume-profile', ResumeProfileViewSet, basename='resume-profile')
+router.register(r'work-experiences', WorkExperienceViewSet, basename='work-experience')
+router.register(r'educations', EducationViewSet, basename='education')
+router.register(r'skills', SkillViewSet, basename='skill')
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'dj_rest_auth.registration',
 
     'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.linkedin_oauth2',
 
     # Local apps
     'backend.apps.BackendConfig',
@@ -176,11 +177,38 @@ CORS_ALLOW_CREDENTIALS = True
 # --- DEBUG ---
 REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = ['rest_framework.renderers.JSONRenderer']
 
-# --- Google OAuth2 ---
+# --- Google OAuth2 (Calendar) ---
 GOOGLE_OAUTH2_CLIENT_ID = env("GOOGLE_OAUTH2_CLIENT_ID", default="")
 GOOGLE_OAUTH2_CLIENT_SECRET = env("GOOGLE_OAUTH2_CLIENT_SECRET", default="")
 GOOGLE_OAUTH2_REDIRECT_URI = env("GOOGLE_OAUTH2_REDIRECT_URI", default="http://localhost:8000/api/calendar/oauth/callback/")
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+
+# --- Social Auth (Login with Google / LinkedIn) ---
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': env('GOOGLE_OAUTH2_CLIENT_ID', default=''),
+            'secret': env('GOOGLE_OAUTH2_CLIENT_SECRET', default=''),
+            'key': '',
+        },
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+    },
+    'linkedin_oauth2': {
+        'APP': {
+            'client_id': env('LINKEDIN_CLIENT_ID', default=''),
+            'secret': env('LINKEDIN_CLIENT_SECRET', default=''),
+            'key': '',
+        },
+        'SCOPE': ['openid', 'profile', 'email'],
+    },
+}
+LINKEDIN_CLIENT_ID = env('LINKEDIN_CLIENT_ID', default='')
+LINKEDIN_CLIENT_SECRET = env('LINKEDIN_CLIENT_SECRET', default='')
+SOCIALACCOUNT_ADAPTER = 'backend.adapters.WorkSmarterSocialAccountAdapter'
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+LOGIN_REDIRECT_URL = '/api/auth/social/complete/'
 
 # --- Misc ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

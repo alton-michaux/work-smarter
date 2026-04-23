@@ -121,6 +121,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const loginWithToken = async (accessToken: string) => {
+    localStorage.setItem('authToken', accessToken);
+    hydratedOnce.current = true;
+    await getUser();
+    setLoggedIn(true);
+  };
+
   const logout = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
@@ -161,7 +168,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loggedIn, isLoading, error, setLoggedIn, register, login, logout, getUser, getAuthHeaders }}
+      value={{ user, loggedIn, isLoading, error, setLoggedIn, register, login, loginWithToken, logout, getUser, getAuthHeaders }}
     >
       {children}
     </AuthContext.Provider>
