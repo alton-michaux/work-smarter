@@ -1,3 +1,4 @@
+import Head from 'next/head';
 import { AuthProvider } from '../context/AuthContext';
 import { ProjectsProvider } from '../context/ProjectsContext';
 import { TasksProvider } from '../context/TasksContext';
@@ -12,6 +13,10 @@ import '../styles/globals.css';
 
 function MyApp({ Component, pageProps }) {
   return (
+    <>
+    <Head>
+      <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    </Head>
     <ThemeProvider>
       <AuthProvider>
         <APIProvider>
@@ -34,6 +39,7 @@ function MyApp({ Component, pageProps }) {
         </APIProvider>
       </AuthProvider>
     </ThemeProvider>
+    </>
   );
 }
 
