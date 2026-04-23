@@ -1,4 +1,6 @@
 from rest_framework import viewsets, status, filters
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from django.http import FileResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -14,6 +16,15 @@ from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
 from loguru import logger
 from django.db.models import Count, Min, Max
+
+
+class DeleteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        user = request.user
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 def _detach_children(task, user):

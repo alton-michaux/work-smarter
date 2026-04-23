@@ -23,7 +23,7 @@ function plusDays(days: number) {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { loggedIn, user, getUser } = useAuth();
+  const { loggedIn, user, getUser, logout } = useAuth();
   const { getAuthHeaders } = useAPI();
   const { pullFromCalendar } = useTasks();
   const { theme, toggleTheme } = useTheme();
@@ -52,6 +52,9 @@ export default function SettingsPage() {
   const [pullDateFrom, setPullDateFrom] = useState(todayStr());
   const [pullDateTo, setPullDateTo] = useState(plusDays(7));
   const [isPulling, setIsPulling] = useState(false);
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [blacklist, setBlacklist] = useState<CalendarBlacklistEntry[]>([]);
   const [isLoadingBlacklist, setIsLoadingBlacklist] = useState(false);
@@ -213,6 +216,25 @@ export default function SettingsPage() {
       toast.error('Failed to change password.');
     } finally {
       setIsSavingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`${API_URL}/auth/account/delete/`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        logout();
+      } else {
+        toast.error('Failed to delete account. Please try again.');
+      }
+    } catch {
+      toast.error('Failed to delete account. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -447,6 +469,45 @@ export default function SettingsPage() {
               )}
             </div>
           </>
+        )}
+      </div>
+      {/* Danger Zone card */}
+      <div className="bg-white dark:bg-gray-800 border border-red-200 dark:border-red-900 rounded-lg shadow-sm p-6 space-y-4">
+        <div>
+          <h2 className="text-sm font-semibold text-red-600 dark:text-red-400">Danger Zone</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Permanently delete your account and all associated data. This cannot be undone.
+          </p>
+        </div>
+        {!confirmDelete ? (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="inline-flex items-center rounded-md border border-red-300 dark:border-red-700 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 dark:hover:bg-opacity-20"
+          >
+            Delete account
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Are you sure? This will delete all your tasks, projects, and data permanently.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting…' : 'Yes, delete my account'}
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                disabled={isDeleting}
+                className="inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
