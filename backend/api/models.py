@@ -53,6 +53,52 @@ class Resume(models.Model):
 
     def __str__(self):
         return f"{self.user}'s Resume"
+
+
+class ResumeProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='resume_profile')
+    headline = models.CharField(max_length=255, blank=True, default='')
+    summary = models.TextField(blank=True, default='')
+    location = models.CharField(max_length=255, blank=True, default='')
+    photo_url = models.URLField(blank=True, default='')
+    linkedin_url = models.URLField(blank=True, default='')
+
+    def __str__(self):
+        return f"{self.user}'s Resume Profile"
+
+
+class WorkExperience(models.Model):
+    profile = models.ForeignKey(ResumeProfile, on_delete=models.CASCADE, related_name='work_experiences')
+    title = models.CharField(max_length=255)
+    company = models.CharField(max_length=255)
+    location = models.CharField(max_length=255, blank=True, default='')
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    is_current = models.BooleanField(default=False)
+    description = models.TextField(blank=True, default='')
+
+    def __str__(self):
+        return f"{self.title} at {self.company}"
+
+
+class Education(models.Model):
+    profile = models.ForeignKey(ResumeProfile, on_delete=models.CASCADE, related_name='educations')
+    school = models.CharField(max_length=255)
+    degree = models.CharField(max_length=255, blank=True, default='')
+    field_of_study = models.CharField(max_length=255, blank=True, default='')
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.degree} at {self.school}"
+
+
+class Skill(models.Model):
+    profile = models.ForeignKey(ResumeProfile, on_delete=models.CASCADE, related_name='skills')
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
     
 class Project(models.Model):
     STATUS_CHOICES = [
