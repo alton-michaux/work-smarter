@@ -7,7 +7,7 @@ export default function FeatureList() {
   ];
 
   return (
-    <section className="py-12 px-6 bg-white dark:bg-gray-800 text-center">
+    <section className="py-6 px-6 bg-white dark:bg-gray-800 text-center">
       <div className="grid gap-4 md:grid-cols-2 max-w-3xl mx-auto">
         {features.map(({ emoji, text }, idx) => (
           <div key={idx} className="text-lg text-gray-700 dark:text-gray-300 flex items-center justify-center space-x-2">
