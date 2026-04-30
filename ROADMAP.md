@@ -110,7 +110,7 @@
   - [x] User should be able to upload or create from scratch
   - [x] User should also be able to download resume
   - [/] Build Resume from linkedin profile(not possible right now)
-- [ ] Dedicated UI for notes
+- [x] Dedicated UI for notes
 - [ ] Make tasks searchable
 - [x] Log in with LinkedIn/Google (social auth)
 - [ ] AI resume analysis

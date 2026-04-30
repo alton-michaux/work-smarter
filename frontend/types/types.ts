@@ -106,6 +106,9 @@ export type TasksContextType = {
   pushDeadlineToCalendar: (taskId: number) => Promise<Task>;
   blacklistEvent: (googleEventId: string, title: string, deleteTask?: boolean) => Promise<void>;
   pullFromCalendar: (dateFrom: string, dateTo: string) => Promise<{ imported: number; skipped: number }>;
+  notes: Task[];
+  isLoadingNotes: boolean;
+  fetchNotes: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
 };
@@ -205,6 +208,7 @@ export type NoteProps = {
   // display tweaks
   showMeta?: boolean;      // date/priority line
   variant?: 'default' | 'dashed'; // dashed looks “ongoing”
+  collapsible?: boolean;   // truncate description with expand toggle
 };
 
 //------UTILITY---------//
@@ -248,6 +252,8 @@ export type Filters = {
   end_date?: string;
   active_on?: string;
   tz_offset?: number;
+  category?: string;
+  page_size?: number;
 };
 
 export type OutlineRowProps = {
