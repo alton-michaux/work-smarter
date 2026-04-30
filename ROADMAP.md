@@ -109,7 +109,7 @@
   - [x] User can have an attached resume model(s)
   - [x] User should be able to upload or create from scratch
   - [x] User should also be able to download resume
-  - [ ] Build Resume from linkedin profile(?)
+  - [/] Build Resume from linkedin profile(not possible right now)
 - [ ] Dedicated UI for notes
 - [ ] Make tasks searchable
 - [x] Log in with LinkedIn/Google (social auth)
