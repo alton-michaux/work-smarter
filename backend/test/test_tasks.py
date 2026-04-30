@@ -32,6 +32,32 @@ def test_task_index(auth_client):
 
 
 @pytest.mark.django_db
+def test_category_filter_returns_only_matching_category(auth_client, get_user, create_task):
+    create_task(title="A Task", begin_date=date.today(), category="task", user=get_user)
+    create_task(title="A Meeting", begin_date=date.today(), category="meeting", user=get_user)
+    create_task(title="A Note", begin_date=date.today(), category="note", user=get_user)
+
+    response = auth_client.get("/api/tasks/?category=note")
+    assert response.status_code == 200
+    results = response.data["results"]
+    assert all(t["category"] == "note" for t in results)
+    assert any(t["title"] == "A Note" for t in results)
+    assert not any(t["title"] in ("A Task", "A Meeting") for t in results)
+
+
+@pytest.mark.django_db
+def test_no_category_filter_returns_all_categories(auth_client, get_user, create_task):
+    create_task(title="A Task", begin_date=date.today(), category="task", user=get_user)
+    create_task(title="A Note", begin_date=date.today(), category="note", user=get_user)
+
+    response = auth_client.get("/api/tasks/")
+    assert response.status_code == 200
+    titles = [t["title"] for t in response.data["results"]]
+    assert "A Task" in titles
+    assert "A Note" in titles
+
+
+@pytest.mark.django_db
 def test_weekly_task_filtering(auth_client, get_user, create_task, create_recurring_task):
     today = date.today()
     start_of_week = today - timedelta(days=today.weekday())
