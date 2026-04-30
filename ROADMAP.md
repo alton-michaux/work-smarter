@@ -35,6 +35,7 @@
 - [x] Dark mode not applied in all forms (create)
 - [x] Back buttons on show pages and import page redundant, no back button (or dashboard button) on daily log or weekly tracker page
 - [x] Meeting project color is not visible because there is not enough room, also meeting time wraps onto next line - there's basically not enough space for all of the information being displayed for meetings on the daily log page
+- [ ] Long-term tasks (maybe just for recurring?) don't persist in daily or weekly tracker
 
 ---
 
