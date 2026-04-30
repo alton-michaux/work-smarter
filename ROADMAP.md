@@ -75,9 +75,10 @@
 - [x] Micro polish: hover states, subtle transitions, keyboard nav
 - [x] Recurrence badges ("weekly", "ongoing")
 - [x] Add status to project (indicates whether still active or complete)
-- [s] Add description to project
+- [x] Add description to project
 - [x] Add a logo
 - [x] Make navbar and footer sticky
+- [ ] Allow notes to have subtasks (in UI)
 
 ---
 
@@ -112,6 +113,7 @@
   - [x] User should also be able to download resume
   - [/] Build Resume from linkedin profile(not possible right now)
 - [x] Dedicated UI for notes
+- [ ] Allow tasks to reference other tasks (notes, meetings, et al.)
 - [ ] Make tasks searchable
 - [x] Log in with LinkedIn/Google (social auth)
 - [ ] AI resume analysis
