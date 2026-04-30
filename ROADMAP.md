@@ -48,6 +48,7 @@
 - [x] Add status to project (indicates whether still active or complete)
 - [x] Add description to project
 - [x] Add role to project
+- [ ] Allow encryption for notes
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
