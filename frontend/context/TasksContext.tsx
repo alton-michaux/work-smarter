@@ -19,7 +19,9 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const { loggedIn } = useAuth();
 
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [notes, setNotes] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const buildUrl = (filters: Filters = { ordering: '-begin_date' }) => {
@@ -33,6 +35,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (filters.end_date) qs.set('end_date', filters.end_date);
     if (filters.active_on) qs.set('active_on', filters.active_on);
     if (filters.tz_offset !== undefined) qs.set('tz_offset', String(filters.tz_offset));
+    if (filters.category) qs.set('category', filters.category);
+    if (filters.page_size !== undefined) qs.set('page_size', String(filters.page_size));
     return `${API_URL}/tasks/?${qs.toString()}`;
   };
 
@@ -94,6 +98,23 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     },
     [loggedIn, getAuthHeaders]
   );
+
+  const fetchNotes = useCallback(async () => {
+    if (!loggedIn) return;
+    setIsLoadingNotes(true);
+    try {
+      const url = buildUrl({ category: 'note', page_size: 500, ordering: '-begin_date', tz_offset: -new Date().getTimezoneOffset() });
+      const res = await fetch(url, { headers: getAuthHeaders() });
+      if (res.status === 401) return;
+      if (!res.ok) throw new Error(`Failed to fetch notes: ${res.status}`);
+      const data = await res.json();
+      setNotes(data.results || []);
+    } catch (e: any) {
+      setError(e.message ?? 'unknown error');
+    } finally {
+      setIsLoadingNotes(false);
+    }
+  }, [loggedIn, getAuthHeaders]);
 
   const fetchRecurringTemplate = async (recurring_task_id: number, initialTask: any, setRecurrence: any) => {
     if (!loggedIn) return;
@@ -477,6 +498,9 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         pushDeadlineToCalendar,
         blacklistEvent,
         pullFromCalendar,
+        notes,
+        isLoadingNotes,
+        fetchNotes,
         isLoading,
         error,
       }}
