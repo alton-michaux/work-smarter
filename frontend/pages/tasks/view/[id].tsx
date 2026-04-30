@@ -57,8 +57,11 @@ const TaskShowPage = () => {
     );
   }
 
+  const qReturn = typeof router.query.returnTo === 'string' ? router.query.returnTo : '/tasks';
+  const backLabel = qReturn === '/notes' ? '← All Notes' : '← All Tasks';
+
   const handleEdit = () => {
-    router.push(`/tasks/edit/${id}`);
+    router.push(`/tasks/edit/${id}?returnTo=${qReturn}`);
   };
 
   const handlePushToCalendar = async () => {
@@ -108,7 +111,7 @@ const TaskShowPage = () => {
 
     try {
       await deleteTask(task);
-      await router.push('/tasks');
+      await router.push(qReturn);
     } catch (err) {
       toast.error('Failed to delete. Please try again.');
     }
@@ -118,8 +121,8 @@ const TaskShowPage = () => {
     <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
       {/* Top bar */}
       <div className="flex items-center justify-between">
-        <a href="/tasks" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
-          ← All Tasks
+        <a href={qReturn} className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+          {backLabel}
         </a>
 
         <div className="flex items-center gap-2">

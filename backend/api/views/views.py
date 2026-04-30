@@ -32,6 +32,8 @@ def _detach_children(task, user):
 
 class TaskCursorPagination(CursorPagination):
     ordering = "-begin_date"
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
 
 class TaskViewSet(viewsets.ModelViewSet):
     pagination_class = TaskCursorPagination
@@ -49,6 +51,10 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         queryset = Task.objects.filter(user=user)
+
+        category = self.request.query_params.get("category")
+        if category:
+            queryset = queryset.filter(category=category)
 
         begin_date_str = self.request.query_params.get("begin_date")
         end_date_str = self.request.query_params.get("end_date")

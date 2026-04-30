@@ -220,7 +220,7 @@ export default function TaskTable({
 
       {/* NOTES */}
       <div className="lg:col-span-3">
-      <SectionPanel title="NOTES" right="Ongoing" children={(
+      <SectionPanel title="NOTES" right={<a href="/notes" className="text-xs text-blue-500 hover:underline">All notes →</a>} children={(
         <div className={`${sectionMaxHeightClass(notes.length)} overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-10`}>
           {notes.length ? (
             <div className="space-y-3">

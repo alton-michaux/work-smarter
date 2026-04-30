@@ -113,6 +113,52 @@ function Dashboard() {
                 </div>
               </button>
 
+              {/* Notes */}
+              <button
+                onClick={go("/notes")}
+                className="group rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 p-5 text-left hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-sm transition"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Workspace
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      Notes
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                      Your persistent reference space.
+                    </div>
+                  </div>
+                  <span className="text-gray-300 dark:text-gray-600 group-hover:text-gray-400 dark:group-hover:text-gray-500 transition">
+                    →
+                  </span>
+                </div>
+              </button>
+
+              {/* Resume */}
+              <button
+                onClick={go("/resume")}
+                className="group rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 p-5 text-left hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-sm transition"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Career
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      Resume
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                      Upload and manage your resumes.
+                    </div>
+                  </div>
+                  <span className="text-gray-300 dark:text-gray-600 group-hover:text-gray-400 dark:group-hover:text-gray-500 transition">
+                    →
+                  </span>
+                </div>
+              </button>
+
               {/* Imports */}
               <button
                 onClick={go("/import")}
@@ -154,29 +200,6 @@ function Dashboard() {
                     </div>
                   </div>
                   <span className="text-blue-300 dark:text-blue-600 group-hover:text-blue-400 dark:group-hover:text-blue-500 transition">
-                    →
-                  </span>
-                </div>
-              </button>
-
-              {/* Resume */}
-              <button
-                onClick={go("/resume")}
-                className="group rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 p-5 text-left hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-sm transition"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      Career
-                    </div>
-                    <div className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      Resume
-                    </div>
-                    <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                      Upload and manage your resumes.
-                    </div>
-                  </div>
-                  <span className="text-gray-300 dark:text-gray-600 group-hover:text-gray-400 dark:group-hover:text-gray-500 transition">
                     →
                   </span>
                 </div>
