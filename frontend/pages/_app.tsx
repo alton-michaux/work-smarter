@@ -1,3 +1,4 @@
+import Head from 'next/head';
 import { AuthProvider } from '../context/AuthContext';
 import { ProjectsProvider } from '../context/ProjectsContext';
 import { TasksProvider } from '../context/TasksContext';
@@ -12,13 +13,17 @@ import '../styles/globals.css';
 
 function MyApp({ Component, pageProps }) {
   return (
+    <>
+    <Head>
+      <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    </Head>
     <ThemeProvider>
       <AuthProvider>
         <APIProvider>
           <SystemsProvider>
-            <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 transition-colors duration-200">
+            <div className="h-screen flex flex-col bg-white dark:bg-gray-900 transition-colors duration-200 overflow-hidden">
               <Navbar />
-                <main className="flex-1 min-h-0" >
+                <main className="flex-1 min-h-0 overflow-y-auto">
                   <ProjectsProvider>
                     <TasksProvider>
                       <ResumesProvider>
@@ -34,6 +39,7 @@ function MyApp({ Component, pageProps }) {
         </APIProvider>
       </AuthProvider>
     </ThemeProvider>
+    </>
   );
 }
 

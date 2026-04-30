@@ -32,9 +32,9 @@
 - [x] Weird daily "Home" meeting keeps being imported even though I can't see it in my google calendar. Should check code for anything suspicious
 - [x] Meetings that should be recurring aren't imported as recurring, but as individual events
 - [x] Meeting should only show time in daily view
-- [ ] Meeting project color is not visible because there is not enough room
-- [ ] Dark mode not applied in all forms (create)
+- [x] Dark mode not applied in all forms (create)
 - [x] Back buttons on show pages and import page redundant, no back button (or dashboard button) on daily log or weekly tracker page
+- [x] Meeting project color is not visible because there is not enough room, also meeting time wraps onto next line - there's basically not enough space for all of the information being displayed for meetings on the daily log page
 
 ---
 
@@ -75,6 +75,8 @@
 - [x] Recurrence badges ("weekly", "ongoing")
 - [x] Add status to project (indicates whether still active or complete)
 - [s] Add description to project
+- [x] Add a logo
+- [x] Make navbar and footer sticky
 
 ---
 
@@ -108,8 +110,9 @@
   - [x] User should be able to upload or create from scratch
   - [x] User should also be able to download resume
   - [ ] Build Resume from linkedin profile(?)
+- [ ] Dedicated UI for notes
 - [ ] Make tasks searchable
-- [ ] Log in with LinkedIn/Google (social auth)
+- [x] Log in with LinkedIn/Google (social auth)
 - [ ] AI resume analysis
 
 

@@ -41,7 +41,7 @@ export default function ProjectsPage() {
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
               type="button"
             >
-              + New Project
+              + Create Project
             </button>
 
             <button
@@ -74,23 +74,7 @@ export default function ProjectsPage() {
               <EmptyStateCard
                 title="No Projects Yet"
                 description="Create a project or import tasks with projects to populate this page"
-                actions={[
-                  {
-                    label: "Back to Dashboard",
-                    onClick: () => router.push("/dashboard"),
-                    variant: "primary",
-                  },
-                ]}
               />
-              <div className="mt-5">
-                <button
-                  onClick={() => router.push("/projects/create")}
-                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
-                  type="button"
-                >
-                  + Create Project
-                </button>
-              </div>
             </div>
           ) : (
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">

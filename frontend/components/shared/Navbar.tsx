@@ -10,8 +10,14 @@ export default function Navbar() {
   const handleLogout = () => logout();
 
   return (
-    <header className="flex justify-between items-center px-6 py-4 shadow-sm bg-white dark:bg-gray-800 border-b border-transparent dark:border-gray-700">
-      <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">Work Smarter</div>
+    <header className="sticky top-0 z-50 flex justify-between items-center px-6 py-4 shadow-sm bg-white dark:bg-gray-800 border-b border-transparent dark:border-gray-700">
+      <a href="/">
+        <img
+          src={theme === 'dark' ? '/logo-horizontal-dark.svg' : '/logo-horizontal.svg'}
+          alt="Work Smarter"
+          style={{ height: '40px', width: 'auto' }}
+        />
+      </a>
       <div className="flex items-center space-x-4">
         <button
           onClick={toggleTheme}

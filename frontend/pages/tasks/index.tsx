@@ -75,14 +75,14 @@ const TasksPage = () => {
   }, [selectedDate]); // keeping your existing behavior
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 px-4 overflow-hidden">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 px-4 overflow-hidden">
       <div className="mx-auto w-full max-w-6xl h-full">
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm h-full flex flex-col overflow-hidden">
           {/* ───────────────── Sticky Header ───────────────── */}
           <div className="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm isolate">
             <div className="px-6 py-4">
               {/* Title row */}
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Daily Log
@@ -97,17 +97,28 @@ const TasksPage = () => {
                   )}
                 </div>
 
-                {/* Date picker */}
-                {selectedDate && (
-                  <div className="shrink-0">
+                <div className="shrink-0 flex items-center gap-4">
+                  <button
+                    onClick={() => router.push('/tasks/tracker')}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    Weekly Tracker →
+                  </button>
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    className="text-sm text-gray-500 dark:text-gray-400 hover:underline"
+                  >
+                    Dashboard
+                  </button>
+                  {selectedDate && (
                     <input
                       type="date"
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
                       className="w-[160px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
                     />
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* Controls row */}
@@ -150,7 +161,7 @@ const TasksPage = () => {
                 </p>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 h-full">
+              <div className="flex-1 min-h-0 flex flex-col">
                 <TaskLayout
                   sections={sections}
                   onView={handleTaskClick}
@@ -188,21 +199,6 @@ const TasksPage = () => {
             />
           </div>
 
-          {/* ───────────────── Bottom Navigation (outside scroll) ───────────────── */}
-          <div className="shrink-0 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-            <button
-              onClick={() => router.push('/tasks/tracker')}
-              className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
-            >
-              View Weekly Tracker
-            </button>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="inline-flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
-            >
-              Dashboard
-            </button>
-          </div>
         </div>
       </div>
     </div>

@@ -21,7 +21,7 @@ export default function ProjectEditPage() {
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
       <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6 text-center">Edit Project</h1>
       {isLoading ? (
         <div className="flex justify-center py-8">

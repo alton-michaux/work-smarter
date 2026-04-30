@@ -47,9 +47,9 @@ export default function TaskCreatePage() {
     : (projects && typeof projects === 'object' && 'results' in projects ? (projects as any).results : []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center px-4 py-10">
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow p-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Create Task</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center px-4 py-10">
+      <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 text-center">Create Task</h1>
 
         {isLoading ? (
           <div className="flex justify-center py-8">
@@ -67,7 +67,7 @@ export default function TaskCreatePage() {
         <div className="mt-6 text-center">
           <button
             onClick={() => router.back()}
-            className="text-sm text-gray-600 hover:underline"
+            className="text-sm text-gray-600 dark:text-gray-400 hover:underline"
           >
             ← Back
           </button>

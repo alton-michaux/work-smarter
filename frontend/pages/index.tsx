@@ -11,9 +11,9 @@ const Home = () => {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
       {loggedIn ? (
-        <main className="mx-auto max-w-4xl px-6 py-16">
+        <main className="mx-auto max-w-4xl px-6 py-8 w-full">
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
             {/* Header */}
             <div className="border-b border-gray-100 dark:border-gray-700 px-8 py-6">
