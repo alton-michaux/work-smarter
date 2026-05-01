@@ -356,6 +356,7 @@ export type ProjectTimelineProps<T extends TaskLike> = {
 export type MarkdownBodyProps = {
   value?: string | null;
   emptyText?: string;
+  truncateLines?: number;
 };
 
 

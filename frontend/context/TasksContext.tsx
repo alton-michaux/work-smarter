@@ -73,7 +73,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       setError(null);
 
       try {
-        const params: any = { ordering: "-begin_date", begin_date: begin, end_date: end, tz_offset: -new Date().getTimezoneOffset() };
+        const params: any = { ordering: "-begin_date", page_size: 500, begin_date: begin, end_date: end, tz_offset: -new Date().getTimezoneOffset() };
 
         // Only include active_on if it’s a non-empty string
         if (typeof active_on === "string" && active_on.trim().length > 0) {
