@@ -38,6 +38,7 @@
 - [x] Meeting project color is not visible because there is not enough room, also meeting time wraps onto next line - there's basically not enough space for all of the information being displayed for meetings on the daily log page
 - [x] Long-term tasks (maybe just for recurring?) don't persist in daily or weekly tracker
 - [x] Notes not all truncating
+- [ ] Resumes are download only (not viewable) after a certain amount of time (even when uploaded as PDF)
 
 ---
 
@@ -120,7 +121,7 @@
 - [x] Make tasks searchable
 - [x] Log in with LinkedIn/Google (social auth)
 - [ ] AI resume analysis
-  - [ ] AI resume generation
+  - [ ] AI resume generation/edits
 
 
 ## User-facing (go-live features)
