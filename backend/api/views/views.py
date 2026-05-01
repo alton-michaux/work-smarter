@@ -1,4 +1,6 @@
 from rest_framework import viewsets, status, filters
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from django.http import FileResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,11 +18,22 @@ from loguru import logger
 from django.db.models import Count, Min, Max
 
 
+class DeleteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        user = request.user
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 def _detach_children(task, user):
     Task.objects.filter(user=user, parent=task).update(parent=None, is_subtask=False)
 
 class TaskCursorPagination(CursorPagination):
     ordering = "-begin_date"
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
 
 class TaskViewSet(viewsets.ModelViewSet):
     pagination_class = TaskCursorPagination
@@ -38,6 +51,16 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         queryset = Task.objects.filter(user=user)
+
+        category = self.request.query_params.get("category")
+        if category:
+            queryset = queryset.filter(category=category)
+
+        search = self.request.query_params.get("search", "").strip()
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) | Q(description__icontains=search)
+            )
 
         begin_date_str = self.request.query_params.get("begin_date")
         end_date_str = self.request.query_params.get("end_date")

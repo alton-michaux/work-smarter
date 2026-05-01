@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NoteProps } from 'types/types';
 import MarkdownBody from 'components/shared/MarkdownBody';
 
@@ -9,11 +9,14 @@ export default function NoteCard({
   onDelete,
   showMeta = true,
   variant = 'default',
+  collapsible = false,
 }: NoteProps) {
+  const [expanded, setExpanded] = useState(false);
   const id = Number(note.id);
   const title = String(note.title ?? '').trim() || 'Untitled note';
   const date = (note.begin_date ?? '').slice(0, 10);
   const priority = note.priority ? String(note.priority).toUpperCase() : '';
+  const hasDescription = Boolean(note.description?.trim());
 
   const border =
     variant === 'dashed'
@@ -42,10 +45,10 @@ export default function NoteCard({
             >
               {note.title}
             </h3>
-            {note.description && (
+            {hasDescription && (
               <div
                 className={`mt-1 text-sm leading-snug ${note.is_done ? 'opacity-60' : ''}`}
-                style={variant === 'dashed' ? {
+                style={(collapsible && !expanded) || variant === 'dashed' ? {
                   display: '-webkit-box',
                   WebkitLineClamp: 3,
                   WebkitBoxOrient: 'vertical',
@@ -62,6 +65,15 @@ export default function NoteCard({
                 {date}
               </div>
             ) : null}
+            {collapsible && hasDescription && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
+                className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition"
+              >
+                {expanded ? 'Show less ↑' : 'Show more ↓'}
+              </button>
+            )}
           </div>
         </button>
 

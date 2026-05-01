@@ -32,6 +32,115 @@ def test_task_index(auth_client):
 
 
 @pytest.mark.django_db
+def test_category_filter_returns_only_matching_category(auth_client, get_user, create_task):
+    create_task(title="A Task", begin_date=date.today(), category="task", user=get_user)
+    create_task(title="A Meeting", begin_date=date.today(), category="meeting", user=get_user)
+    create_task(title="A Note", begin_date=date.today(), category="note", user=get_user)
+
+    response = auth_client.get("/api/tasks/?category=note")
+    assert response.status_code == 200
+    results = response.data["results"]
+    assert all(t["category"] == "note" for t in results)
+    assert any(t["title"] == "A Note" for t in results)
+    assert not any(t["title"] in ("A Task", "A Meeting") for t in results)
+
+
+@pytest.mark.django_db
+def test_no_category_filter_returns_all_categories(auth_client, get_user, create_task):
+    create_task(title="A Task", begin_date=date.today(), category="task", user=get_user)
+    create_task(title="A Note", begin_date=date.today(), category="note", user=get_user)
+
+    response = auth_client.get("/api/tasks/")
+    assert response.status_code == 200
+    titles = [t["title"] for t in response.data["results"]]
+    assert "A Task" in titles
+    assert "A Note" in titles
+
+
+@pytest.mark.django_db
+def test_search_by_title_returns_matching_tasks(auth_client, get_user, create_task):
+    create_task(title="Fix login bug", begin_date=date.today(), user=get_user)
+    create_task(title="Write release notes", begin_date=date.today(), user=get_user)
+    create_task(title="Deploy to production", begin_date=date.today(), user=get_user)
+
+    response = auth_client.get("/api/tasks/?search=login")
+    assert response.status_code == 200
+    titles = [t["title"] for t in response.data["results"]]
+    assert "Fix login bug" in titles
+    assert "Write release notes" not in titles
+    assert "Deploy to production" not in titles
+
+
+@pytest.mark.django_db
+def test_search_by_description_returns_matching_tasks(auth_client, get_user, create_task):
+    create_task(title="Nondescript task", description="check the authentication flow", begin_date=date.today(), user=get_user)
+    create_task(title="Other task", description="nothing relevant", begin_date=date.today(), user=get_user)
+
+    response = auth_client.get("/api/tasks/?search=authentication")
+    assert response.status_code == 200
+    titles = [t["title"] for t in response.data["results"]]
+    assert "Nondescript task" in titles
+    assert "Other task" not in titles
+
+
+@pytest.mark.django_db
+def test_search_is_case_insensitive(auth_client, get_user, create_task):
+    create_task(title="Deploy to STAGING", begin_date=date.today(), user=get_user)
+
+    response = auth_client.get("/api/tasks/?search=staging")
+    assert response.status_code == 200
+    assert any(t["title"] == "Deploy to STAGING" for t in response.data["results"])
+
+
+@pytest.mark.django_db
+def test_search_composes_with_category_filter(auth_client, get_user, create_task):
+    create_task(title="Auth meeting", begin_date=date.today(), category="meeting", user=get_user)
+    create_task(title="Auth task", begin_date=date.today(), category="task", user=get_user)
+
+    response = auth_client.get("/api/tasks/?search=auth&category=meeting")
+    assert response.status_code == 200
+    results = response.data["results"]
+    assert all(t["category"] == "meeting" for t in results)
+    assert any(t["title"] == "Auth meeting" for t in results)
+    assert not any(t["title"] == "Auth task" for t in results)
+
+
+@pytest.mark.django_db
+def test_search_returns_tasks_across_dates(auth_client, get_user, create_task):
+    create_task(title="Old API task", begin_date=date(2025, 1, 15), user=get_user)
+    create_task(title="New API task", begin_date=date.today(), user=get_user)
+    create_task(title="Other task", begin_date=date.today(), user=get_user)
+
+    response = auth_client.get("/api/tasks/?search=API")
+    assert response.status_code == 200
+    titles = [t["title"] for t in response.data["results"]]
+    assert "Old API task" in titles
+    assert "New API task" in titles
+    assert "Other task" not in titles
+
+
+@pytest.mark.django_db
+def test_search_with_no_match_returns_empty(auth_client, get_user, create_task):
+    create_task(title="Unrelated task", begin_date=date.today(), user=get_user)
+
+    response = auth_client.get("/api/tasks/?search=zzznomatch")
+    assert response.status_code == 200
+    assert response.data["results"] == []
+
+
+@pytest.mark.django_db
+def test_empty_search_param_returns_all_tasks(auth_client, get_user, create_task):
+    create_task(title="Task A", begin_date=date.today(), user=get_user)
+    create_task(title="Task B", begin_date=date.today(), user=get_user)
+
+    response = auth_client.get("/api/tasks/?search=")
+    assert response.status_code == 200
+    titles = [t["title"] for t in response.data["results"]]
+    assert "Task A" in titles
+    assert "Task B" in titles
+
+
+@pytest.mark.django_db
 def test_weekly_task_filtering(auth_client, get_user, create_task, create_recurring_task):
     today = date.today()
     start_of_week = today - timedelta(days=today.weekday())

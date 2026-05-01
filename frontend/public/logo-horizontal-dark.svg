@@ -1,0 +1,45 @@
+<svg width="220" height="60" viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Work Smarter logo">
+  <title>Work Smarter</title>
+
+  <!-- Node cluster -->
+  <g transform="translate(34, 30)">
+    <!-- Outer ring nodes -->
+    <circle cx="0" cy="-22" r="4" fill="#0C447C"/>
+    <circle cx="19" cy="-11" r="4" fill="#0C447C"/>
+    <circle cx="19" cy="11" r="4" fill="#0C447C"/>
+    <circle cx="0" cy="22" r="4" fill="#0C447C"/>
+    <circle cx="-19" cy="11" r="4" fill="#0C447C"/>
+    <circle cx="-19" cy="-11" r="4" fill="#0C447C"/>
+    <!-- Outer connectors -->
+    <line x1="0" y1="-18" x2="0" y2="-8" stroke="#185FA5" stroke-width="1" stroke-linecap="round"/>
+    <line x1="16" y1="-9" x2="6" y2="-3" stroke="#185FA5" stroke-width="1" stroke-linecap="round"/>
+    <line x1="16" y1="9" x2="6" y2="3" stroke="#185FA5" stroke-width="1" stroke-linecap="round"/>
+    <line x1="0" y1="18" x2="0" y2="8" stroke="#185FA5" stroke-width="1" stroke-linecap="round"/>
+    <line x1="-16" y1="9" x2="-6" y2="3" stroke="#185FA5" stroke-width="1" stroke-linecap="round"/>
+    <line x1="-16" y1="-9" x2="-6" y2="-3" stroke="#185FA5" stroke-width="1" stroke-linecap="round"/>
+    <!-- Inner ring nodes -->
+    <circle cx="0" cy="-8" r="5" fill="#185FA5"/>
+    <circle cx="7" cy="4" r="5" fill="#185FA5"/>
+    <circle cx="-7" cy="4" r="5" fill="#185FA5"/>
+    <!-- Central node -->
+    <circle cx="0" cy="0" r="7" fill="#378ADD"/>
+    <circle cx="0" cy="0" r="3" fill="white"/>
+    <!-- Active highlights -->
+    <circle cx="0" cy="-22" r="2" fill="#85B7EB"/>
+    <circle cx="19" cy="-11" r="2" fill="#85B7EB"/>
+  </g>
+
+  <!-- Divider -->
+  <line x1="66" y1="12" x2="66" y2="48" stroke="#185FA5" stroke-width="0.5"/>
+
+  <!-- Wordmark -->
+  <text x="76" y="24" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="400" letter-spacing="0.18em" fill="#85B7EB">WORK</text>
+  <text x="74" y="44" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="500" letter-spacing="0.02em" fill="white">smarter</text>
+
+  <!-- Data pulse -->
+  <g transform="translate(76, 54)">
+    <line x1="0" y1="0" x2="12" y2="0" stroke="#185FA5" stroke-width="1.2" stroke-linecap="round"/>
+    <polyline points="12,0 16,-5 20,0 23,-3 26,0 30,4 34,0" fill="none" stroke="#85B7EB" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="34" y1="0" x2="48" y2="0" stroke="#185FA5" stroke-width="1.2" stroke-linecap="round"/>
+  </g>
+</svg>

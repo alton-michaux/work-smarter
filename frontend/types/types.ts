@@ -106,8 +106,14 @@ export type TasksContextType = {
   pushDeadlineToCalendar: (taskId: number) => Promise<Task>;
   blacklistEvent: (googleEventId: string, title: string, deleteTask?: boolean) => Promise<void>;
   pullFromCalendar: (dateFrom: string, dateTo: string) => Promise<{ imported: number; skipped: number }>;
+  notes: Task[];
+  isLoadingNotes: boolean;
+  fetchNotes: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
+  searchResults: Task[];
+  isSearching: boolean;
+  fetchTasksBySearch: (query: string, category?: string) => Promise<void>;
 };
 
 export type GoogleCalendarStatus = {
@@ -205,6 +211,7 @@ export type NoteProps = {
   // display tweaks
   showMeta?: boolean;      // date/priority line
   variant?: 'default' | 'dashed'; // dashed looks “ongoing”
+  collapsible?: boolean;   // truncate description with expand toggle
 };
 
 //------UTILITY---------//
@@ -248,6 +255,8 @@ export type Filters = {
   end_date?: string;
   active_on?: string;
   tz_offset?: number;
+  category?: string;
+  page_size?: number;
 };
 
 export type OutlineRowProps = {
@@ -386,7 +395,8 @@ export type AuthContextType = {
   error: string | null;
   setLoggedIn: (v: boolean) => void;
   register: (form: { email: string; password1: string; password2: string }) => Promise<void>;
-  login: (form: { username: string; password: string }) => Promise<void>;
+  login: (form: { email: string; password: string }) => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
   logout: () => void;
   getUser: () => Promise<void>;
   getAuthHeaders: () => Record<string, string>;

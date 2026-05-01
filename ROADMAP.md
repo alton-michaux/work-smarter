@@ -35,6 +35,9 @@
 - [x] Meeting project color is not visible because there is not enough room
 - [x] Dark mode not applied in all forms (create)
 - [x] Back buttons on show pages and import page redundant, no back button (or dashboard button) on daily log or weekly tracker page
+- [x] Meeting project color is not visible because there is not enough room, also meeting time wraps onto next line - there's basically not enough space for all of the information being displayed for meetings on the daily log page
+- [ ] Long-term tasks (maybe just for recurring?) don't persist in daily or weekly tracker
+- [ ] Notes not all truncating
 
 ---
 
@@ -48,6 +51,7 @@
 - [x] Add status to project (indicates whether still active or complete)
 - [x] Add description to project
 - [x] Add role to project
+- [ ] Allow encryption for notes
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
@@ -74,7 +78,10 @@
 - [x] Micro polish: hover states, subtle transitions, keyboard nav
 - [x] Recurrence badges ("weekly", "ongoing")
 - [x] Add status to project (indicates whether still active or complete)
-- [s] Add description to project
+- [x] Add description to project
+- [x] Add a logo
+- [x] Make navbar and footer sticky
+- [ ] Allow notes to have subtasks (in UI)
 
 ---
 
@@ -107,9 +114,11 @@
   - [x] User can have an attached resume model(s)
   - [x] User should be able to upload or create from scratch
   - [x] User should also be able to download resume
-  - [ ] Build Resume from linkedin profile(?)
+  - [/] Build Resume from linkedin profile(not possible right now)
+- [x] Dedicated UI for notes
+- [ ] Allow tasks to reference other tasks (notes, meetings, et al.)
 - [ ] Make tasks searchable
-- [ ] Log in with LinkedIn/Google (social auth)
+- [x] Log in with LinkedIn/Google (social auth)
 - [ ] AI resume analysis
 
 
