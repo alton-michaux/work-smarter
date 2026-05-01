@@ -120,6 +120,7 @@
 - [x] Make tasks searchable
 - [x] Log in with LinkedIn/Google (social auth)
 - [ ] AI resume analysis
+  - [ ] AI resume generation
 
 
 ## User-facing (go-live features)
