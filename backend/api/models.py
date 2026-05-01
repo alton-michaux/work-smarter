@@ -55,6 +55,24 @@ class Resume(models.Model):
         return f"{self.user}'s Resume"
 
 
+class ResumeAnalysis(models.Model):
+    resume = models.OneToOneField(Resume, on_delete=models.CASCADE, related_name='analysis')
+    score = models.FloatField()
+    summary = models.TextField(blank=True, default='')
+    suggestions = models.JSONField(default=list)
+    accomplishments = models.JSONField(default=list)
+    bullet_rewrites = models.JSONField(default=dict)
+    analyzed_at = models.DateTimeField(auto_now=True)
+    resume_fingerprint = models.CharField(max_length=64, blank=True, default='')
+
+    class Meta:
+        verbose_name = 'Resume Analysis'
+        verbose_name_plural = 'Resume Analyses'
+
+    def __str__(self):
+        return f"Analysis for {self.resume}"
+
+
 class ResumeProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='resume_profile')
     headline = models.CharField(max_length=255, blank=True, default='')
