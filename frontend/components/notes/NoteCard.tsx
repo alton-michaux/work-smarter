@@ -46,16 +46,12 @@ export default function NoteCard({
               {note.title}
             </h3>
             {hasDescription && (
-              <div
-                className={`mt-1 text-sm leading-snug ${note.is_done ? 'opacity-60' : ''}`}
-                style={(collapsible && !expanded) || variant === 'dashed' ? {
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                } : undefined}
-              >
-                <MarkdownBody value={note.description} emptyText="" />
+              <div className={`mt-1 text-sm leading-snug ${note.is_done ? 'opacity-60' : ''}`}>
+                <MarkdownBody
+                  value={note.description}
+                  emptyText=""
+                  truncateLines={(collapsible && !expanded) || variant === 'dashed' ? 3 : undefined}
+                />
               </div>
             )}
             {showMeta && (date || priority) ? (
