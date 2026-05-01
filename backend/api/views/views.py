@@ -9,8 +9,8 @@ from rest_framework.pagination import CursorPagination
 from django.db.models import Q
 from datetime import datetime
 from django.utils import timezone
-from api.models import Resume, Project, Task, RecurringTask, RecurringTaskException
-from api.serializers import ResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
+from api.models import Resume, ResumeAnalysis, Project, Task, RecurringTask, RecurringTaskException
+from api.serializers import ResumeSerializer, ResumeAnalysisSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range
 from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
@@ -398,3 +398,74 @@ class ResumeViewSet(viewsets.ViewSet):
         except Exception as e:
             logger.warning(f"Error in ResumeViewSet.download: {e}")
             return Response({"error": "An error occurred while downloading the resume."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'], url_path='analyze')
+    def analyze(self, request, pk=None):
+        import hashlib
+        from api.services.resume_analysis import extract_resume_text, _build_task_context, analyze_resume
+
+        resume = self._get_resume_or_404(request, pk)
+        if resume is None:
+            return Response({"error": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        force_refresh = request.query_params.get('refresh') == '1'
+        fingerprint = hashlib.md5(str(resume.uploaded_at).encode()).hexdigest()
+
+        # Serve from cache if the resume hasn't changed and refresh isn't requested
+        try:
+            existing = resume.analysis
+            if not force_refresh and existing.resume_fingerprint == fingerprint:
+                data = ResumeAnalysisSerializer({
+                    'score': existing.score,
+                    'summary': existing.summary,
+                    'suggestions': existing.suggestions,
+                    'accomplishments': existing.accomplishments,
+                    'bullet_rewrites': existing.bullet_rewrites,
+                    'analyzed_at': existing.analyzed_at,
+                    'is_cached': True,
+                }).data
+                return Response(data)
+        except ResumeAnalysis.DoesNotExist:
+            pass
+
+        try:
+            resume_text = extract_resume_text(resume)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Text extraction failed for resume {resume.id}: {e}")
+            return Response({"error": "Could not read resume file."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not resume_text.strip():
+            return Response({"error": "Resume appears to be empty or unreadable."}, status=status.HTTP_400_BAD_REQUEST)
+
+        task_context = _build_task_context(request.user)
+
+        try:
+            result = analyze_resume(resume_text, task_context)
+        except Exception as e:
+            logger.error(f"AI analysis failed for resume {resume.id}: {e}")
+            return Response({"error": "AI analysis failed. Please try again."}, status=status.HTTP_502_BAD_GATEWAY)
+
+        analysis, _ = ResumeAnalysis.objects.update_or_create(
+            resume=resume,
+            defaults={
+                'score': result['score'],
+                'summary': result.get('summary', ''),
+                'suggestions': result.get('suggestions', []),
+                'accomplishments': result.get('accomplishments', []),
+                'bullet_rewrites': result.get('bullet_rewrites', {}),
+                'resume_fingerprint': fingerprint,
+            }
+        )
+
+        data = ResumeAnalysisSerializer({
+            'score': analysis.score,
+            'summary': analysis.summary,
+            'suggestions': analysis.suggestions,
+            'accomplishments': analysis.accomplishments,
+            'bullet_rewrites': analysis.bullet_rewrites,
+            'analyzed_at': analysis.analyzed_at,
+            'is_cached': False,
+        }).data
+        return Response(data)

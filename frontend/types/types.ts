@@ -439,6 +439,22 @@ export type Resume = {
   uploaded_at: string;
 };
 
+export type ResumeAnalysis = {
+  score: number;
+  summary: string;
+  suggestions: string[];
+  accomplishments: string[];
+  bullet_rewrites: Record<string, string>;
+  analyzed_at: string;
+  is_cached: boolean;
+};
+
+export type ResumeAnalysisState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: ResumeAnalysis }
+  | { status: 'error'; message: string };
+
 export type ResumesContextType = {
   resumes: Resume[];
   isLoading: boolean;
@@ -447,4 +463,5 @@ export type ResumesContextType = {
   uploadResume: (file: File, title: string) => Promise<void>;
   deleteResume: (id: number) => Promise<void>;
   downloadResume: (id: number, filename: string) => Promise<void>;
+  analyzeResume: (id: number, forceRefresh?: boolean) => Promise<ResumeAnalysis>;
 };

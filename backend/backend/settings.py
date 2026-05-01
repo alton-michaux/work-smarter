@@ -167,8 +167,11 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# --- OpenAI (used for future AI resume analysis) ---
+# --- OpenAI ---
 OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
+
+# --- Groq (AI resume analysis) ---
+GROQ_API_KEY = env("GROQ_API_KEY", default="")
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
