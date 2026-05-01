@@ -6,6 +6,8 @@ import { DateToggleUI } from 'components/ui/dateToggleUI';
 import { TaskLayout } from 'components/tasks/TaskLayout';
 import { useDailyLog } from '../../hooks/useDailyLog';
 import QuickAddBar from '../../components/tasks/quickAddBar';
+import SearchBar from '../../components/tasks/SearchBar';
+import SearchResults from '../../components/tasks/SearchResults';
 import ConfirmDeleteRecurringModal from 'components/ui/confirmDeleteRecurringModal';
 import { toast } from 'sonner';
 
@@ -17,11 +19,16 @@ const TasksPage = () => {
     error,
     fetchTasksByDateRange,
     toggleTaskDone,
+    searchResults,
+    isSearching,
+    fetchTasksBySearch,
   } = useTasks();
 
   
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [taskPendingDelete, setTaskPendingDelete] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
 
   const router = useRouter();
   const queryDate =
@@ -68,11 +75,24 @@ const TasksPage = () => {
   const { selectedDate, setSelectedDate, last7Days, dailyTasks, sections } =
     useDailyLog(tasks, queryDate, { activeOn: true });
 
+  const isSearchMode = Boolean(debouncedQuery.trim());
+
   useEffect(() => {
     if (!selectedDate) return;
     fetchTasksByDateRange(selectedDate, selectedDate, selectedDate);
     setProjects(projects);
   }, [selectedDate]); // keeping your existing behavior
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (debouncedQuery.trim()) {
+      fetchTasksBySearch(debouncedQuery);
+    }
+  }, [debouncedQuery]);
 
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 px-4 overflow-hidden">
@@ -144,6 +164,16 @@ const TasksPage = () => {
                   <div className="lg:col-span-5">
                     <QuickAddBar selectedDate={selectedDate} />
                   </div>
+
+                  {/* Search */}
+                  <div className="lg:col-span-12">
+                    <SearchBar
+                      value={searchQuery}
+                      onChange={setSearchQuery}
+                      isSearching={isSearching}
+                      onClear={() => { setSearchQuery(''); setDebouncedQuery(''); }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -157,7 +187,17 @@ const TasksPage = () => {
               </div>
             )}
 
-            {!selectedDate ? (
+            {isSearchMode ? (
+              <SearchResults
+                results={searchResults}
+                query={debouncedQuery}
+                isSearching={isSearching}
+                onView={handleTaskClick}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggleDone={handleToggleDone}
+              />
+            ) : !selectedDate ? (
               <p className="text-gray-600 text-center">Loading…</p>
             ) : !isLoading && dailyTasks.length === 0 ? (
               <div className="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 px-4 py-8 text-center">
