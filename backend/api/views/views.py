@@ -56,6 +56,12 @@ class TaskViewSet(viewsets.ModelViewSet):
         if category:
             queryset = queryset.filter(category=category)
 
+        search = self.request.query_params.get("search", "").strip()
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) | Q(description__icontains=search)
+            )
+
         begin_date_str = self.request.query_params.get("begin_date")
         end_date_str = self.request.query_params.get("end_date")
 

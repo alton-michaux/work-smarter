@@ -20,8 +20,10 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notes, setNotes] = useState<Task[]>([]);
+  const [searchResults, setSearchResults] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const buildUrl = (filters: Filters = { ordering: '-begin_date' }) => {
@@ -460,6 +462,37 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const fetchTasksBySearch = useCallback(
+    async (query: string, category?: string) => {
+      if (!loggedIn || !query.trim()) {
+        setSearchResults([]);
+        return;
+      }
+      setIsSearching(true);
+      setError(null);
+      try {
+        const filters: Filters = {
+          search: query.trim(),
+          ordering: '-begin_date',
+          page_size: 200,
+          tz_offset: -new Date().getTimezoneOffset(),
+        };
+        if (category) filters.category = category;
+        const url = buildUrl(filters);
+        const res = await fetch(url, { headers: getAuthHeaders() });
+        if (res.status === 401) { setError('Unauthorized'); return; }
+        if (!res.ok) throw new Error(`Failed to search: ${res.status}`);
+        const data = await res.json();
+        setSearchResults(data.results || []);
+      } catch (e: any) {
+        setError(e.message ?? 'unknown error');
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [loggedIn, getAuthHeaders]
+  );
+
   const pushToCalendar = async (taskId: number): Promise<Task> => {
     if (!loggedIn) throw new Error('Not logged in');
 
@@ -503,6 +536,9 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         fetchNotes,
         isLoading,
         error,
+        searchResults,
+        isSearching,
+        fetchTasksBySearch,
       }}
     >
       {children}

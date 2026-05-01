@@ -111,6 +111,9 @@ export type TasksContextType = {
   fetchNotes: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
+  searchResults: Task[];
+  isSearching: boolean;
+  fetchTasksBySearch: (query: string, category?: string) => Promise<void>;
 };
 
 export type GoogleCalendarStatus = {
