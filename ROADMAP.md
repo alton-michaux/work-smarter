@@ -120,7 +120,7 @@
 - [ ] Allow tasks to reference other tasks (notes, meetings, et al.)
 - [x] Make tasks searchable
 - [x] Log in with LinkedIn/Google (social auth)
-- [ ] AI resume analysis
+- [x] AI resume analysis
   - [ ] AI resume generation/edits
 
 
