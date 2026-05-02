@@ -14,9 +14,9 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
   const getAuthHeaders = () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     return {
       Authorization: token ? `Bearer ${token}` : '',
       Accept: 'application/json',
@@ -25,6 +25,7 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getAuthHeadersForForm = () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     // IMPORTANT: do NOT set Content-Type for FormData
     return {
       Authorization: token ? `Bearer ${token}` : '',
@@ -33,12 +34,13 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getImportCsvSpec = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     setIsLoading(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/import/csv/spec/`,{
-        headers: { 
+        headers: {
           Authorization: token ? `Bearer ${token}` : '',
-          // "Content-Type": "multipart/form-data" 
+          // "Content-Type": "multipart/form-data"
         },
       });
       const data = await res.json().catch(() => ({}));
@@ -53,6 +55,7 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const importTasksCsv = async (file: File, dryRun: boolean) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     const formData = new FormData();
     formData.append("file", file); // this MUST match upload_field: "file"
 
@@ -60,10 +63,10 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 
+        headers: {
           Authorization: token ? `Bearer ${token}` : '',
           // "Content-Type": "multipart/form-data" 
         },
@@ -84,6 +87,7 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fileUpload = async (selectedFile: File | null) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     if (!selectedFile) return;
 
     const formData = new FormData();

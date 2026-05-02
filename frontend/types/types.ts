@@ -401,6 +401,7 @@ export type AuthContextType = {
   logout: () => void;
   getUser: () => Promise<void>;
   getAuthHeaders: () => Record<string, string>;
+  refreshAccessToken: () => Promise<string | null>;
 };
 
 export type APIContextType = {
@@ -455,6 +456,19 @@ export type ResumeAnalysisState =
   | { status: 'success'; data: ResumeAnalysis }
   | { status: 'error'; message: string };
 
+export type GeneratedResume = {
+  content: string;
+  updated_at: string;
+  source_fingerprint: string;
+  is_cached: boolean;
+};
+
+export type ResumeGenerationState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: GeneratedResume }
+  | { status: 'error'; message: string };
+
 export type ResumesContextType = {
   resumes: Resume[];
   isLoading: boolean;
@@ -464,4 +478,8 @@ export type ResumesContextType = {
   deleteResume: (id: number) => Promise<void>;
   downloadResume: (id: number, filename: string) => Promise<void>;
   analyzeResume: (id: number, forceRefresh?: boolean) => Promise<ResumeAnalysis>;
+  generateResume: (id: number, forceRefresh?: boolean) => Promise<GeneratedResume>;
+  downloadGeneratedResume: (resumeId: number, title: string) => Promise<void>;
+  generateNewResume: (forceRefresh?: boolean) => Promise<GeneratedResume>;
+  downloadNewGeneratedResume: () => Promise<void>;
 };

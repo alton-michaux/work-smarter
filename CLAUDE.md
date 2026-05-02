@@ -70,12 +70,12 @@ Django 4.2 + DRF 3.15. Entry point: `backend/settings.py` (project config), `api
 - `api/models.py` — All core models: `Task`, `Project`, `Resume`, `RecurringTask`, `RecurringTaskException`
 - `api/views.py` + `api/views/` — DRF viewsets; upload/download views in subdirectories
 - `api/serializers.py` — DRF serializers for all models
-- `api/services/` — Business logic for recurring tasks (`recurring_tasks.py`) and skippable tasks (`skippable_tasks.py`)
+- `api/services/` — Business logic: `recurring_tasks.py`, `skippable_tasks.py`, `resume_analysis.py` (Anthropic-powered resume scoring)
 - `backend/signals.py` — Django signals (post-save hooks)
 - `backend/adapters.py` — django-allauth adapters for custom auth behavior
 - `test/` — pytest suite; `conftest.py` has shared fixtures
 
-**Authentication flow**: django-allauth handles registration/social auth → dj-rest-auth exposes REST endpoints → SimpleJWT issues access/refresh tokens.
+**Authentication flow**: django-allauth handles registration/social auth → dj-rest-auth exposes REST endpoints → SimpleJWT issues access/refresh tokens. Custom login endpoint at `POST /api/auth/login/` uses email (not username). Token refresh at `POST /api/auth/refresh/` with `{"refresh": "<token>"}` body.
 
 **Task model key fields**: self-referencing FK for subtasks, optional FK to `Project`, priority (urgent/high/medium/low), category (task/meeting/note), `begin_date`/`end_date`, `is_done`. Unique constraint on `(user, title, begin_date, project, parent)`.
 
@@ -85,12 +85,12 @@ Next.js 15 + React 18 + TypeScript. Pages-router (not App Router).
 
 - `pages/` — Route pages; `tasks/`, `projects/`, `resume/` are main feature areas
 - `components/` — Organized by feature domain (notes, tasks, etc.)
-- `context/` — React Context for global state: `AuthContext`, `TasksContext`, `ProjectsContext`, `SystemsContext`, `APIContext`
+- `context/` — React Context for global state: `AuthContext`, `TasksContext`, `ProjectsContext`, `SystemsContext`, `APIContext`, `ResumesContext`
 - `hooks/` — Custom hooks: `useDailyLog`, `useProjectInsights`
 - `lib/` — Shared utility functions
 - `types/` — TypeScript type definitions
 
-API calls go through `context/APIContext.tsx` using axios. Auth state lives in `AuthContext.tsx`.
+API calls use `fetch` (not axios) — `APIContext` provides `getAuthHeaders()` and form upload helpers. Auth state lives in `AuthContext.tsx`.
 
 ### Data Flow
 
@@ -102,7 +102,8 @@ The backend runs behind gunicorn in production (`backend.wsgi:application`). In 
 
 ### Environment Variables
 
-- Backend: `./backend/.env` — must include `DATABASE_URL`, `SECRET_KEY`, `DEBUG`, OpenAI key, AWS credentials
+- Backend: `./backend/.env` — must include `DATABASE_URL`, `SECRET_KEY`, `DEBUG`, `GROQ_API_KEY` (for AI resume analysis/generation), AWS credentials
+- Media files: uploaded resumes are stored at `./backend/media/resumes/` (persisted via Docker volume mount `./backend:/app`)
 - Frontend: `./frontend/.env.local` — API base URL
 
 ### CI/CD
