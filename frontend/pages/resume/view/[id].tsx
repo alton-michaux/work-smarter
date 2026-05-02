@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useResumes } from 'context/ResumesContext';
 import { useAPI } from 'context/APIContext';
+import { useAuth } from 'context/AuthContext';
 import { Resume, ResumeAnalysisState } from 'types/types';
 import { toast } from 'sonner';
 import ResumeAnalysisPanel from 'components/resume/ResumeAnalysisPanel';
@@ -15,6 +16,7 @@ export default function ResumeViewPage() {
   const { id } = router.query;
   const { resumes, fetchResumes, deleteResume, downloadResume, analyzeResume, isLoading, error } = useResumes();
   const { getAuthHeaders } = useAPI();
+  const { refreshAccessToken } = useAuth();
   const [resume, setResume] = useState<Resume | null>(null);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -31,18 +33,28 @@ export default function ResumeViewPage() {
     }
   }, [id, resumes]);
 
-  // Fetch PDF as blob via the authenticated download endpoint
+  // Fetch PDF as blob via the authenticated download endpoint, refreshing the token on 401
   useEffect(() => {
     if (!resume || !isPdf(resume.file)) return;
 
     let objectUrl: string;
     setPreviewLoading(true);
 
-    fetch(`${API_URL}/resumes/${resume.id}/download/`, { headers: getAuthHeaders() })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Failed to load preview (${res.status})`);
-        return res.blob();
-      })
+    const fetchBlob = async () => {
+      let res = await fetch(`${API_URL}/resumes/${resume.id}/download/`, { headers: getAuthHeaders() });
+      if (res.status === 401) {
+        const newToken = await refreshAccessToken();
+        if (newToken) {
+          res = await fetch(`${API_URL}/resumes/${resume.id}/download/`, {
+            headers: { Authorization: `Bearer ${newToken}`, Accept: 'application/json' },
+          });
+        }
+      }
+      if (!res.ok) throw new Error(`Failed to load preview (${res.status})`);
+      return res.blob();
+    };
+
+    fetchBlob()
       .then((blob) => {
         objectUrl = URL.createObjectURL(blob);
         setBlobUrl(objectUrl);

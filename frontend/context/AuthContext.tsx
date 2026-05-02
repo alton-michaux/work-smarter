@@ -96,6 +96,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // jwt payload (dj-rest-auth/jwt): adjust if your shape differs
       if (data?.access) {
         localStorage.setItem('authToken', data.access);
+        if (data?.refresh) localStorage.setItem('refreshToken', data.refresh);
         hydratedOnce.current = true;
       } else if (data?.key) {
         // fallback if using token auth
@@ -128,11 +129,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoggedIn(true);
   };
 
+  const refreshAccessToken = async (): Promise<string | null> => {
+    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+    if (!refreshToken) return null;
+    try {
+      const res = await fetch(`${API_URL}/auth/refresh/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh: refreshToken }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.access) {
+        localStorage.setItem('authToken', data.access);
+        return data.access;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
   const logout = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
     // Clear local state and redirect immediately — don't wait on the server
     localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
     setLoggedIn(false);
     setUser(null);
     setError(null);
@@ -168,7 +191,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loggedIn, isLoading, error, setLoggedIn, register, login, loginWithToken, logout, getUser, getAuthHeaders }}
+      value={{ user, loggedIn, isLoading, error, setLoggedIn, register, login, loginWithToken, logout, getUser, getAuthHeaders, refreshAccessToken }}
     >
       {children}
     </AuthContext.Provider>

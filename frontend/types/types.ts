@@ -401,6 +401,7 @@ export type AuthContextType = {
   logout: () => void;
   getUser: () => Promise<void>;
   getAuthHeaders: () => Record<string, string>;
+  refreshAccessToken: () => Promise<string | null>;
 };
 
 export type APIContextType = {
