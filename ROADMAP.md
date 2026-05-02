@@ -136,3 +136,17 @@
 
 - [ ] Update tests
 - [ ] Ensure app is aligned with design principles
+
+## Action Plan (updated 5/2/2026)
+
+  │ Priority │            Item             │                   Rationale                    │
+  ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
+  │ 1        │ Resume viewability bug      │ Unblocks the AI workflow you just shipped      │
+  ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
+  │ 2        │ AI resume generation/edits  │ Completes the resume feature end-to-end        │
+  ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
+  │ 3        │ Beef up account security    │ Go-live blocker — don't launch without this    │
+  ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
+  │ 4        │ About page + Tutorial       │ Needed for new users to understand the product │
+  ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
+  │ 5        │ Notes subtasks + encryption │ Quality-of-life, lower urgency                 │
