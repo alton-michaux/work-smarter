@@ -81,7 +81,7 @@ export default function GenerateResumePage() {
             data={generation.data}
             onRegenerate={() => handleGenerate(true)}
             onDownload={handleDownload}
-            isRegenerating={generation.status === 'loading'}
+            isRegenerating={false}
           />
         )}
 
