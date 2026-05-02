@@ -121,7 +121,7 @@
 - [x] Make tasks searchable
 - [x] Log in with LinkedIn/Google (social auth)
 - [x] AI resume analysis
-  - [ ] AI resume generation/edits
+  - [x] AI resume generation/edits
 
 
 ## User-facing (go-live features)

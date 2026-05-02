@@ -73,6 +73,19 @@ class ResumeAnalysis(models.Model):
         return f"Analysis for {self.resume}"
 
 
+class GeneratedResume(models.Model):
+    # resume is null for "generate from scratch" entries
+    resume = models.OneToOneField(Resume, on_delete=models.CASCADE, null=True, blank=True, related_name='generated')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='generated_resumes')
+    content = models.TextField()
+    updated_at = models.DateTimeField(auto_now=True)
+    source_fingerprint = models.CharField(max_length=64, blank=True, default='')
+
+    def __str__(self):
+        label = self.resume.title if self.resume else 'scratch'
+        return f"Generated resume ({label}) for {self.user}"
+
+
 class ResumeProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='resume_profile')
     headline = models.CharField(max_length=255, blank=True, default='')

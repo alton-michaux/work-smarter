@@ -84,13 +84,22 @@ export default function ResumePage() {
               Upload and manage your resumes. PDF and Word documents are supported.
             </p>
           </div>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
-            type="button"
-          >
-            Dashboard
-          </button>
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => router.push('/resume/generate')}
+              className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition"
+              type="button"
+            >
+              Generate from Scratch
+            </button>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+              type="button"
+            >
+              Dashboard
+            </button>
+          </div>
         </div>
 
         {/* Upload form */}

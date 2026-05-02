@@ -211,6 +211,13 @@ class ResumeSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'file', 'uploaded_at']
         read_only_fields = ['id', 'uploaded_at']
 
+class GeneratedResumeSerializer(serializers.Serializer):
+    content = serializers.CharField()
+    updated_at = serializers.DateTimeField()
+    source_fingerprint = serializers.CharField()
+    is_cached = serializers.BooleanField()
+
+
 class ResumeAnalysisSerializer(serializers.Serializer):
     score = serializers.FloatField()
     summary = serializers.CharField()

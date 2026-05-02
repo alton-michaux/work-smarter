@@ -102,7 +102,7 @@ The backend runs behind gunicorn in production (`backend.wsgi:application`). In 
 
 ### Environment Variables
 
-- Backend: `./backend/.env` — must include `DATABASE_URL`, `SECRET_KEY`, `DEBUG`, `ANTHROPIC_API_KEY` (for AI resume analysis), AWS credentials
+- Backend: `./backend/.env` — must include `DATABASE_URL`, `SECRET_KEY`, `DEBUG`, `GROQ_API_KEY` (for AI resume analysis/generation), AWS credentials
 - Media files: uploaded resumes are stored at `./backend/media/resumes/` (persisted via Docker volume mount `./backend:/app`)
 - Frontend: `./frontend/.env.local` — API base URL
 

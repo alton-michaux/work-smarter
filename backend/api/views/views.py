@@ -1,3 +1,4 @@
+import io
 from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -9,8 +10,8 @@ from rest_framework.pagination import CursorPagination
 from django.db.models import Q
 from datetime import datetime
 from django.utils import timezone
-from api.models import Resume, ResumeAnalysis, Project, Task, RecurringTask, RecurringTaskException
-from api.serializers import ResumeSerializer, ResumeAnalysisSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
+from api.models import Resume, ResumeAnalysis, GeneratedResume, Project, Task, RecurringTask, RecurringTaskException
+from api.serializers import ResumeSerializer, ResumeAnalysisSerializer, GeneratedResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range
 from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
@@ -469,3 +470,173 @@ class ResumeViewSet(viewsets.ViewSet):
             'is_cached': False,
         }).data
         return Response(data)
+
+    @action(detail=True, methods=['post'], url_path='generate')
+    def generate(self, request, pk=None):
+        import hashlib
+        from api.services.resume_analysis import extract_resume_text, _build_task_context
+        from api.services.resume_generation import generate_improved_resume
+
+        resume = self._get_resume_or_404(request, pk)
+        if resume is None:
+            return Response({"error": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        force_refresh = request.query_params.get('refresh') == '1'
+        fingerprint = hashlib.md5(str(resume.uploaded_at).encode()).hexdigest()
+
+        try:
+            existing = resume.generated
+            if not force_refresh and existing.source_fingerprint == fingerprint:
+                data = GeneratedResumeSerializer({
+                    'content': existing.content,
+                    'updated_at': existing.updated_at,
+                    'source_fingerprint': existing.source_fingerprint,
+                    'is_cached': True,
+                }).data
+                return Response(data)
+        except GeneratedResume.DoesNotExist:
+            pass
+
+        try:
+            resume_text = extract_resume_text(resume)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Text extraction failed for resume {resume.id}: {e}")
+            return Response({"error": "Could not read resume file."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not resume_text.strip():
+            return Response({"error": "Resume appears to be empty or unreadable."}, status=status.HTTP_400_BAD_REQUEST)
+
+        task_context = _build_task_context(request.user)
+
+        # Include prior analysis hints if available
+        analysis_hints = None
+        try:
+            a = resume.analysis
+            analysis_hints = {
+                'suggestions': a.suggestions,
+                'accomplishments': a.accomplishments,
+                'bullet_rewrites': a.bullet_rewrites,
+            }
+        except ResumeAnalysis.DoesNotExist:
+            pass
+
+        try:
+            content = generate_improved_resume(resume_text, task_context, analysis_hints)
+        except Exception as e:
+            logger.error(f"AI generation failed for resume {resume.id}: {e}")
+            return Response({"error": "AI generation failed. Please try again."}, status=status.HTTP_502_BAD_GATEWAY)
+
+        generated, _ = GeneratedResume.objects.update_or_create(
+            resume=resume,
+            defaults={'content': content, 'source_fingerprint': fingerprint, 'user': request.user},
+        )
+
+        data = GeneratedResumeSerializer({
+            'content': generated.content,
+            'updated_at': generated.updated_at,
+            'source_fingerprint': generated.source_fingerprint,
+            'is_cached': False,
+        }).data
+        return Response(data)
+
+    @action(detail=True, methods=['get'], url_path='generate/download')
+    def generate_download(self, request, pk=None):
+        from api.services.resume_generation import content_to_docx
+
+        resume = self._get_resume_or_404(request, pk)
+        if resume is None:
+            return Response({"error": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            generated = resume.generated
+        except GeneratedResume.DoesNotExist:
+            return Response({"error": "No generated resume found. Run generation first."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            docx_bytes = content_to_docx(generated.content)
+        except Exception as e:
+            logger.error(f"DOCX conversion failed for resume {resume.id}: {e}")
+            return Response({"error": "Could not create DOCX file."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        filename = f"{resume.title or 'resume'}_improved.docx"
+        response = FileResponse(
+            io.BytesIO(docx_bytes),
+            as_attachment=True,
+            filename=filename,
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+        return response
+
+    @action(detail=False, methods=['post'], url_path='generate-new')
+    def generate_new(self, request):
+        import hashlib
+        from api.services.resume_analysis import _build_task_context
+        from api.services.resume_generation import generate_resume_from_scratch
+
+        force_refresh = request.query_params.get('refresh') == '1'
+        task_context = _build_task_context(request.user)
+        fingerprint = hashlib.md5(task_context.encode()).hexdigest()
+
+        try:
+            existing = GeneratedResume.objects.get(user=request.user, resume__isnull=True)
+            if not force_refresh and existing.source_fingerprint == fingerprint:
+                data = GeneratedResumeSerializer({
+                    'content': existing.content,
+                    'updated_at': existing.updated_at,
+                    'source_fingerprint': existing.source_fingerprint,
+                    'is_cached': True,
+                }).data
+                return Response(data)
+        except GeneratedResume.DoesNotExist:
+            pass
+
+        if not task_context.strip():
+            return Response(
+                {"error": "No work history found. Complete some tasks first, then try again."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            content = generate_resume_from_scratch(task_context)
+        except Exception as e:
+            logger.error(f"AI generation from scratch failed for user {request.user.id}: {e}")
+            return Response({"error": "AI generation failed. Please try again."}, status=status.HTTP_502_BAD_GATEWAY)
+
+        generated, _ = GeneratedResume.objects.update_or_create(
+            user=request.user,
+            resume=None,
+            defaults={'content': content, 'source_fingerprint': fingerprint},
+        )
+
+        data = GeneratedResumeSerializer({
+            'content': generated.content,
+            'updated_at': generated.updated_at,
+            'source_fingerprint': generated.source_fingerprint,
+            'is_cached': False,
+        }).data
+        return Response(data)
+
+    @action(detail=False, methods=['get'], url_path='generate-new/download')
+    def generate_new_download(self, request):
+        from api.services.resume_generation import content_to_docx
+
+        try:
+            generated = GeneratedResume.objects.get(user=request.user, resume__isnull=True)
+        except GeneratedResume.DoesNotExist:
+            return Response({"error": "No generated resume found. Run generation first."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            docx_bytes = content_to_docx(generated.content)
+        except Exception as e:
+            logger.error(f"DOCX conversion failed (scratch) for user {request.user.id}: {e}")
+            return Response({"error": "Could not create DOCX file."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        response = FileResponse(
+            io.BytesIO(docx_bytes),
+            as_attachment=True,
+            filename='generated_resume.docx',
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+        return response
