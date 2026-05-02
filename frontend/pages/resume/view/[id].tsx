@@ -291,7 +291,7 @@ export default function ResumeViewPage() {
             data={generation.data}
             onRegenerate={() => handleGenerate(true)}
             onDownload={handleDownloadGenerated}
-            isRegenerating={generation.status === 'loading'}
+            isRegenerating={false}
           />
         )}
 
