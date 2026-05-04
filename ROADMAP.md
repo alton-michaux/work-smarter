@@ -43,6 +43,7 @@
   - [ ] Generating resume from scratch should use account information for name/email and ask for phone/location information
   - [ ] Job date range for generated resumes all say "2026-Present", this is incorrect and should be inferred from the earliest project task and assumed to be current as long as the project has had an associated task within the last month
   - [ ] Generating a resume should consider the entire work log, not just recent items
+- [ ] Clicking on a searched task results in "Task not found" page
 
 ---
 
