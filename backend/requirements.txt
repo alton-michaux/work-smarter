@@ -79,6 +79,8 @@ networkx==3.2.1
 numpy==1.26.4
 oauthlib==3.2.2
 openai==0.27.0
+pdfplumber
+python-docx
 openpyxl==3.1.5
 packaging==24.2
 pandas==2.2.3

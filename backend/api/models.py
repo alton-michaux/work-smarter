@@ -55,6 +55,37 @@ class Resume(models.Model):
         return f"{self.user}'s Resume"
 
 
+class ResumeAnalysis(models.Model):
+    resume = models.OneToOneField(Resume, on_delete=models.CASCADE, related_name='analysis')
+    score = models.FloatField()
+    summary = models.TextField(blank=True, default='')
+    suggestions = models.JSONField(default=list)
+    accomplishments = models.JSONField(default=list)
+    bullet_rewrites = models.JSONField(default=dict)
+    analyzed_at = models.DateTimeField(auto_now=True)
+    resume_fingerprint = models.CharField(max_length=64, blank=True, default='')
+
+    class Meta:
+        verbose_name = 'Resume Analysis'
+        verbose_name_plural = 'Resume Analyses'
+
+    def __str__(self):
+        return f"Analysis for {self.resume}"
+
+
+class GeneratedResume(models.Model):
+    # resume is null for "generate from scratch" entries
+    resume = models.OneToOneField(Resume, on_delete=models.CASCADE, null=True, blank=True, related_name='generated')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='generated_resumes')
+    content = models.TextField()
+    updated_at = models.DateTimeField(auto_now=True)
+    source_fingerprint = models.CharField(max_length=64, blank=True, default='')
+
+    def __str__(self):
+        label = self.resume.title if self.resume else 'scratch'
+        return f"Generated resume ({label}) for {self.user}"
+
+
 class ResumeProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='resume_profile')
     headline = models.CharField(max_length=255, blank=True, default='')

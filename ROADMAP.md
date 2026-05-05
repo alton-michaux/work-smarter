@@ -38,6 +38,12 @@
 - [x] Meeting project color is not visible because there is not enough room, also meeting time wraps onto next line - there's basically not enough space for all of the information being displayed for meetings on the daily log page
 - [x] Long-term tasks (maybe just for recurring?) don't persist in daily or weekly tracker
 - [x] Notes not all truncating
+- [x] Resumes are download only (not viewable) after a certain amount of time (even when uploaded as PDF)
+- [ ] Resume generation bugs
+  - [ ] Generating resume from scratch should use account information for name/email and ask for phone/location information
+  - [ ] Job date range for generated resumes all say "2026-Present", this is incorrect and should be inferred from the earliest project task and assumed to be current as long as the project has had an associated task within the last month
+  - [ ] Generating a resume should consider the entire work log, not just recent items
+- [x] Clicking on a searched task results in "Task not found" page
 
 ---
 
@@ -119,7 +125,8 @@
 - [ ] Allow tasks to reference other tasks (notes, meetings, et al.)
 - [x] Make tasks searchable
 - [x] Log in with LinkedIn/Google (social auth)
-- [ ] AI resume analysis
+- [x] AI resume analysis
+  - [x] AI resume generation/edits
 
 
 ## User-facing (go-live features)
@@ -134,3 +141,17 @@
 
 - [ ] Update tests
 - [ ] Ensure app is aligned with design principles
+
+## Action Plan (updated 5/2/2026)
+
+  │ Priority │            Item             │                   Rationale                    │
+  ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
+  │ 1        │ Resume viewability bug      │ Unblocks the AI workflow you just shipped      │
+  ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
+  │ 2        │ AI resume generation/edits  │ Completes the resume feature end-to-end        │
+  ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
+  │ 3        │ Beef up account security    │ Go-live blocker — don't launch without this    │
+  ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
+  │ 4        │ About page + Tutorial       │ Needed for new users to understand the product │
+  ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
+  │ 5        │ Notes subtasks + encryption │ Quality-of-life, lower urgency                 │

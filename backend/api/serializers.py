@@ -211,9 +211,21 @@ class ResumeSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'file', 'uploaded_at']
         read_only_fields = ['id', 'uploaded_at']
 
+class GeneratedResumeSerializer(serializers.Serializer):
+    content = serializers.CharField()
+    updated_at = serializers.DateTimeField()
+    source_fingerprint = serializers.CharField()
+    is_cached = serializers.BooleanField()
+
+
 class ResumeAnalysisSerializer(serializers.Serializer):
-    suggestions = serializers.ListField(child=serializers.CharField())  # List of suggestions from analysis
-    score = serializers.FloatField()  # Score indicating the quality of the resume
+    score = serializers.FloatField()
+    summary = serializers.CharField()
+    suggestions = serializers.ListField(child=serializers.CharField())
+    accomplishments = serializers.ListField(child=serializers.CharField())
+    bullet_rewrites = serializers.DictField(child=serializers.CharField())
+    analyzed_at = serializers.DateTimeField()
+    is_cached = serializers.BooleanField()
 
 class CalendarBlacklistSerializer(serializers.ModelSerializer):
     class Meta:
