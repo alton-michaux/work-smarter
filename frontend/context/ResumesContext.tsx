@@ -128,8 +128,12 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [getAuthHeaders]);
 
-  const generateNewResume = useCallback(async (forceRefresh = false): Promise<GeneratedResume> => {
-    const url = `${API_URL}/resumes/generate-new/${forceRefresh ? '?refresh=1' : ''}`;
+  const generateNewResume = useCallback(async (forceRefresh = false, userInfo?: { phone?: string; location?: string }): Promise<GeneratedResume> => {
+    const qs = new URLSearchParams();
+    if (forceRefresh) qs.set('refresh', '1');
+    if (userInfo?.phone) qs.set('phone', userInfo.phone);
+    if (userInfo?.location) qs.set('location', userInfo.location);
+    const url = `${API_URL}/resumes/generate-new/${qs.toString() ? `?${qs.toString()}` : ''}`;
     const res = await fetch(url, { method: 'POST', headers: getAuthHeaders() });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
