@@ -61,7 +61,8 @@ Email | Phone | Location | LinkedIn
 
 ## Experience
 ### Inferred Job Title — Project/Company Name (Date Range)
-- Transform completed tasks into impactful bullets starting with action verbs
+- Achievement-oriented bullet synthesized from multiple related tasks
+- Another high-level accomplishment (3–5 bullets per role max)
 
 ## Skills
 Infer from task descriptions and project types.
@@ -71,9 +72,11 @@ Infer from task descriptions and project types.
 (Leave as placeholder if not determinable)
 
 Rules:
-- Group tasks logically into jobs or projects. If tasks have no projects, only infer the skills gained from those tasks.
-- Use the "Date Range" field from each project section exactly as provided — do not change or fabricate dates.
-- Use action verbs: Built, Designed, Led, Implemented, Improved, etc.
+- Only include projects that have an associated role or named project — do NOT create an experience entry for standalone tasks. Infer any skills gained from standalone tasks and fold them into the Skills section instead.
+- Use the "Date Range" field from each project section exactly as provided for the date in parentheses — do not use status labels like "active".
+- Write 3–5 bullets per role. Each bullet must synthesize a theme or outcome across multiple tasks — never copy a single task title.
+- Bullets describe what was accomplished or built, not what was done on a specific day.
+- Use action verbs: Built, Designed, Led, Implemented, Improved, Delivered, etc.
 - Do not fabricate specific metrics unless clearly inferable.
 - Return only the markdown resume. No commentary.\
 """

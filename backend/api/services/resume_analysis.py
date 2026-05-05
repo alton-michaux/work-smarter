@@ -77,7 +77,7 @@ def _build_task_context(user) -> str:
         Task.objects
         .filter(user=user, is_done=True, category='task')
         .select_related('project')
-        .order_by('-end_date')
+        .order_by('-begin_date')
     )
 
     groups: dict[str, list] = defaultdict(list)
@@ -91,7 +91,7 @@ def _build_task_context(user) -> str:
     task_lines = []
     for project_name, group_tasks in groups.items():
         project_obj = group_tasks[0].project
-        task_dates = [t.end_date for t in group_tasks if t.end_date]
+        task_dates = [t.end_date or t.begin_date for t in group_tasks if t.end_date or t.begin_date]
         if task_dates:
             earliest = min(task_dates)
             latest = max(task_dates)
@@ -102,8 +102,6 @@ def _build_task_context(user) -> str:
             date_range = None
 
         header = f"Project: {project_name}"
-        if project_obj and project_obj.status:
-            header += f" ({project_obj.status})"
         if project_obj and project_obj.role:
             header += f"\nRole: {project_obj.role}"
         if date_range:
