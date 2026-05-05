@@ -7,7 +7,7 @@ import Spinner from 'components/shared/Spinner';
 import EmptyStateCard from 'components/shared/EmptyStateCard';
 import MarkdownBody from 'components/shared/MarkdownBody';
 import { toast } from 'sonner';
-import { GoogleCalendarStatus } from 'types/types';
+import { GoogleCalendarStatus, Task } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -22,6 +22,8 @@ const TaskShowPage = () => {
   const [isPushing, setIsPushing] = useState(false);
   const [isSyncingDeadline, setIsSyncingDeadline] = useState(false);
   const [isBlacklisting, setIsBlacklisting] = useState(false);
+  const [fetchedTask, setFetchedTask] = useState<Task | null>(null);
+  const [isFetchingTask, setIsFetchingTask] = useState(false);
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -31,9 +33,21 @@ const TaskShowPage = () => {
       .catch(() => {});
   }, [loggedIn]);
 
-  const task = tasks?.find(t => t.id === Number(id));
+  const taskInContext = tasks?.find(t => t.id === Number(id));
+  const task = taskInContext ?? fetchedTask;
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!id || isLoading || taskInContext || fetchedTask) return;
+    if (!loggedIn) return;
+    setIsFetchingTask(true);
+    fetch(`${API_URL}/tasks/${id}/`, { headers: getAuthHeaders() })
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data: Task) => setFetchedTask(data))
+      .catch(() => {})
+      .finally(() => setIsFetchingTask(false));
+  }, [id, isLoading, taskInContext, fetchedTask, loggedIn]);
+
+  if (isLoading || isFetchingTask) {
     return (
       <div className="flex justify-center py-8">
         <Spinner />

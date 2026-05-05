@@ -49,16 +49,18 @@ You are a professional resume writer. Build a professional resume from the work 
 
 The user has not provided an existing resume. Infer experience from their completed task history and projects.
 
+If a USER PROFILE section is provided, use that exact information (name, email, phone, location) in the contact header instead of placeholders.
+
 Return ONLY a resume in markdown. Use this exact structure:
-# Your Name
+# Full Name
 ## Contact
-Email | Phone | Location | LinkedIn (fill with placeholders)
+Email | Phone | Location | LinkedIn
 
 ## Professional Summary
 2-3 sentence summary inferred from their work.
 
 ## Experience
-### Inferred Job Title — Project/Company Name (infer dates from task dates)
+### Inferred Job Title — Project/Company Name (Date Range)
 - Transform completed tasks into impactful bullets starting with action verbs
 
 ## Skills
@@ -69,7 +71,8 @@ Infer from task descriptions and project types.
 (Leave as placeholder if not determinable)
 
 Rules:
-- Group tasks logically into jobs or projects.
+- Group tasks logically into jobs or projects. If tasks have no projects, only infer the skills gained from those tasks.
+- Use the "Date Range" field from each project section exactly as provided — do not change or fabricate dates.
 - Use action verbs: Built, Designed, Led, Implemented, Improved, etc.
 - Do not fabricate specific metrics unless clearly inferable.
 - Return only the markdown resume. No commentary.\
@@ -105,8 +108,22 @@ def generate_improved_resume(resume_text: str, task_context: str, analysis: dict
     return _call_groq(IMPROVE_PROMPT, user_content)
 
 
-def generate_resume_from_scratch(task_context: str) -> str:
-    user_content = f"=== WORK HISTORY ===\n{task_context}"
+def generate_resume_from_scratch(task_context: str, user_info: dict | None = None) -> str:
+    parts = []
+    if user_info:
+        info_lines = []
+        if user_info.get('name'):
+            info_lines.append(f"Name: {user_info['name']}")
+        if user_info.get('email'):
+            info_lines.append(f"Email: {user_info['email']}")
+        if user_info.get('phone'):
+            info_lines.append(f"Phone: {user_info['phone']}")
+        if user_info.get('location'):
+            info_lines.append(f"Location: {user_info['location']}")
+        if info_lines:
+            parts.append("=== USER PROFILE ===\n" + '\n'.join(info_lines))
+    parts.append(f"=== WORK HISTORY ===\n{task_context}")
+    user_content = "\n\n".join(parts)
     return _call_groq(SCRATCH_PROMPT, user_content)
 
 

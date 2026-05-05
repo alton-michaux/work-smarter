@@ -576,8 +576,18 @@ class ResumeViewSet(viewsets.ViewSet):
         from api.services.resume_generation import generate_resume_from_scratch
 
         force_refresh = request.query_params.get('refresh') == '1'
-        task_context = _build_task_context(request.user)
-        fingerprint = hashlib.md5(task_context.encode()).hexdigest()
+
+        user = request.user
+        user_info = {
+            'name': user.get_full_name() or user.username,
+            'email': user.email,
+            'phone': request.query_params.get('phone', ''),
+            'location': request.query_params.get('location', ''),
+        }
+
+        task_context = _build_task_context(user)
+        user_info_str = f"{user_info.get('phone', '')}:{user_info.get('location', '')}"
+        fingerprint = hashlib.md5((task_context + user_info_str).encode()).hexdigest()
 
         try:
             existing = GeneratedResume.objects.get(user=request.user, resume__isnull=True)
@@ -599,7 +609,7 @@ class ResumeViewSet(viewsets.ViewSet):
             )
 
         try:
-            content = generate_resume_from_scratch(task_context)
+            content = generate_resume_from_scratch(task_context, user_info)
         except Exception as e:
             logger.error(f"AI generation from scratch failed for user {request.user.id}: {e}")
             return Response({"error": "AI generation failed. Please try again."}, status=status.HTTP_502_BAD_GATEWAY)

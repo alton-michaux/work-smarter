@@ -480,6 +480,6 @@ export type ResumesContextType = {
   analyzeResume: (id: number, forceRefresh?: boolean) => Promise<ResumeAnalysis>;
   generateResume: (id: number, forceRefresh?: boolean) => Promise<GeneratedResume>;
   downloadGeneratedResume: (resumeId: number, title: string) => Promise<void>;
-  generateNewResume: (forceRefresh?: boolean) => Promise<GeneratedResume>;
+  generateNewResume: (forceRefresh?: boolean, userInfo?: { phone?: string; location?: string }) => Promise<GeneratedResume>;
   downloadNewGeneratedResume: () => Promise<void>;
 };

@@ -60,6 +60,7 @@ def extract_resume_text(resume) -> str:
 
 
 def _build_task_context(user) -> str:
+    from datetime import date, timedelta
     from api.models import Project
 
     projects = Project.objects.filter(user=user)
@@ -76,7 +77,7 @@ def _build_task_context(user) -> str:
         Task.objects
         .filter(user=user, is_done=True, category='task')
         .select_related('project')
-        .order_by('-end_date')[:100]
+        .order_by('-end_date')
     )
 
     groups: dict[str, list] = defaultdict(list)
@@ -84,14 +85,29 @@ def _build_task_context(user) -> str:
         key = task.project.name if task.project else 'Standalone Tasks'
         groups[key].append(task)
 
+    today = date.today()
+    recent_threshold = today - timedelta(days=30)
+
     task_lines = []
     for project_name, group_tasks in groups.items():
         project_obj = group_tasks[0].project
+        task_dates = [t.end_date for t in group_tasks if t.end_date]
+        if task_dates:
+            earliest = min(task_dates)
+            latest = max(task_dates)
+            is_current = latest >= recent_threshold or (project_obj and project_obj.status == 'active')
+            end_label = 'Present' if is_current else latest.strftime('%b %Y')
+            date_range = f"{earliest.strftime('%b %Y')} – {end_label}"
+        else:
+            date_range = None
+
         header = f"Project: {project_name}"
         if project_obj and project_obj.status:
             header += f" ({project_obj.status})"
         if project_obj and project_obj.role:
             header += f"\nRole: {project_obj.role}"
+        if date_range:
+            header += f"\nDate Range: {date_range}"
         task_lines.append(header)
         for task in group_tasks:
             date_str = str(task.end_date) if task.end_date else 'unknown date'
@@ -108,7 +124,7 @@ def _build_task_context(user) -> str:
         sections.append("=== COMPLETED TASKS ===\n" + '\n'.join(task_lines))
 
     context = '\n\n'.join(sections)
-    return context[:4000]
+    return context[:8000]
 
 
 def analyze_resume(resume_text: str, task_context: str) -> dict:
