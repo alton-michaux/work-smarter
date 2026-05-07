@@ -45,6 +45,7 @@
   - [x] Generating a resume should consider the entire work log, not just recent items
 - [x] Clicking on a searched task results in "Task not found" page
 - [x] Trying to edit a searched task leads to 404 page
+- [ ] Importing meetings creates duplicate events (imported meeting from calendar and separate recurring event?)
 
 ---
 
