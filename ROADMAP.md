@@ -36,7 +36,7 @@
 - [x] Dark mode not applied in all forms (create)
 - [x] Back buttons on show pages and import page redundant, no back button (or dashboard button) on daily log or weekly tracker page
 - [x] Meeting project color is not visible because there is not enough room, also meeting time wraps onto next line - there's basically not enough space for all of the information being displayed for meetings on the daily log page
-- [ ] Long-term tasks (started long ago) don't persist in daily or weekly tracker
+- [x] Long-term tasks (started long ago) don't persist in daily or weekly tracker
 - [x] Notes not all truncating
 - [x] Resumes are download only (not viewable) after a certain amount of time (even when uploaded as PDF)
 - [x] Resume generation bugs
@@ -45,7 +45,7 @@
   - [x] Generating a resume should consider the entire work log, not just recent items
 - [x] Clicking on a searched task results in "Task not found" page
 - [x] Trying to edit a searched task leads to 404 page
-- [ ] Importing meetings creates duplicate events (imported meeting from calendar and separate recurring event?)
+- [x] Importing meetings creates duplicate events (imported meeting from calendar and separate recurring event?)
 - [x] Meetings should be marked as done after time of completion (frontend and backend)
 
 ---

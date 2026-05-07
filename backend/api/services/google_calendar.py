@@ -330,19 +330,42 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
         project = _match_project(title, user_projects, description)
         recurring_task = recurring_task_map.get(event.get("recurringEventId"))
 
-        task = Task.objects.create(
-            user=user,
-            title=title,
-            description=event.get("description") or "",
-            category="meeting",
-            begin_date=begin_date,
-            begin_time=begin_time,
-            end_time=end_time,
-            google_event_id=event_id,
-            is_done=False,
-            project=project,
-            recurring_task=recurring_task,
-        )
+        if recurring_task:
+            # A pre-generated occurrence (no google_event_id) may already exist —
+            # use get_or_create to avoid the unique(recurring_task, begin_date) constraint
+            # and stamp the event ID onto any pre-generated task we find.
+            task, created = Task.objects.get_or_create(
+                user=user,
+                recurring_task=recurring_task,
+                begin_date=begin_date,
+                defaults={
+                    "title": title,
+                    "description": event.get("description") or "",
+                    "category": "meeting",
+                    "begin_time": begin_time,
+                    "end_time": end_time,
+                    "google_event_id": event_id,
+                    "is_done": False,
+                    "project": project,
+                },
+            )
+            if not created and not task.google_event_id:
+                task.google_event_id = event_id
+                task.save(update_fields=["google_event_id"])
+        else:
+            task = Task.objects.create(
+                user=user,
+                title=title,
+                description=event.get("description") or "",
+                category="meeting",
+                begin_date=begin_date,
+                begin_time=begin_time,
+                end_time=end_time,
+                google_event_id=event_id,
+                is_done=False,
+                project=project,
+                recurring_task=None,
+            )
         created_tasks.append(task)
         existing_ids.add(event_id)
         imported += 1
