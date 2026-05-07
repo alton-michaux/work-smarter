@@ -44,6 +44,7 @@
   - [x] Job date range for generated resumes all say "2026-Present", this is incorrect and should be inferred from the earliest project task and assumed to be current as long as the project has had an associated task within the last month
   - [x] Generating a resume should consider the entire work log, not just recent items
 - [x] Clicking on a searched task results in "Task not found" page
+- [ ] Trying to edit a searched task leads to 404 page
 
 ---
 
