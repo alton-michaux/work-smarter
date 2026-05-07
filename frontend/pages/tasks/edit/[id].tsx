@@ -1,10 +1,16 @@
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useTasks } from "../../../context/TasksContext";
 import { useProjects } from "../../../context/ProjectsContext";
+import { useAPI } from "../../../context/APIContext";
+import { useAuth } from "../../../context/AuthContext";
 import TaskForm from "../../../components/tasks/TaskForm";
 import Spinner from "components/shared/Spinner";
 import EmptyStateCard from "components/shared/EmptyStateCard";
+import { Task } from "types/types";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function TaskEditPage() {
   const router = useRouter();
@@ -12,8 +18,25 @@ export default function TaskEditPage() {
 
   const { tasks, updateTaskAndReload, isLoading } = useTasks();
   const { projects } = useProjects();
+  const { getAuthHeaders } = useAPI();
+  const { loggedIn } = useAuth();
 
-  const task = tasks?.find((t) => t.id === Number(id));
+  const [fetchedTask, setFetchedTask] = useState<Task | null>(null);
+  const [isFetchingTask, setIsFetchingTask] = useState(false);
+
+  const taskInContext = tasks?.find((t) => t.id === Number(id));
+  const task = taskInContext ?? fetchedTask;
+
+  useEffect(() => {
+    if (!id || isLoading || taskInContext || fetchedTask) return;
+    if (!loggedIn) return;
+    setIsFetchingTask(true);
+    fetch(`${API_URL}/tasks/${id}/`, { headers: getAuthHeaders() })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: Task) => setFetchedTask(data))
+      .catch(() => {})
+      .finally(() => setIsFetchingTask(false));
+  }, [id, isLoading, taskInContext, fetchedTask, loggedIn]);
 
   const projectOptions = Array.isArray(projects)
     ? projects
@@ -21,7 +44,7 @@ export default function TaskEditPage() {
     ? (projects as any).results
     : [];
 
-  if (isLoading && !task) {
+  if (isLoading || isFetchingTask) {
     return (
       <div className="flex justify-center py-10">
         <Spinner />

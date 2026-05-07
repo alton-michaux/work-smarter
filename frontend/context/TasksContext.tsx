@@ -80,18 +80,28 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           params.active_on = active_on;
         }
 
-        const url = buildUrl(params);
-        const res = await fetch(url, { headers: getAuthHeaders() });
+        const allResults: Task[] = [];
+        // Replace host in cursor URLs to handle Docker/proxy hostname mismatches
+        let nextUrl: string | null = buildUrl(params);
 
-        if (res.status === 401) {
-          setError("Unauthorized");
-          return;
+        while (nextUrl) {
+          const res = await fetch(nextUrl, { headers: getAuthHeaders() });
+
+          if (res.status === 401) {
+            setError("Unauthorized");
+            return;
+          }
+
+          if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+
+          const data = await res.json();
+          allResults.push(...(data.results || []));
+          nextUrl = data.next
+            ? data.next.replace(/^https?:\/\/[^/]+/, API_URL)
+            : null;
         }
 
-        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-
-        const data = await res.json();
-        setTasks(data.results || []);
+        setTasks(allResults);
       } catch (e: any) {
         setError(e.message ?? "unknown error");
       } finally {

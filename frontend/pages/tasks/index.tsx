@@ -83,6 +83,17 @@ const TasksPage = () => {
     setProjects(projects);
   }, [selectedDate]); // keeping your existing behavior
 
+  // Re-fetch every 2 minutes when viewing today so meeting done-state stays current
+  useEffect(() => {
+    if (!selectedDate) return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (selectedDate !== today) return;
+    const interval = setInterval(() => {
+      fetchTasksByDateRange(selectedDate, selectedDate, selectedDate);
+    }, 2 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [selectedDate]);
+
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(searchQuery), 300);
     return () => clearTimeout(t);

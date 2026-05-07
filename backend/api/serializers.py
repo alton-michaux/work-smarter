@@ -52,12 +52,10 @@ class TaskSerializer(serializers.ModelSerializer):
         if obj.category == "meeting" and obj.begin_date is not None:
             if obj.begin_date < today:
                 return True
-            if (
-                obj.begin_date == today
-                and obj.begin_time is not None
-                and obj.begin_time < current_time
-            ):
-                return True
+            if obj.begin_date == today:
+                threshold = obj.end_time if obj.end_time is not None else obj.begin_time
+                if threshold is not None and threshold < current_time:
+                    return True
 
         return bool(obj.is_done)
 
