@@ -13,6 +13,7 @@ from django.utils import timezone
 from api.models import Resume, ResumeAnalysis, GeneratedResume, Project, Task, RecurringTask, RecurringTaskException
 from api.serializers import ResumeSerializer, ResumeAnalysisSerializer, GeneratedResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range
+from api.services.meeting_completion import auto_complete_past_meetings
 from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
 from loguru import logger
@@ -94,6 +95,12 @@ class TaskViewSet(viewsets.ModelViewSet):
                         
                         # generate recurring occurrences for that specific day
                         ensure_recurring_tasks_in_range(day, day, user=user)
+
+                        try:
+                            tz_offset = int(self.request.query_params.get("tz_offset", 0) or 0)
+                        except (TypeError, ValueError):
+                            tz_offset = 0
+                        auto_complete_past_meetings(user, tz_offset=tz_offset)
 
                         filtered_queryset = queryset.filter(
                             (
