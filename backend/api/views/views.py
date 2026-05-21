@@ -97,8 +97,14 @@ class TaskViewSet(viewsets.ModelViewSet):
 
                         filtered_queryset = queryset.filter(
                             (
-                                # Non-recurring tasks:
-                                # - unfinished tasks remain active across days
+                                # Non-recurring, unfinished tasks:
+                                # - undated tasks always carry over
+                                Q(recurring_task__isnull=True, is_done=False, begin_date__isnull=True)
+                            )
+                            |
+                            (
+                                # Non-recurring, unfinished tasks:
+                                # - dated tasks carry over until done
                                 Q(recurring_task__isnull=True, is_done=False, begin_date__lte=day)
                                 & (Q(end_date__isnull=True) | Q(end_date__gte=day))
                             )

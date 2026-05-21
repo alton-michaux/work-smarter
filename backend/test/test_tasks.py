@@ -1190,3 +1190,115 @@ def test_deadline_date_survives_marking_undone(auth_client, get_user):
     task.refresh_from_db()
     assert task.end_date is None
     assert task.deadline_date == date(2026, 12, 31)
+
+
+# -----------------------
+# active_on (Daily Log) Filter Tests
+# -----------------------
+
+@pytest.mark.django_db
+def test_active_on_undated_unfinished_task_always_appears(auth_client, get_user, create_task):
+    """Regression: undated open tasks were silently excluded because begin_date__lte=day
+    excludes NULL in SQL. They should always carry over to every day's log."""
+    today = date.today()
+    create_task(title="Undated open task", begin_date=None, is_done=False, user=get_user)
+
+    res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
+    assert res.status_code == 200
+    assert any(t["title"] == "Undated open task" for t in res.data["results"])
+
+
+@pytest.mark.django_db
+def test_active_on_old_unfinished_task_appears_today(auth_client, get_user, create_task):
+    """An old unfinished task (begin_date years ago) still shows in today's log."""
+    today = date.today()
+    create_task(title="Old open task", begin_date=date(2020, 1, 1), is_done=False, user=get_user)
+
+    res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
+    assert res.status_code == 200
+    assert any(t["title"] == "Old open task" for t in res.data["results"])
+
+
+@pytest.mark.django_db
+def test_active_on_done_task_appears_only_on_completion_day(auth_client, get_user, create_task):
+    """A finished non-recurring task shows only on the day it was completed (end_date)."""
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    create_task(title="Done yesterday", begin_date=yesterday, end_date=yesterday, is_done=True, user=get_user)
+
+    res = auth_client.get(f"/api/tasks/?begin_date={yesterday}&end_date={yesterday}&active_on={yesterday}")
+    assert res.status_code == 200
+    assert any(t["title"] == "Done yesterday" for t in res.data["results"])
+
+    res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
+    assert res.status_code == 200
+    assert not any(t["title"] == "Done yesterday" for t in res.data["results"])
+
+
+@pytest.mark.django_db
+def test_active_on_future_day_shows_only_tasks_scheduled_that_day(auth_client, get_user, create_task):
+    """For a future date, carry-over logic is skipped — only tasks explicitly scheduled
+    that day are returned (no backlog bleed-in)."""
+    today = date.today()
+    future = today + timedelta(days=5)
+    other_future = today + timedelta(days=10)
+
+    create_task(title="Scheduled future task", begin_date=future, is_done=False, user=get_user)
+    create_task(title="Open old task", begin_date=today - timedelta(days=3), is_done=False, user=get_user)
+    create_task(title="Different future task", begin_date=other_future, is_done=False, user=get_user)
+
+    res = auth_client.get(f"/api/tasks/?begin_date={future}&end_date={future}&active_on={future}")
+    assert res.status_code == 200
+    titles = [t["title"] for t in res.data["results"]]
+    assert "Scheduled future task" in titles
+    assert "Open old task" not in titles
+    assert "Different future task" not in titles
+
+
+@pytest.mark.django_db
+def test_active_on_done_task_excluded_from_unrelated_day(auth_client, get_user, create_task):
+    """A done task doesn't bleed into days other than its completion day."""
+    today = date.today()
+    completed_day = today - timedelta(days=7)
+    create_task(title="Done last week", begin_date=completed_day, end_date=completed_day, is_done=True, user=get_user)
+
+    res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
+    assert res.status_code == 200
+    assert not any(t["title"] == "Done last week" for t in res.data["results"])
+
+
+@pytest.mark.django_db
+def test_active_on_recurring_occurrence_shows_only_on_its_day(auth_client, get_user, create_task, create_recurring_task):
+    """Recurring occurrences are pinned to their begin_date — they don't carry over."""
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+
+    rt = create_recurring_task(user=get_user, frequency="daily", start_date=yesterday)
+    create_task(title="Daily standup", begin_date=today, is_done=False, recurring_task=rt, user=get_user)
+
+    res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
+    assert res.status_code == 200
+    assert any(t["title"] == "Daily standup" for t in res.data["results"])
+
+    res = auth_client.get(f"/api/tasks/?begin_date={yesterday}&end_date={yesterday}&active_on={yesterday}")
+    assert res.status_code == 200
+    assert not any(t["title"] == "Daily standup" for t in res.data["results"])
+
+
+@pytest.mark.django_db
+def test_active_on_done_undated_task_appears_only_on_stamped_completion_day(auth_client, get_user, create_task):
+    """Task.save() auto-stamps end_date=today when a task is marked done with no date.
+    That task should appear today but not on any other day."""
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+
+    # Model stamps end_date=today on create since begin_date=None and is_done=True
+    create_task(title="Done undated task", begin_date=None, end_date=None, is_done=True, user=get_user)
+
+    res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
+    assert res.status_code == 200
+    assert any(t["title"] == "Done undated task" for t in res.data["results"])
+
+    res = auth_client.get(f"/api/tasks/?begin_date={yesterday}&end_date={yesterday}&active_on={yesterday}")
+    assert res.status_code == 200
+    assert not any(t["title"] == "Done undated task" for t in res.data["results"])
