@@ -103,6 +103,12 @@ class TaskViewSet(viewsets.ModelViewSet):
                             tz_offset = 0
                         auto_complete_past_meetings(user, tz_offset=tz_offset)
 
+                        try:
+                            tz_offset = int(self.request.query_params.get("tz_offset", 0) or 0)
+                        except (TypeError, ValueError):
+                            tz_offset = 0
+                        auto_complete_past_meetings(user, tz_offset=tz_offset)
+
                         filtered_queryset = queryset.filter(
                             (
                                 # Non-recurring, unfinished tasks:
