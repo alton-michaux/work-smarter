@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.pagination import CursorPagination
 from django.db.models import Q
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils import timezone
 from api.models import Resume, ResumeAnalysis, GeneratedResume, Project, Task, RecurringTask, RecurringTaskException
 from api.serializers import ResumeSerializer, ResumeAnalysisSerializer, GeneratedResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
@@ -93,8 +93,15 @@ class TaskViewSet(viewsets.ModelViewSet):
                             # Only return tasks that actually belong to that day.
                             return queryset.filter(begin_date=day)
                         
-                        # generate recurring occurrences for that specific day
-                        ensure_recurring_tasks_in_range(day, day, user=user)
+                        # generate occurrences across a wider window so recurring
+                        # meetings on other days of the week are pre-populated
+                        ensure_recurring_tasks_in_range(day - timedelta(days=30), day + timedelta(days=30), user=user)
+
+                        try:
+                            tz_offset = int(self.request.query_params.get("tz_offset", 0) or 0)
+                        except (TypeError, ValueError):
+                            tz_offset = 0
+                        auto_complete_past_meetings(user, tz_offset=tz_offset)
 
                         try:
                             tz_offset = int(self.request.query_params.get("tz_offset", 0) or 0)
