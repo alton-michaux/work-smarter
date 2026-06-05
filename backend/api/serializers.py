@@ -114,7 +114,8 @@ class TaskSerializer(serializers.ModelSerializer):
 
         # Transition: not done → done
         if next_done and not instance.is_done:
-            validated_data.setdefault("end_date", timezone.localdate())
+            if not validated_data.get("end_date"):
+                validated_data["end_date"] = timezone.localdate()
 
         # Transition: done → not done
         if not next_done and instance.is_done:

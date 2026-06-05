@@ -1302,3 +1302,74 @@ def test_active_on_done_undated_task_appears_only_on_stamped_completion_day(auth
     res = auth_client.get(f"/api/tasks/?begin_date={yesterday}&end_date={yesterday}&active_on={yesterday}")
     assert res.status_code == 200
     assert not any(t["title"] == "Done undated task" for t in res.data["results"])
+
+
+@pytest.mark.django_db
+def test_done_long_term_task_appears_on_completion_day_not_begin_date(auth_client, get_user, create_task):
+    """Regression: marking a long-term task done via PATCH should stamp end_date=today,
+    NOT end_date=begin_date, so it shows in today's log rather than its creation day."""
+    today = date.today()
+    old_date = date(2020, 1, 1)
+
+    task = create_task(title="Long-term task", begin_date=old_date, is_done=False, user=get_user)
+
+    # Mark done via PATCH (as toggleTaskDone does)
+    res = auth_client.patch(f"/api/tasks/{task.id}/", {"is_done": True}, content_type="application/json")
+    assert res.status_code == 200
+    assert res.data["end_date"] == str(today)
+
+    # Should appear in today's log
+    res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
+    assert res.status_code == 200
+    assert any(t["title"] == "Long-term task" for t in res.data["results"])
+
+    # Should NOT appear on its old begin_date
+    res = auth_client.get(f"/api/tasks/?begin_date={old_date}&end_date={old_date}&active_on={old_date}")
+    assert res.status_code == 200
+    assert not any(t["title"] == "Long-term task" for t in res.data["results"])
+
+
+@pytest.mark.django_db
+def test_done_long_term_task_via_put_with_null_end_date_stamps_today(auth_client, get_user, create_task):
+    """Regression: a PUT that includes end_date: null while marking done should still
+    stamp end_date=today (not end_date=begin_date from the old model.save() bug)."""
+    today = date.today()
+    old_date = date(2020, 6, 1)
+
+    task = create_task(title="PUT done task", begin_date=old_date, is_done=False, user=get_user)
+
+    payload = {
+        "title": "PUT done task",
+        "begin_date": str(old_date),
+        "end_date": None,
+        "is_done": True,
+        "category": "task",
+        "priority": "medium",
+        "description": "",
+        "carry_over": True,
+    }
+    res = auth_client.put(f"/api/tasks/{task.id}/", payload, content_type="application/json")
+    assert res.status_code == 200
+    assert res.data["end_date"] == str(today)
+
+
+@pytest.mark.django_db
+def test_undone_task_with_stale_end_date_appears_in_daily_log(auth_client, get_user, create_task):
+    """Regression: an undone task that somehow has a stale end_date in the past must still
+    appear in today's log — the data migration clears these, and the unmark-done path
+    prevents new occurrences."""
+    today = date.today()
+    old_date = date(2020, 3, 15)
+
+    # Simulate a task in the bad state: is_done=False but end_date set to an old date.
+    # We bypass model.save() by using queryset update to force the stale state.
+    task = create_task(title="Stale end_date task", begin_date=old_date, is_done=False, user=get_user)
+    Task.objects.filter(id=task.id).update(end_date=old_date)
+
+    # Without the data migration the task would be hidden; re-save via PATCH to trigger clearing
+    res = auth_client.patch(f"/api/tasks/{task.id}/", {"priority": "high"}, content_type="application/json")
+    assert res.status_code == 200
+
+    res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
+    assert res.status_code == 200
+    assert any(t["title"] == "Stale end_date task" for t in res.data["results"])
