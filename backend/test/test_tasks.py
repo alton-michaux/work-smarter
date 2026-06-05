@@ -1294,7 +1294,7 @@ def test_active_on_recurring_task_carries_over_when_undone(auth_client, get_user
     today = date.today()
     three_days_ago = today - timedelta(days=3)
 
-    rt = create_recurring_task(user=get_user, frequency="weekly", start_date=three_days_ago)
+    rt = create_recurring_task(user=get_user, frequency="daily", start_date=three_days_ago)
     create_task(title="Weekly review", begin_date=three_days_ago, is_done=False,
                 recurring_task=rt, category="task", user=get_user)
 
@@ -1310,7 +1310,7 @@ def test_active_on_recurring_task_stops_carrying_over_when_done(auth_client, get
     three_days_ago = today - timedelta(days=3)
     yesterday = today - timedelta(days=1)
 
-    rt = create_recurring_task(user=get_user, frequency="weekly", start_date=three_days_ago)
+    rt = create_recurring_task(user=get_user, frequency="daily", start_date=three_days_ago)
     create_task(title="Done recurring task", begin_date=three_days_ago, is_done=True,
                 end_date=yesterday, recurring_task=rt, category="task", user=get_user)
 
@@ -1353,7 +1353,7 @@ def test_done_long_term_task_appears_on_completion_day_not_begin_date(auth_clien
     task = create_task(title="Long-term task", begin_date=old_date, is_done=False, user=get_user)
 
     # Mark done via PATCH (as toggleTaskDone does)
-    res = auth_client.patch(f"/api/tasks/{task.id}/", {"is_done": True}, content_type="application/json")
+    res = auth_client.patch(f"/api/tasks/{task.id}/", {"is_done": True}, format="json")
     assert res.status_code == 200
     assert res.data["end_date"] == str(today)
 
@@ -1387,7 +1387,7 @@ def test_done_long_term_task_via_put_with_null_end_date_stamps_today(auth_client
         "description": "",
         "carry_over": True,
     }
-    res = auth_client.put(f"/api/tasks/{task.id}/", payload, content_type="application/json")
+    res = auth_client.put(f"/api/tasks/{task.id}/", payload, format="json")
     assert res.status_code == 200
     assert res.data["end_date"] == str(today)
 
@@ -1406,7 +1406,7 @@ def test_undone_task_with_stale_end_date_appears_in_daily_log(auth_client, get_u
     Task.objects.filter(id=task.id).update(end_date=old_date)
 
     # Without the data migration the task would be hidden; re-save via PATCH to trigger clearing
-    res = auth_client.patch(f"/api/tasks/{task.id}/", {"priority": "high"}, content_type="application/json")
+    res = auth_client.patch(f"/api/tasks/{task.id}/", {"priority": "high"}, format="json")
     assert res.status_code == 200
 
     res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
