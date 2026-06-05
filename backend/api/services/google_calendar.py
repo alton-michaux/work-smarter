@@ -285,17 +285,19 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
     )
     user_projects = list(Project.objects.filter(user=user))
 
-    # Collect unique recurring parent IDs from new events so we can batch-fetch them
-    new_events = [
+    # Collect recurring parent IDs from ALL valid events (not just new ones).
+    # This ensures standalones that were previously imported before their RecurringTask
+    # existed can still be retroactively associated and de-duplicated.
+    valid_events = [
         e for e in events
         if e.get("id")
         and e.get("status") != "cancelled"
         and e.get("eventType", "default") == "default"
-        and e.get("id") not in existing_ids
         and e.get("id") not in blacklisted_ids
     ]
+    new_events = [e for e in valid_events if e.get("id") not in existing_ids]
     recurring_parent_ids = {
-        e["recurringEventId"] for e in new_events if e.get("recurringEventId")
+        e["recurringEventId"] for e in valid_events if e.get("recurringEventId")
     }
     recurring_task_map = _fetch_recurring_task_map(
         service, calendar_id, recurring_parent_ids, user, user_projects
@@ -315,7 +317,7 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
             skipped += 1
             continue
 
-        if event_id in existing_ids or event_id in blacklisted_ids:
+        if event_id in blacklisted_ids:
             skipped += 1
             continue
 
@@ -324,6 +326,32 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
 
         begin_date, begin_time = _parse_google_event_datetime(start)
         _, end_time = _parse_google_event_datetime(end)
+
+        if event_id in existing_ids:
+            # Backfill times on already-imported tasks that were created without them
+            if begin_time is not None:
+                Task.objects.filter(
+                    user=user, google_event_id=event_id, begin_time__isnull=True
+                ).update(begin_time=begin_time, end_time=end_time)
+
+            # Fix standalones that should be recurring: if we now know this event belongs
+            # to a recurring series, associate the existing task and remove any orphan stub
+            # that ensure_recurring_tasks_in_range may have generated for the same slot.
+            recurring_task = recurring_task_map.get(event.get("recurringEventId"))
+            if recurring_task:
+                fixed = Task.objects.filter(
+                    user=user, google_event_id=event_id, recurring_task__isnull=True
+                ).update(recurring_task=recurring_task)
+                if fixed:
+                    Task.objects.filter(
+                        user=user,
+                        recurring_task=recurring_task,
+                        begin_date=begin_date,
+                        google_event_id__isnull=True,
+                    ).delete()
+
+            skipped += 1
+            continue
 
         title = event.get("summary") or "(No title)"
         description = event.get("description") or ""
@@ -349,9 +377,18 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
                     "project": project,
                 },
             )
-            if not created and not task.google_event_id:
-                task.google_event_id = event_id
-                task.save(update_fields=["google_event_id"])
+            if not created:
+                updates = {}
+                if not task.google_event_id:
+                    updates["google_event_id"] = event_id
+                if begin_time is not None and task.begin_time is None:
+                    updates["begin_time"] = begin_time
+                if end_time is not None and task.end_time is None:
+                    updates["end_time"] = end_time
+                if updates:
+                    for key, val in updates.items():
+                        setattr(task, key, val)
+                    task.save(update_fields=list(updates.keys()))
         else:
             task = Task.objects.create(
                 user=user,
