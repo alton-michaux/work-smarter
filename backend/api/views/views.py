@@ -130,9 +130,17 @@ class TaskViewSet(viewsets.ModelViewSet):
                             )
                             |
                             (
-                                # Recurring occurrences:
-                                # - unfinished occurrence shows on its day
+                                # Recurring occurrences (any category):
+                                # - unfinished occurrence shows on its scheduled day
                                 Q(recurring_task__isnull=False, is_done=False, begin_date=day)
+                            )
+                            |
+                            (
+                                # Recurring tasks (not meetings):
+                                # - past undone occurrences carry over until completed,
+                                #   just like non-recurring tasks do
+                                Q(recurring_task__isnull=False, is_done=False, category='task', begin_date__lt=day)
+                                & (Q(end_date__isnull=True) | Q(end_date__gte=day))
                             )
                             |
                             (

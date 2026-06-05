@@ -1268,21 +1268,60 @@ def test_active_on_done_task_excluded_from_unrelated_day(auth_client, get_user, 
 
 
 @pytest.mark.django_db
-def test_active_on_recurring_occurrence_shows_only_on_its_day(auth_client, get_user, create_task, create_recurring_task):
-    """Recurring occurrences are pinned to their begin_date — they don't carry over."""
+def test_active_on_recurring_meeting_pinned_to_its_day(auth_client, get_user, create_task, create_recurring_task):
+    """Recurring meetings are pinned to their begin_date and do not carry over to later days."""
     today = date.today()
     yesterday = today - timedelta(days=1)
 
     rt = create_recurring_task(user=get_user, frequency="daily", start_date=yesterday)
-    create_task(title="Daily standup", begin_date=today, is_done=False, recurring_task=rt, user=get_user)
+    create_task(title="Daily standup", begin_date=today, is_done=False, recurring_task=rt,
+                category="meeting", user=get_user)
+    create_task(title="Yesterday standup", begin_date=yesterday, is_done=False, recurring_task=rt,
+                category="meeting", user=get_user)
+
+    # today's meeting shows today
+    res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
+    assert res.status_code == 200
+    titles = [t["title"] for t in res.data["results"]]
+    assert "Daily standup" in titles
+    # yesterday's undone meeting must NOT bleed into today
+    assert "Yesterday standup" not in titles
+
+
+@pytest.mark.django_db
+def test_active_on_recurring_task_carries_over_when_undone(auth_client, get_user, create_task, create_recurring_task):
+    """Undone recurring tasks (category=task) carry over to later days like non-recurring tasks."""
+    today = date.today()
+    three_days_ago = today - timedelta(days=3)
+
+    rt = create_recurring_task(user=get_user, frequency="weekly", start_date=three_days_ago)
+    create_task(title="Weekly review", begin_date=three_days_ago, is_done=False,
+                recurring_task=rt, category="task", user=get_user)
 
     res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
     assert res.status_code == 200
-    assert any(t["title"] == "Daily standup" for t in res.data["results"])
+    assert any(t["title"] == "Weekly review" for t in res.data["results"])
 
+
+@pytest.mark.django_db
+def test_active_on_recurring_task_stops_carrying_over_when_done(auth_client, get_user, create_task, create_recurring_task):
+    """Once a recurring task is marked done it no longer carries over."""
+    today = date.today()
+    three_days_ago = today - timedelta(days=3)
+    yesterday = today - timedelta(days=1)
+
+    rt = create_recurring_task(user=get_user, frequency="weekly", start_date=three_days_ago)
+    create_task(title="Done recurring task", begin_date=three_days_ago, is_done=True,
+                end_date=yesterday, recurring_task=rt, category="task", user=get_user)
+
+    # completed on yesterday — should appear yesterday but not today
     res = auth_client.get(f"/api/tasks/?begin_date={yesterday}&end_date={yesterday}&active_on={yesterday}")
     assert res.status_code == 200
-    assert not any(t["title"] == "Daily standup" for t in res.data["results"])
+    assert any(t["title"] == "Done recurring task" for t in res.data["results"])
+
+    res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
+    assert res.status_code == 200
+    assert not any(t["title"] == "Done recurring task" for t in res.data["results"])
 
 
 @pytest.mark.django_db
