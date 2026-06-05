@@ -315,7 +315,7 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
             skipped += 1
             continue
 
-        if event_id in existing_ids or event_id in blacklisted_ids:
+        if event_id in blacklisted_ids:
             skipped += 1
             continue
 
@@ -324,6 +324,15 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
 
         begin_date, begin_time = _parse_google_event_datetime(start)
         _, end_time = _parse_google_event_datetime(end)
+
+        if event_id in existing_ids:
+            # Backfill times on already-imported tasks that were created without them
+            if begin_time is not None:
+                Task.objects.filter(
+                    user=user, google_event_id=event_id, begin_time__isnull=True
+                ).update(begin_time=begin_time, end_time=end_time)
+            skipped += 1
+            continue
 
         title = event.get("summary") or "(No title)"
         description = event.get("description") or ""
@@ -349,9 +358,18 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
                     "project": project,
                 },
             )
-            if not created and not task.google_event_id:
-                task.google_event_id = event_id
-                task.save(update_fields=["google_event_id"])
+            if not created:
+                updates = {}
+                if not task.google_event_id:
+                    updates["google_event_id"] = event_id
+                if begin_time is not None and task.begin_time is None:
+                    updates["begin_time"] = begin_time
+                if end_time is not None and task.end_time is None:
+                    updates["end_time"] = end_time
+                if updates:
+                    for key, val in updates.items():
+                        setattr(task, key, val)
+                    task.save(update_fields=list(updates.keys()))
         else:
             task = Task.objects.create(
                 user=user,
