@@ -131,6 +131,7 @@
 - [x] Log in with LinkedIn/Google (social auth)
 - [x] AI resume analysis
   - [x] AI resume generation/edits
+- [x] Implement timeline view to see visual layout of tasks done and ongoing over time (exclude meetings)
 
 
 ## User-facing (go-live features)
