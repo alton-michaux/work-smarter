@@ -100,6 +100,7 @@ export type TasksContextType = {
   deleteTask: (taskOrId: TaskIdLike, options?: DeleteTaskOptions) => Promise<void>;
   fetchTasks: () => Promise<void>;
   fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
+  fetchTasksForTimeline: (begin: string, end: string) => Promise<void>;
   fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
   pushToCalendar: (taskId: number) => Promise<Task>;
@@ -257,6 +258,7 @@ export type Filters = {
   tz_offset?: number;
   category?: string;
   page_size?: number;
+  timeline?: boolean;
 };
 
 export type OutlineRowProps = {

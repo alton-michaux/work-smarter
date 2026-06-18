@@ -64,6 +64,27 @@ class TaskViewSet(viewsets.ModelViewSet):
                 Q(title__icontains=search) | Q(description__icontains=search)
             )
 
+        # Timeline mode: simple overlap filter, no recurring task generation
+        if self.request.query_params.get('timeline') == 'true':
+            begin_date_str = self.request.query_params.get("begin_date")
+            end_date_str = self.request.query_params.get("end_date")
+            timeline_qs = queryset.filter(
+                category__in=['task', 'note'],
+                begin_date__isnull=False,
+                recurring_task__isnull=True,
+            )
+            if begin_date_str and end_date_str:
+                try:
+                    range_start = datetime.strptime(begin_date_str, "%Y-%m-%d").date()
+                    range_end = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+                    timeline_qs = timeline_qs.filter(
+                        Q(begin_date__lte=range_end) &
+                        (Q(end_date__gte=range_start) | Q(end_date__isnull=True))
+                    )
+                except ValueError:
+                    pass
+            return timeline_qs.order_by('begin_date')
+
         begin_date_str = self.request.query_params.get("begin_date")
         end_date_str = self.request.query_params.get("end_date")
 
