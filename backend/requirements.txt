@@ -94,7 +94,7 @@ protobuf==5.29.6
 psutil==5.9.8
 psycopg2-binary==2.9.6
 ptyprocess==0.7.0
-pyasn1==0.6.3
+pyasn1==0.6.4
 pyasn1_modules==0.4.2
 pybrake==1.10.1
 pycparser==2.21
