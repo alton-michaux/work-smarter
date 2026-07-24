@@ -128,7 +128,7 @@ rpds-py==0.18.0
 s3transfer==0.10.4
 SecretStorage==2.3.1
 service-identity==18.1.0
-setuptools==75.6.0
+setuptools==83.0.0
 simplejson==3.16.0
 six==1.17.0
 sos==0.24.5
