@@ -47,6 +47,7 @@
 - [x] Trying to edit a searched task leads to 404 page
 - [x] Importing meetings creates duplicate events (imported meeting from calendar and separate recurring event?)
 - [x] Meetings should be marked as done after time of completion (frontend and backend)
+- [x] Long term tasks don't persist in daily view: I have to search the task even though it's marked as carry_over: true and done: false. Even when marked done it only shows for the day it was created. This is a long running bug that has yet to be fixed.
 
 ---
 
@@ -131,6 +132,7 @@
 - [x] Log in with LinkedIn/Google (social auth)
 - [x] AI resume analysis
   - [x] AI resume generation/edits
+- [x] Implement timeline view to see visual layout of tasks done and ongoing over time (exclude meetings)
 
 
 ## User-facing (go-live features)

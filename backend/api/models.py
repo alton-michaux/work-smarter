@@ -252,9 +252,7 @@ class Task(models.Model):
     
     def save(self, *args, **kwargs):
         self.is_subtask = self.parent_id is not None
-        if self.is_done and self.end_date is None and self.begin_date is not None:
-            self.end_date = self.begin_date
-        elif self.is_done and self.end_date is None:
+        if self.is_done and self.end_date is None:
             self.end_date = date.today()
         elif not self.is_done and self.end_date:
             self.end_date = None

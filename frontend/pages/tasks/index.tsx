@@ -136,6 +136,12 @@ const TasksPage = () => {
                     Weekly Tracker →
                   </button>
                   <button
+                    onClick={() => router.push('/tasks/timeline')}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    Timeline →
+                  </button>
+                  <button
                     onClick={() => router.push('/notes')}
                     className="text-sm text-gray-500 dark:text-gray-400 hover:underline"
                   >

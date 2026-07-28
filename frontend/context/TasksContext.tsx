@@ -39,6 +39,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (filters.tz_offset !== undefined) qs.set('tz_offset', String(filters.tz_offset));
     if (filters.category) qs.set('category', filters.category);
     if (filters.page_size !== undefined) qs.set('page_size', String(filters.page_size));
+    if (filters.timeline) qs.set('timeline', 'true');
     return `${API_URL}/tasks/?${qs.toString()}`;
   };
 
@@ -127,6 +128,38 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       setIsLoadingNotes(false);
     }
   }, [loggedIn, getAuthHeaders]);
+
+  const fetchTasksForTimeline = useCallback(
+    async (begin: string, end: string) => {
+      if (!loggedIn) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const allResults: Task[] = [];
+        let nextUrl: string | null = buildUrl({
+          begin_date: begin,
+          end_date: end,
+          timeline: true,
+          page_size: 500,
+          ordering: 'begin_date',
+        });
+        while (nextUrl) {
+          const res = await fetch(nextUrl, { headers: getAuthHeaders() });
+          if (res.status === 401) { setError('Unauthorized'); return; }
+          if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+          const data = await res.json();
+          allResults.push(...(data.results || []));
+          nextUrl = data.next ? data.next.replace(/^https?:\/\/[^/]+/, API_URL) : null;
+        }
+        setTasks(allResults);
+      } catch (e: any) {
+        setError(e.message ?? 'unknown error');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [loggedIn, getAuthHeaders]
+  );
 
   const fetchRecurringTemplate = async (recurring_task_id: number, initialTask: any, setRecurrence: any) => {
     if (!loggedIn) return;
@@ -535,6 +568,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         deleteTask,
         fetchTasks,
         fetchTasksByDateRange,
+        fetchTasksForTimeline,
         fetchRecurringTemplate,
         toggleTaskDone,
         pushToCalendar,

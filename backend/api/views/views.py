@@ -8,11 +8,12 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.pagination import CursorPagination
 from django.db.models import Q
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils import timezone
 from api.models import Resume, ResumeAnalysis, GeneratedResume, Project, Task, RecurringTask, RecurringTaskException
 from api.serializers import ResumeSerializer, ResumeAnalysisSerializer, GeneratedResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range
+from api.services.meeting_completion import auto_complete_past_meetings
 from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
 from loguru import logger
@@ -63,6 +64,27 @@ class TaskViewSet(viewsets.ModelViewSet):
                 Q(title__icontains=search) | Q(description__icontains=search)
             )
 
+        # Timeline mode: simple overlap filter, no recurring task generation
+        if self.request.query_params.get('timeline') == 'true':
+            begin_date_str = self.request.query_params.get("begin_date")
+            end_date_str = self.request.query_params.get("end_date")
+            timeline_qs = queryset.filter(
+                category__in=['task', 'note'],
+                begin_date__isnull=False,
+                recurring_task__isnull=True,
+            )
+            if begin_date_str and end_date_str:
+                try:
+                    range_start = datetime.strptime(begin_date_str, "%Y-%m-%d").date()
+                    range_end = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+                    timeline_qs = timeline_qs.filter(
+                        Q(begin_date__lte=range_end) &
+                        (Q(end_date__gte=range_start) | Q(end_date__isnull=True))
+                    )
+                except ValueError:
+                    pass
+            return timeline_qs.order_by('begin_date')
+
         begin_date_str = self.request.query_params.get("begin_date")
         end_date_str = self.request.query_params.get("end_date")
 
@@ -92,13 +114,32 @@ class TaskViewSet(viewsets.ModelViewSet):
                             # Only return tasks that actually belong to that day.
                             return queryset.filter(begin_date=day)
                         
-                        # generate recurring occurrences for that specific day
-                        ensure_recurring_tasks_in_range(day, day, user=user)
+                        # generate occurrences across a wider window so recurring
+                        # meetings on other days of the week are pre-populated
+                        ensure_recurring_tasks_in_range(day - timedelta(days=30), day + timedelta(days=30), user=user)
+
+                        try:
+                            tz_offset = int(self.request.query_params.get("tz_offset", 0) or 0)
+                        except (TypeError, ValueError):
+                            tz_offset = 0
+                        auto_complete_past_meetings(user, tz_offset=tz_offset)
+
+                        try:
+                            tz_offset = int(self.request.query_params.get("tz_offset", 0) or 0)
+                        except (TypeError, ValueError):
+                            tz_offset = 0
+                        auto_complete_past_meetings(user, tz_offset=tz_offset)
 
                         filtered_queryset = queryset.filter(
                             (
-                                # Non-recurring tasks:
-                                # - unfinished tasks remain active across days
+                                # Non-recurring, unfinished tasks:
+                                # - undated tasks always carry over
+                                Q(recurring_task__isnull=True, is_done=False, begin_date__isnull=True)
+                            )
+                            |
+                            (
+                                # Non-recurring, unfinished tasks:
+                                # - dated tasks carry over until done
                                 Q(recurring_task__isnull=True, is_done=False, begin_date__lte=day)
                                 & (Q(end_date__isnull=True) | Q(end_date__gte=day))
                             )
@@ -110,9 +151,17 @@ class TaskViewSet(viewsets.ModelViewSet):
                             )
                             |
                             (
-                                # Recurring occurrences:
-                                # - unfinished occurrence shows on its day
+                                # Recurring occurrences (any category):
+                                # - unfinished occurrence shows on its scheduled day
                                 Q(recurring_task__isnull=False, is_done=False, begin_date=day)
+                            )
+                            |
+                            (
+                                # Recurring tasks (not meetings):
+                                # - past undone occurrences carry over until completed,
+                                #   just like non-recurring tasks do
+                                Q(recurring_task__isnull=False, is_done=False, category='task', begin_date__lt=day)
+                                & (Q(end_date__isnull=True) | Q(end_date__gte=day))
                             )
                             |
                             (
