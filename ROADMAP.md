@@ -91,6 +91,7 @@
 - [x] Add description to project
 - [x] Add a logo
 - [x] Make navbar and footer sticky
+- [ ] Allow way to hide large chunks of text in markdown
 - [ ] Allow notes to have subtasks (in UI)
 
 ---
