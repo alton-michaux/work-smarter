@@ -50,8 +50,10 @@ function OutlineRow({
   onDelete,
   onToggleDone,
   onAddSubtask,
+  density = 'comfortable',
 }: OutlineRowProps) {
   const type = categoryToType(node.category);
+  const isCompact = density === 'compact';
 
   const [showSubtask, setShowSubtask] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState('');
@@ -113,10 +115,9 @@ function OutlineRow({
         "group relative",
         "border-b border-gray-100 dark:border-gray-700 last:border-b-0",
         "px-4",
-        "py-2.5",
+        isCompact ? "py-1.5" : "py-2.5",
         "hover:bg-gray-50 dark:hover:bg-gray-700",
         "transition-colors",
-        "flex items-start justify-between gap-4",
         "focus-within:bg-gray-50 dark:focus-within:bg-gray-700",
       ].join(" ")}
       style={{
@@ -124,173 +125,196 @@ function OutlineRow({
         borderLeft: `3px solid ${priorityBorder}`,
       }}
     >
-      {/* LEFT: checkbox/icon + content */}
-      <div className="min-w-0 flex-1 flex items-start gap-3">
-        <div className="pt-0.5">
-          {type === 'task' ? (
-            <input
-              ref={checkboxRef}
-              type="checkbox"
-              checked={!!node.is_done}
-              onChange={(e) => onToggleDone?.(Number(node.id), e.target.checked)}
-              onClick={(e) => e.stopPropagation()}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-200"
-            />
-          ) : (
-            <span className="text-base leading-none">
-              {type === 'meeting' ? '🗓️' : '•'}
-            </span>
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              onView(Number(node.id));
-            }}
-            className={[
-              "block w-full text-left",
-              "font-medium",
-              isDone ? "text-gray-500 dark:text-gray-500 line-through" : "text-gray-900 dark:text-gray-100",
-              "hover:text-blue-700",
-              "focus:outline-none focus:ring-2 focus:ring-blue-200 rounded-sm",
-            ].join(" ")}
-            title={node.title}
-          >
-            <span className="flex items-center gap-1.5 min-w-0 overflow-hidden">
-              {pColor && (
-                <span
-                  className="shrink-0 inline-block w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: pColor }}
-                  title={projectObj?.name}
-                />
-              )}
-              <span className="truncate">{node.title}</span>
-
-              {!isSubtask && childCount > 0 && (
-                <span
-                  className="shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                  title="Subtask progress"
-                >
-                  {doneChildCount}/{childCount}
-                </span>
-              )}
-
-              {node.is_recurring && (
-                <span className="shrink-0 text-[11px] text-gray-400 dark:text-gray-500" title="Recurring">
-                  🔁
-                </span>
-              )}
-
-              {node.category === 'meeting' && node.google_event_id && (
-                <span
-                  className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-900 dark:bg-opacity-20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
-                  title="Synced to Google Calendar"
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
-                  Synced
-                </span>
-              )}
-            </span>
-          </button>
-
-          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-gray-500 dark:text-gray-400">
-            <span className="whitespace-nowrap uppercase tracking-wide">
-              {(node.priority ?? '—').toString()}
-            </span>
-            {type !== 'meeting' && (
-              <span className="whitespace-nowrap">
-                <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
-                {node.begin_date ?? '—'}
+      {/* Main row */}
+      <div className="relative flex items-start justify-between gap-4">
+        {/* LEFT: checkbox/icon + content */}
+        <div className={[
+          "min-w-0 flex-1 flex gap-3",
+          isCompact ? "items-center" : "items-start",
+        ].join(" ")}>
+          <div className={isCompact ? "shrink-0 flex items-center" : "pt-0.5"}>
+            {type === 'task' ? (
+              <input
+                ref={checkboxRef}
+                type="checkbox"
+                checked={!!node.is_done}
+                onChange={(e) => onToggleDone?.(Number(node.id), e.target.checked)}
+                onClick={(e) => e.stopPropagation()}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-200"
+              />
+            ) : (
+              <span className="text-base leading-none">
+                {type === 'meeting' ? '🗓️' : '•'}
               </span>
             )}
-            {type === 'meeting' && node.begin_time && (
-              <span className="whitespace-nowrap">
-                <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
-                {formatTime(node.begin_time)}
-                {node.end_time ? ` – ${formatTime(node.end_time)}` : ''}
-              </span>
-            )}
-            {node.deadline_date && (() => {
-              const st = deadlineStatus(node.deadline_date, isDone);
-              return (
-                <span
-                  className={[
-                    'whitespace-nowrap',
-                    st === 'overdue' ? 'text-red-600 dark:text-red-400 font-medium' :
-                    st === 'soon'    ? 'text-amber-600 dark:text-amber-400 font-medium' :
-                                       'text-gray-500 dark:text-gray-400',
-                  ].join(' ')}
-                >
-                  <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
-                  ⚑ {node.deadline_date}
-                </span>
-              );
-            })()}
           </div>
 
-          {/* Inline Add Subtask */}
-          {!isSubtask && type === 'task' && showSubtask && (
-            <div className="mt-2 pl-7">
-              <div className="flex items-center gap-2">
-                <input
-                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  placeholder="New subtask…"
-                  value={subtaskTitle}
-                  onChange={(e) => setSubtaskTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') setShowSubtask(false);
-                    if (e.key === 'Enter') submitSubtask();
-                  }}
-                  disabled={saving}
-                  autoFocus
-                />
-                <button
-                  className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
-                  disabled={saving || !subtaskTitle.trim() || !onAddSubtask}
-                  onClick={submitSubtask}
-                  type="button"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                Enter to save • Esc to cancel
-              </div>
+          <div className={[
+            "min-w-0 flex-1",
+            isCompact ? "flex items-center gap-3" : "",
+          ].join(" ")}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                onView(Number(node.id));
+              }}
+              className={[
+                isCompact ? "min-w-0 flex-1 text-left" : "block w-full text-left",
+                "font-medium",
+                isDone ? "text-gray-500 dark:text-gray-500 line-through" : "text-gray-900 dark:text-gray-100",
+                "hover:text-blue-700",
+                "focus:outline-none focus:ring-2 focus:ring-blue-200 rounded-sm",
+              ].join(" ")}
+              title={node.title}
+            >
+              <span className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                {pColor && (
+                  <span
+                    className="shrink-0 inline-block w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: pColor }}
+                    title={projectObj?.name}
+                  />
+                )}
+                <span className="truncate">{node.title}</span>
+
+                {!isSubtask && childCount > 0 && (
+                  <span
+                    className="shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                    title="Subtask progress"
+                  >
+                    {doneChildCount}/{childCount}
+                  </span>
+                )}
+
+                {node.is_recurring && (
+                  <span className="shrink-0 text-[11px] text-gray-400 dark:text-gray-500" title="Recurring">
+                    🔁
+                  </span>
+                )}
+
+                {node.category === 'meeting' && node.google_event_id && (
+                  <span
+                    className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-900 dark:bg-opacity-20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
+                    title="Synced to Google Calendar"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
+                    Synced
+                  </span>
+                )}
+              </span>
+            </button>
+
+            <div className={[
+              isCompact
+                ? "shrink-0 flex items-center gap-x-1.5"
+                : "mt-1 flex flex-wrap items-center gap-x-1.5",
+              "text-xs text-gray-500 dark:text-gray-400",
+            ].join(" ")}>
+              <span className="whitespace-nowrap uppercase tracking-wide">
+                {(node.priority ?? '—').toString()}
+              </span>
+              {type !== 'meeting' && (
+                <span className="whitespace-nowrap">
+                  <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
+                  {node.begin_date ?? '—'}
+                </span>
+              )}
+              {type === 'meeting' && node.begin_time && (
+                <span className="whitespace-nowrap">
+                  <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
+                  {formatTime(node.begin_time)}
+                  {node.end_time ? ` – ${formatTime(node.end_time)}` : ''}
+                </span>
+              )}
+              {node.deadline_date && (() => {
+                const st = deadlineStatus(node.deadline_date, isDone);
+                return (
+                  <span
+                    className={[
+                      'whitespace-nowrap',
+                      st === 'overdue' ? 'text-red-600 dark:text-red-400 font-medium' :
+                      st === 'soon'    ? 'text-amber-600 dark:text-amber-400 font-medium' :
+                                         'text-gray-500 dark:text-gray-400',
+                    ].join(' ')}
+                  >
+                    <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
+                    ⚑ {node.deadline_date}
+                  </span>
+                );
+              })()}
             </div>
+
+          </div>
+        </div>
+
+        {/* RIGHT: actions (hidden until hover/focus).
+            In compact mode the metadata occupies the right edge, so the actions
+            overlay it rather than competing for width. */}
+        <div className={[
+          isCompact
+            ? "absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-3 rounded-md bg-gray-50 dark:bg-gray-700 pl-3 pr-1 py-0.5"
+            : "shrink-0 flex items-center gap-3",
+          "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity",
+        ].join(" ")}>
+          {!isSubtask && type === 'task' && (
+            <button
+              onClick={() => setShowSubtask((v) => !v)}
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+              type="button"
+            >
+              + Subtask
+            </button>
           )}
+
+          <button
+            onClick={() => onEdit(Number(node.id))}
+            className="text-sm text-amber-700 dark:text-amber-500 hover:text-amber-900 dark:hover:text-amber-400"
+            type="button"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => onDelete(node)}
+            className="text-sm text-red-600 hover:text-red-800"
+            type="button"
+          >
+            Delete
+          </button>
         </div>
       </div>
 
-      {/* RIGHT: actions (hidden until hover/focus) */}
-      <div className="shrink-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-        {!isSubtask && type === 'task' && (
-          <button
-            onClick={() => setShowSubtask((v) => !v)}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-            type="button"
-          >
-            + Subtask
-          </button>
-        )}
-
-        <button
-          onClick={() => onEdit(Number(node.id))}
-          className="text-sm text-amber-700 dark:text-amber-500 hover:text-amber-900 dark:hover:text-amber-400"
-          type="button"
-        >
-          Edit
-        </button>
-        <button
-          onClick={() => onDelete(node)}
-          className="text-sm text-red-600 hover:text-red-800"
-          type="button"
-        >
-          Delete
-        </button>
-      </div>
+      {/* Inline Add Subtask — sits below the row so it can expand without
+          breaking the single-line layout in compact mode. */}
+      {!isSubtask && type === 'task' && showSubtask && (
+        <div className="mt-2 pl-7">
+          <div className="flex items-center gap-2">
+            <input
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+              placeholder="New subtask…"
+              value={subtaskTitle}
+              onChange={(e) => setSubtaskTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setShowSubtask(false);
+                if (e.key === 'Enter') submitSubtask();
+              }}
+              disabled={saving}
+              autoFocus
+            />
+            <button
+              className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
+              disabled={saving || !subtaskTitle.trim() || !onAddSubtask}
+              onClick={submitSubtask}
+              type="button"
+            >
+              Add
+            </button>
+          </div>
+          <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            Enter to save • Esc to cancel
+          </div>
+        </div>
+      )}
     </li>
   );
 }
@@ -303,6 +327,7 @@ export default function OutlineTree({
   onDelete,
   onToggleDone,
   onAddSubtask,
+  density = 'comfortable',
 }: OutlineTreeProps) {
   const { addSubtask } = useTasks();
 
@@ -343,6 +368,7 @@ export default function OutlineTree({
             onDelete={onDelete}
             onToggleDone={onToggleDone}
             onAddSubtask={handleAddSubtask}
+            density={density}
           />
 
           {n.children?.length ? (
@@ -354,6 +380,7 @@ export default function OutlineTree({
               onDelete={onDelete}
               onToggleDone={onToggleDone}
               onAddSubtask={handleAddSubtask}
+              density={density}
             />
           ) : null}
         </React.Fragment>
