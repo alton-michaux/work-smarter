@@ -105,99 +105,84 @@ const TasksPage = () => {
     }
   }, [debouncedQuery]);
 
+  // Matches the nav buttons on the sibling tracker/timeline views
+  const navBtnClass =
+    'rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition';
+
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900 px-4 overflow-hidden">
       <div className="mx-auto w-full max-w-6xl h-full">
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm h-full flex flex-col overflow-hidden">
           {/* ───────────────── Sticky Header ───────────────── */}
           <div className="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm isolate">
-            <div className="px-6 py-4">
+            <div className="px-6 py-3">
               {/* Title row */}
               <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Daily Log
-                  </h1>
+                <h1 className="min-w-0 truncate text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Daily Log
                   {selectedDate && (
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      Showing{' '}
-                      <span className="font-medium text-gray-900 dark:text-gray-100">
-                        {selectedDate}
-                      </span>
-                    </p>
+                    <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                      · {selectedDate}
+                    </span>
                   )}
-                </div>
+                </h1>
 
-                <div className="shrink-0 flex items-center gap-4">
-                  <button
-                    onClick={() => router.push('/tasks/tracker')}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    Weekly Tracker →
+                <div className="shrink-0 flex items-center gap-2">
+                  <button onClick={() => router.push('/tasks/tracker')} className={navBtnClass}>
+                    Weekly Tracker
                   </button>
-                  <button
-                    onClick={() => router.push('/tasks/timeline')}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    Timeline →
+                  <button onClick={() => router.push('/tasks/timeline')} className={navBtnClass}>
+                    Timeline
                   </button>
-                  <button
-                    onClick={() => router.push('/notes')}
-                    className="text-sm text-gray-500 dark:text-gray-400 hover:underline"
-                  >
-                    Notes →
+                  <button onClick={() => router.push('/notes')} className={navBtnClass}>
+                    Notes
                   </button>
-                  <button
-                    onClick={() => router.push('/dashboard')}
-                    className="text-sm text-gray-500 dark:text-gray-400 hover:underline"
-                  >
+                  <button onClick={() => router.push('/dashboard')} className={navBtnClass}>
                     Dashboard
                   </button>
-                  {selectedDate && (
-                    <input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-[160px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-                    />
-                  )}
                 </div>
               </div>
 
-              {/* Controls row */}
+              {/* Controls */}
               {selectedDate && (
-                <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                  {/* Weekday toggle */}
-                  <div className="lg:col-span-7">
+                <>
+                  {/* Row 1: day pills + date picker + search */}
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
                     <DateToggleUI
                       selectedDate={selectedDate}
                       setSelectedDate={setSelectedDate}
                       last7Days={last7Days}
                       compact
                     />
+
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="shrink-0 w-[150px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    />
+
+                    <div className="flex-1 min-w-[220px]">
+                      <SearchBar
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        isSearching={isSearching}
+                        onClear={() => { setSearchQuery(''); setDebouncedQuery(''); }}
+                      />
+                    </div>
                   </div>
 
-                  {/* Quick add */}
-                  <div className="lg:col-span-5">
+                  {/* Row 2: quick add */}
+                  <div className="mt-2">
                     <QuickAddBar selectedDate={selectedDate} />
                   </div>
-
-                  {/* Search */}
-                  <div className="lg:col-span-12">
-                    <SearchBar
-                      value={searchQuery}
-                      onChange={setSearchQuery}
-                      isSearching={isSearching}
-                      onClear={() => { setSearchQuery(''); setDebouncedQuery(''); }}
-                    />
-                  </div>
-                </div>
+                </>
               )}
             </div>
           </div>
 
           {/* ───────────────── Content ───────────────── */}
-          <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-6 pt-6 pb-6">
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-6 pt-4 pb-4">
             {error && (
               <div className="mb-4 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900 dark:bg-opacity-20 px-3 py-2 text-sm text-red-700 dark:text-red-400">
                 {error}

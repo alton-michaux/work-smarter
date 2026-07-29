@@ -261,6 +261,10 @@ export type Filters = {
   timeline?: boolean;
 };
 
+/** 'comfortable' stacks the title and its metadata on two lines.
+ *  'compact' puts them on a single line to fit more rows on screen. */
+export type OutlineDensity = 'comfortable' | 'compact';
+
 export type OutlineRowProps = {
   node: Node;
   depth: number;
@@ -268,7 +272,9 @@ export type OutlineRowProps = {
   onEdit: (id: number) => void;
   onDelete: (task: any) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
-  
+
+  density?: OutlineDensity;
+
   onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
 }
 
@@ -281,6 +287,8 @@ export type OutlineTreeProps = {
   onDelete: (id: number) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
 
+  density?: OutlineDensity;
+
   onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
 };
 
@@ -289,6 +297,10 @@ export type PanelProps = {
   right?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+
+  /** Stretch to the full height of the parent (default). When false the panel
+   *  hugs its content and only scrolls once it would exceed the parent. */
+  fill?: boolean;
 };
 
 //--------UI---------//
