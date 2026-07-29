@@ -91,7 +91,6 @@
 - [x] Add description to project
 - [x] Add a logo
 - [x] Make navbar and footer sticky
-- [ ] Allow notes to have subtasks (in UI)
 
 ---
 
