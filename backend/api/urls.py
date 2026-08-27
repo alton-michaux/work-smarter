@@ -16,6 +16,7 @@ from api.views.views_calendar import (
     PushDeadlineView,
 )
 from api.views.views_resume_profile import ResumeProfileViewSet, WorkExperienceViewSet, EducationViewSet, SkillViewSet
+from api.views.views_api_tokens import PersonalAPITokenViewSet
 
 # JWT views
 from rest_framework_simplejwt.views import (
@@ -34,6 +35,7 @@ router.register(r'resume-profile', ResumeProfileViewSet, basename='resume-profil
 router.register(r'work-experiences', WorkExperienceViewSet, basename='work-experience')
 router.register(r'educations', EducationViewSet, basename='education')
 router.register(r'skills', SkillViewSet, basename='skill')
+router.register(r'keys', PersonalAPITokenViewSet, basename='api-key')
 
 urlpatterns = [
     path('', include(router.urls)),

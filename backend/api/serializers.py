@@ -1,7 +1,7 @@
 from django.utils import timezone
 from datetime import timedelta, timezone as dt_timezone
 from rest_framework import serializers
-from .models import Resume, Task, Project, User, RecurringTask, CalendarBlacklist, ResumeProfile, WorkExperience, Education, Skill
+from .models import Resume, Task, Project, User, RecurringTask, CalendarBlacklist, ResumeProfile, WorkExperience, Education, Skill, PersonalAPIToken
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -260,3 +260,14 @@ class ResumeProfileSerializer(serializers.ModelSerializer):
         model = ResumeProfile
         fields = ["id", "headline", "summary", "location", "photo_url", "linkedin_url", "work_experiences", "educations", "skills"]
         read_only_fields = ["id"]
+
+class PersonalAPITokenSerializer(serializers.ModelSerializer):
+    """Key metadata. Never carries the secret — see PersonalAPIToken.generate."""
+
+    prefix = serializers.CharField(source="display_prefix", read_only=True)
+
+    class Meta:
+        model = PersonalAPIToken
+        fields = ["id", "name", "prefix", "created_at", "last_used_at"]
+        read_only_fields = fields
+

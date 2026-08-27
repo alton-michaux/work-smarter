@@ -1,3 +1,6 @@
+import hashlib
+import secrets
+
 from django.db import models
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -13,6 +16,62 @@ User = get_user_model()
 #     # avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
 #
 # Then, use signals to automatically create/update the Profile when a User is created.
+
+class PersonalAPIToken(models.Model):
+    """A long-lived, user-scoped key granting read-only programmatic API access.
+
+    The raw key is shown to the user exactly once, at creation. Only its SHA-256
+    digest is stored, alongside a non-secret ``public_id`` used to look the row up
+    without scanning every hash. Plain SHA-256 (no salt/KDF) is appropriate here
+    because the secret is 256 bits of CSPRNG output, not a user-chosen password.
+    """
+
+    PREFIX = "ws_live_"
+    PUBLIC_ID_BYTES = 4   # 8 hex characters
+    SECRET_BYTES = 32
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="api_tokens")
+    name = models.CharField(max_length=100, blank=True, default="")
+    public_id = models.CharField(max_length=16, unique=True, db_index=True)
+    hashed_secret = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return f"{self.display_prefix} ({self.user})"
+
+    @staticmethod
+    def hash_secret(secret):
+        return hashlib.sha256(secret.encode()).hexdigest()
+
+    @classmethod
+    def generate(cls, user, name=""):
+        """Create a token and return ``(token, raw_key)``.
+
+        ``raw_key`` is the only time the secret exists in plaintext — the caller
+        must hand it straight to the user and never persist it.
+        """
+        public_id = secrets.token_hex(cls.PUBLIC_ID_BYTES)
+        secret = secrets.token_urlsafe(cls.SECRET_BYTES)
+        token = cls.objects.create(
+            user=user,
+            name=name,
+            public_id=public_id,
+            hashed_secret=cls.hash_secret(secret),
+        )
+        return token, f"{cls.PREFIX}{public_id}.{secret}"
+
+    def secret_matches(self, secret):
+        return secrets.compare_digest(self.hashed_secret, self.hash_secret(secret))
+
+    @property
+    def display_prefix(self):
+        """The non-secret half of the key, safe to show in a key list."""
+        return f"{self.PREFIX}{self.public_id}"
+
 
 class GoogleCalendarToken(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='google_calendar_token')
