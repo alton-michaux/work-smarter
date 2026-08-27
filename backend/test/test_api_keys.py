@@ -2,6 +2,7 @@
 
 import pytest
 from datetime import date, timedelta
+from urllib.parse import parse_qs, urlparse
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -392,3 +393,97 @@ def test_v1_projects_filter_by_status(key_client, v1_projects_url, get_user, cre
     response = key_client.get(v1_projects_url, {"status": "complete"})
 
     assert [p["name"] for p in response.data["results"]] == ["done one"]
+
+
+# --- v1: query parameter validation -----------------------------------------
+
+@pytest.mark.parametrize("params", [
+    {"done": "false"},              # plausible-but-wrong name for is_done
+    {"completed": "true"},
+    {"title": "report"},            # `search` covers this
+    {"ordering": "-begin_date"},    # not offered; ordering is fixed
+    {"project_id": "1"},            # the param is `project`
+])
+def test_v1_tasks_reject_unknown_params(key_client, v1_tasks_url, params):
+    """A typo'd filter must not read as 'no filter' and return everything."""
+    response = key_client.get(v1_tasks_url, params)
+
+    assert response.status_code == 400
+    name = next(iter(params))
+    assert name in response.data
+    assert "supported_parameters" in response.data
+
+
+def test_v1_unknown_param_error_lists_what_is_accepted(key_client, v1_tasks_url):
+    response = key_client.get(v1_tasks_url, {"nope": "1"})
+
+    supported = response.data["supported_parameters"]
+    assert set(supported) >= {"category", "priority", "project", "is_done", "search",
+                              "begin_date", "end_date", "cursor", "page_size"}
+
+
+@pytest.mark.parametrize("params", [
+    {"category": "Meeting"},        # values are case-sensitive
+    {"category": "errand"},
+    {"priority": "URGENT"},
+    {"priority": "critical"},
+])
+def test_v1_tasks_reject_invalid_choice_values(key_client, v1_tasks_url, get_user, create_task, params):
+    """An unrecognised choice is a 400, not an empty page that looks like 'no matches'."""
+    create_task(title="something", user=get_user)
+
+    response = key_client.get(v1_tasks_url, params)
+
+    assert response.status_code == 400
+    assert next(iter(params)) in response.data
+
+
+def test_v1_choice_error_names_the_valid_values(key_client, v1_tasks_url):
+    response = key_client.get(v1_tasks_url, {"priority": "critical"})
+
+    message = str(response.data["priority"])
+    assert all(value in message for value in ["urgent", "high", "medium", "low"])
+
+
+@pytest.mark.parametrize("params", [
+    {"state": "active"},            # the param is `status`
+    {"name": "Apollo"},             # `search` covers this
+])
+def test_v1_projects_reject_unknown_params(key_client, v1_projects_url, params):
+    assert key_client.get(v1_projects_url, params).status_code == 400
+
+
+def test_v1_projects_reject_invalid_status(key_client, v1_projects_url, get_user, create_project):
+    create_project(name="mine", user=get_user)
+
+    response = key_client.get(v1_projects_url, {"status": "archived"})
+
+    assert response.status_code == 400
+    assert "active" in str(response.data["status"])
+
+
+def test_v1_pagination_params_are_not_treated_as_unknown(key_client, v1_tasks_url, get_user, create_task):
+    """page_size and cursor are DRF's, not ours, but must still be accepted."""
+    for i in range(3):
+        create_task(title=f"task {i}", user=get_user)
+
+    first = key_client.get(v1_tasks_url, {"page_size": 2})
+    assert first.status_code == 200
+
+    cursor = parse_qs(urlparse(first.data["next"]).query)["cursor"][0]
+    second = key_client.get(v1_tasks_url, {"page_size": 2, "cursor": cursor})
+    assert second.status_code == 200
+    assert len(second.data["results"]) == 1
+
+
+def test_v1_detail_route_also_rejects_unknown_params(key_client, get_user, create_task):
+    task = create_task(title="a task", user=get_user)
+
+    response = key_client.get(reverse("v1-task-detail", args=[task.id]), {"nope": "1"})
+
+    assert response.status_code == 400
+
+
+def test_unauthenticated_request_with_bad_params_is_401_not_400(api_client, v1_tasks_url):
+    """Never disclose the parameter surface to an unauthenticated caller."""
+    assert api_client.get(v1_tasks_url, {"nope": "1"}).status_code == 401
