@@ -61,6 +61,7 @@
 - [x] Add status to project (indicates whether still active or complete)
 - [x] Add description to project
 - [x] Add role to project
+- [x] Expose API endpoints for tasks (read only)
 - [ ] Allow encryption for notes
 
 ### UI
