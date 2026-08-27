@@ -271,3 +271,66 @@ class PersonalAPITokenSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "prefix", "created_at", "last_used_at"]
         read_only_fields = fields
 
+
+# --- Public read-only v1 API ------------------------------------------------
+# These are a deliberately narrow, stable contract for external consumers. They
+# are kept separate from TaskSerializer/ProjectSerializer so that internal
+# reshaping of the app's own payloads cannot silently break third-party clients.
+
+PUBLIC_TASK_FIELDS = [
+    "id",
+    "title",
+    "description",
+    "category",
+    "priority",
+    "is_done",
+    "begin_date",
+    "end_date",
+    "deadline_date",
+    "begin_time",
+    "end_time",
+    "project",
+    "project_name",
+    "parent",
+    "is_subtask",
+    "is_recurring",
+    "recurring_frequency",
+    "created_at",
+]
+
+
+class PublicTaskSerializer(serializers.ModelSerializer):
+    project_name = serializers.CharField(source="project.name", read_only=True, default=None)
+    is_recurring = serializers.SerializerMethodField()
+    recurring_frequency = serializers.CharField(
+        source="recurring_task.frequency", read_only=True, default=None
+    )
+
+    class Meta:
+        model = Task
+        fields = PUBLIC_TASK_FIELDS
+        read_only_fields = PUBLIC_TASK_FIELDS
+
+    def get_is_recurring(self, obj):
+        return obj.recurring_task_id is not None
+
+
+PUBLIC_PROJECT_FIELDS = [
+    "id",
+    "name",
+    "color",
+    "status",
+    "description",
+    "role",
+    "created",
+    "task_count",
+]
+
+
+class PublicProjectSerializer(serializers.ModelSerializer):
+    task_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Project
+        fields = PUBLIC_PROJECT_FIELDS
+        read_only_fields = PUBLIC_PROJECT_FIELDS

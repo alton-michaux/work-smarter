@@ -17,6 +17,7 @@ from api.views.views_calendar import (
 )
 from api.views.views_resume_profile import ResumeProfileViewSet, WorkExperienceViewSet, EducationViewSet, SkillViewSet
 from api.views.views_api_tokens import PersonalAPITokenViewSet
+from api.views.views_public_api import PublicTaskViewSet, PublicProjectViewSet
 
 # JWT views
 from rest_framework_simplejwt.views import (
@@ -37,8 +38,14 @@ router.register(r'educations', EducationViewSet, basename='education')
 router.register(r'skills', SkillViewSet, basename='skill')
 router.register(r'keys', PersonalAPITokenViewSet, basename='api-key')
 
+# Read-only v1 API for external consumers, authenticated by personal API key.
+v1_router = DefaultRouter()
+v1_router.register(r'tasks', PublicTaskViewSet, basename='v1-task')
+v1_router.register(r'projects', PublicProjectViewSet, basename='v1-project')
+
 urlpatterns = [
     path('', include(router.urls)),
+    path('v1/', include(v1_router.urls)),
     path('import/txt/', ImportTasksTXTView.as_view(), name='import-tasks-txt'),
     path("import/csv/spec/", ImportTasksCSVSpecView.as_view(), name="import-tasks-csv-spec"),
     path('import/csv/', ImportTasksCSVView.as_view(), name="import-tasks-csv"),
