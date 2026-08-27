@@ -497,3 +497,14 @@ export type ResumesContextType = {
   generateNewResume: (forceRefresh?: boolean, userInfo?: { phone?: string; location?: string }) => Promise<GeneratedResume>;
   downloadNewGeneratedResume: () => Promise<void>;
 };
+
+export type PersonalAPIKey = {
+  id: number;
+  name: string;
+  prefix: string;
+  created_at: string;
+  last_used_at: string | null;
+};
+
+/** Only returned by POST /keys/ — the secret is never retrievable again. */
+export type NewPersonalAPIKey = PersonalAPIKey & { key: string };
