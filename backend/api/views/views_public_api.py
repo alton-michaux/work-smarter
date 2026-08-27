@@ -6,6 +6,10 @@ scripts and third-party integrations authenticating with a personal API key.
 Unlike the app's own TaskViewSet, nothing here mutates data as a side effect of
 reading: no recurring occurrences are generated, no past meetings are
 auto-completed. What is stored is what is returned.
+
+Filters fail loudly. A typo in a parameter name or an unrecognised choice value
+returns a 400 naming what was accepted, rather than a 200 carrying a silently
+unfiltered list — the latter is far more expensive for a client to notice.
 """
 
 from datetime import datetime
@@ -22,6 +26,10 @@ from api.serializers import PublicProjectSerializer, PublicTaskSerializer
 
 TRUE_VALUES = {"1", "true", "yes"}
 FALSE_VALUES = {"0", "false", "no"}
+
+# Handled by DRF itself rather than by any viewset's get_queryset, so they are
+# always legal even though no endpoint declares them.
+RESERVED_PARAMS = frozenset({"cursor", "page_size", "format"})
 
 
 def _parse_date(params, key):
@@ -61,6 +69,25 @@ def _parse_int(params, key):
         raise serializers.ValidationError({key: "Expected an integer id."})
 
 
+def _parse_choice(params, key, choices):
+    """Return a validated choice value for `key`, or None if absent.
+
+    `choices` is a Django-style ``[(value, label), ...]``, so the accepted set
+    tracks the model definition instead of being restated here. Matching is
+    exact: an unrecognised value is a 400, not an empty result set, since the
+    two are indistinguishable to a client that legitimately has no matches.
+    """
+    raw = params.get(key)
+    if not raw:
+        return None
+    valid = [value for value, _label in choices]
+    if raw not in valid:
+        raise serializers.ValidationError(
+            {key: f"Expected one of: {', '.join(valid)}."}
+        )
+    return raw
+
+
 class ReadOnlyAPIViewSet(viewsets.ReadOnlyModelViewSet):
     """Shared auth/permission wiring for the v1 endpoints.
 
@@ -70,6 +97,24 @@ class ReadOnlyAPIViewSet(viewsets.ReadOnlyModelViewSet):
 
     authentication_classes = [PersonalAPITokenAuthentication, JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+    #: Query params this endpoint understands, beyond RESERVED_PARAMS.
+    filter_params = frozenset()
+
+    def initial(self, request, *args, **kwargs):
+        # After super(), so an unauthenticated caller still gets a 401 rather
+        # than being told which parameters it may not use.
+        super().initial(request, *args, **kwargs)
+        self._reject_unknown_params(request.query_params)
+
+    def _reject_unknown_params(self, params):
+        allowed = self.filter_params | RESERVED_PARAMS
+        unknown = sorted(set(params) - allowed)
+        if not unknown:
+            return
+        detail = {param: "Unrecognized query parameter." for param in unknown}
+        detail["supported_parameters"] = sorted(allowed)
+        raise serializers.ValidationError(detail)
 
 
 class TaskCursorPagination(CursorPagination):
@@ -100,6 +145,15 @@ class PublicTaskViewSet(ReadOnlyAPIViewSet):
 
     serializer_class = PublicTaskSerializer
     pagination_class = TaskCursorPagination
+    filter_params = frozenset({
+        "category",
+        "priority",
+        "project",
+        "is_done",
+        "search",
+        "begin_date",
+        "end_date",
+    })
 
     def get_queryset(self):
         params = self.request.query_params
@@ -107,11 +161,11 @@ class PublicTaskViewSet(ReadOnlyAPIViewSet):
             "project", "recurring_task"
         )
 
-        category = params.get("category")
+        category = _parse_choice(params, "category", Task.CATEGORY_CHOICES)
         if category:
             queryset = queryset.filter(category=category)
 
-        priority = params.get("priority")
+        priority = _parse_choice(params, "priority", Task.PRIORITY_CHOICES)
         if priority:
             queryset = queryset.filter(priority=priority)
 
@@ -152,6 +206,7 @@ class PublicProjectViewSet(ReadOnlyAPIViewSet):
 
     serializer_class = PublicProjectSerializer
     pagination_class = ProjectCursorPagination
+    filter_params = frozenset({"status", "search"})
 
     def get_queryset(self):
         params = self.request.query_params
@@ -159,7 +214,7 @@ class PublicProjectViewSet(ReadOnlyAPIViewSet):
             task_count=Count("tasks")
         )
 
-        status_filter = params.get("status")
+        status_filter = _parse_choice(params, "status", Project.STATUS_CHOICES)
         if status_filter:
             queryset = queryset.filter(status=status_filter)
 
