@@ -219,7 +219,13 @@ export default function ApiKeysCard() {
           Available: <code>/v1/tasks/</code> and <code>/v1/projects/</code>. Tasks accept{' '}
           <code>category</code>, <code>priority</code>, <code>project</code>,{' '}
           <code>is_done</code>, <code>search</code>, and a <code>begin_date</code>/
-          <code>end_date</code> window.
+          <code>end_date</code> window. Projects accept <code>status</code> and{' '}
+          <code>search</code>.
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Unrecognized parameters and invalid filter values return a{' '}
+          <code>400</code> rather than being ignored, so a typo never looks like
+          an empty or unfiltered result.
         </p>
       </div>
     </div>
