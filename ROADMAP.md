@@ -62,6 +62,7 @@
 - [x] Add description to project
 - [x] Add role to project
 - [x] Expose API endpoints for tasks (read only)
+- [x] Expose API endpoints for tasks (write)
 - [ ] Allow encryption for notes
 
 ### UI

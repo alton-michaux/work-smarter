@@ -3,11 +3,12 @@
 import pytest
 from datetime import date, timedelta
 from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from api.models import PersonalAPIToken, Task
+from api.models import PersonalAPIToken, RecurringTask, RecurringTaskException, Task
 from api.views.views_api_tokens import PersonalAPITokenViewSet
 
 
@@ -33,11 +34,26 @@ def other_user(create_user):
 
 @pytest.fixture
 def key_client(get_user):
-    """An APIClient authenticated as `alice` with a personal API key."""
+    """An APIClient authenticated as `alice` with a read-scoped API key."""
     _, raw_key = PersonalAPIToken.generate(get_user, name="scripts")
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Api-Key {raw_key}")
     return client
+
+
+@pytest.fixture
+def write_client(get_user):
+    """An APIClient authenticated as `alice` with a read/write API key."""
+    _, raw_key = PersonalAPIToken.generate(
+        get_user, name="automation", scope=PersonalAPIToken.SCOPE_READ_WRITE
+    )
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Api-Key {raw_key}")
+    return client
+
+
+def task_detail(task):
+    return reverse("v1-task-detail", args=[task.id])
 
 
 # --- Key management ---------------------------------------------------------
@@ -209,17 +225,22 @@ def test_api_key_cannot_reach_the_apps_own_task_endpoints(key_client, tasks_list
 
 # --- v1 tasks: read-only and user-scoped ------------------------------------
 
-def test_v1_tasks_are_read_only(key_client, v1_tasks_url, get_user, create_task):
+def test_read_scoped_key_cannot_write_tasks(key_client, v1_tasks_url, get_user, create_task):
     task = create_task(title="immutable", user=get_user)
     detail_url = reverse("v1-task-detail", args=[task.id])
 
-    assert key_client.post(v1_tasks_url, {"title": "new"}, format="json").status_code == 405
-    assert key_client.patch(detail_url, {"title": "edited"}, format="json").status_code == 405
-    assert key_client.put(detail_url, {"title": "edited"}, format="json").status_code == 405
-    assert key_client.delete(detail_url).status_code == 405
+    denied = key_client.post(v1_tasks_url, {"title": "new"}, format="json")
+    assert denied.status_code == 403
+    # The error has to say what to do about it, or the caller is left guessing.
+    assert "read/write key" in str(denied.data["detail"])
+
+    assert key_client.patch(detail_url, {"title": "edited"}, format="json").status_code == 403
+    assert key_client.put(detail_url, {"title": "edited"}, format="json").status_code == 403
+    assert key_client.delete(detail_url).status_code == 403
 
     task.refresh_from_db()
     assert task.title == "immutable"
+    assert Task.objects.filter(id=task.id).exists()
 
 
 def test_v1_tasks_exclude_other_users_tasks(key_client, v1_tasks_url, get_user, other_user, create_task):
@@ -487,3 +508,410 @@ def test_v1_detail_route_also_rejects_unknown_params(key_client, get_user, creat
 def test_unauthenticated_request_with_bad_params_is_401_not_400(api_client, v1_tasks_url):
     """Never disclose the parameter surface to an unauthenticated caller."""
     assert api_client.get(v1_tasks_url, {"nope": "1"}).status_code == 401
+
+
+# --- Key scopes -------------------------------------------------------------
+
+def test_keys_are_read_scoped_by_default(auth_client, keys_url):
+    """Asking for a key without saying more must never hand out write access."""
+    response = auth_client.post(keys_url, {"name": "laptop"}, format="json")
+
+    assert response.data["scope"] == PersonalAPIToken.SCOPE_READ
+    assert PersonalAPIToken.objects.get().can_write is False
+
+
+def test_key_can_be_created_read_write(auth_client, keys_url):
+    response = auth_client.post(
+        keys_url, {"name": "automation", "scope": "read_write"}, format="json"
+    )
+
+    assert response.status_code == 201
+    assert response.data["scope"] == "read_write"
+    assert PersonalAPIToken.objects.get().can_write is True
+
+
+def test_key_creation_rejects_unknown_scope(auth_client, keys_url):
+    response = auth_client.post(keys_url, {"scope": "admin"}, format="json")
+
+    assert response.status_code == 400
+    assert "read_write" in response.data["scope"]
+    assert not PersonalAPIToken.objects.exists()
+
+
+def test_key_list_reports_scope(auth_client, keys_url):
+    auth_client.post(keys_url, {"name": "rw", "scope": "read_write"}, format="json")
+
+    assert auth_client.get(keys_url).data[0]["scope"] == "read_write"
+
+
+def test_a_key_cannot_widen_its_own_scope(write_client, keys_url):
+    """Even a read/write key is barred from key management."""
+    assert write_client.post(keys_url, {"scope": "read_write"}, format="json").status_code == 401
+
+
+# --- v1 tasks: create -------------------------------------------------------
+
+def test_create_task_with_only_a_title(write_client, v1_tasks_url, get_user):
+    response = write_client.post(v1_tasks_url, {"title": "write the docs"}, format="json")
+
+    assert response.status_code == 201
+    task = Task.objects.get()
+    assert task.title == "write the docs"
+    assert task.user == get_user
+    assert task.is_done is False
+    assert task.category == "task"
+    assert task.priority == "medium"
+
+
+def test_created_task_is_owned_by_the_key_holder(write_client, v1_tasks_url, get_user, other_user):
+    """`user` is not writable — a payload claiming another owner is ignored."""
+    response = write_client.post(
+        v1_tasks_url, {"title": "not yours", "user": other_user.id}, format="json"
+    )
+
+    assert response.status_code == 201
+    assert Task.objects.get().user == get_user
+
+
+def test_create_task_with_full_payload(write_client, v1_tasks_url, get_user, create_project):
+    project = create_project(name="Apollo", user=get_user)
+
+    response = write_client.post(v1_tasks_url, {
+        "title": "kickoff",
+        "description": "with the team",
+        "category": "meeting",
+        "priority": "high",
+        "begin_date": "2026-09-01",
+        "deadline_date": "2026-09-02",
+        "begin_time": "09:00:00",
+        "end_time": "09:30:00",
+        "project": project.id,
+    }, format="json")
+
+    assert response.status_code == 201
+    assert response.data["project_name"] == "Apollo"
+    task = Task.objects.get()
+    assert task.category == "meeting"
+    assert task.priority == "high"
+    assert str(task.begin_date) == "2026-09-01"
+    assert task.project == project
+
+
+def test_create_task_requires_a_title(write_client, v1_tasks_url):
+    assert write_client.post(v1_tasks_url, {}, format="json").status_code == 400
+    assert write_client.post(v1_tasks_url, {"title": "   "}, format="json").status_code == 400
+    assert not Task.objects.exists()
+
+
+def test_create_task_rejects_invalid_choices(write_client, v1_tasks_url):
+    assert write_client.post(
+        v1_tasks_url, {"title": "x", "category": "errand"}, format="json"
+    ).status_code == 400
+    assert write_client.post(
+        v1_tasks_url, {"title": "x", "priority": "critical"}, format="json"
+    ).status_code == 400
+    assert not Task.objects.exists()
+
+
+def test_cannot_attach_a_task_to_another_users_project(
+    write_client, v1_tasks_url, other_user, create_project
+):
+    """Guessing a project id must not file work into someone else's account."""
+    theirs = create_project(name="theirs", user=other_user)
+
+    response = write_client.post(
+        v1_tasks_url, {"title": "trespass", "project": theirs.id}, format="json"
+    )
+
+    assert response.status_code == 400
+    assert "project" in response.data
+    assert not Task.objects.exists()
+
+
+def test_cannot_parent_a_task_to_another_users_task(
+    write_client, v1_tasks_url, other_user, create_task
+):
+    theirs = create_task(title="theirs", user=other_user)
+
+    response = write_client.post(
+        v1_tasks_url, {"title": "trespass", "parent": theirs.id}, format="json"
+    )
+
+    assert response.status_code == 400
+    assert "parent" in response.data
+
+
+def test_create_subtask_inherits_parent_begin_date(
+    write_client, v1_tasks_url, get_user, create_task
+):
+    parent = create_task(title="parent", begin_date="2026-09-01", user=get_user)
+
+    response = write_client.post(
+        v1_tasks_url, {"title": "child", "parent": parent.id}, format="json"
+    )
+
+    assert response.status_code == 201
+    child = Task.objects.get(title="child")
+    assert child.begin_date == date(2026, 9, 1)
+    assert child.is_subtask is True
+    assert response.data["is_subtask"] is True
+
+
+def test_subtask_begin_date_must_match_its_parent(
+    write_client, v1_tasks_url, get_user, create_task
+):
+    parent = create_task(title="parent", begin_date="2026-09-01", user=get_user)
+
+    response = write_client.post(
+        v1_tasks_url,
+        {"title": "child", "parent": parent.id, "begin_date": "2026-09-05"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "begin_date" in response.data
+
+
+def test_subtasks_cannot_nest(write_client, v1_tasks_url, get_user, create_task):
+    """The app renders one level of subtasks; the API must not create deeper trees."""
+    parent = create_task(title="parent", user=get_user)
+    child = create_task(title="child", user=get_user, parent=parent)
+
+    response = write_client.post(
+        v1_tasks_url, {"title": "grandchild", "parent": child.id}, format="json"
+    )
+
+    assert response.status_code == 400
+    assert "parent" in response.data
+
+
+def test_recurrence_cannot_be_set_over_the_api(
+    write_client, v1_tasks_url, get_user, create_recurring_task
+):
+    recurring = create_recurring_task(title="standup", frequency="daily", user=get_user)
+
+    response = write_client.post(
+        v1_tasks_url, {"title": "sneaky", "recurring_task": recurring.id}, format="json"
+    )
+
+    assert response.status_code == 201
+    assert Task.objects.get(title="sneaky").recurring_task_id is None
+
+
+# --- v1 tasks: update -------------------------------------------------------
+
+def test_patch_task_fields(write_client, get_user, create_task):
+    task = create_task(title="draft", user=get_user)
+
+    response = write_client.patch(
+        task_detail(task), {"title": "final", "priority": "urgent"}, format="json"
+    )
+
+    assert response.status_code == 200
+    task.refresh_from_db()
+    assert task.title == "final"
+    assert task.priority == "urgent"
+
+
+def test_patch_leaves_unmentioned_fields_alone(write_client, get_user, create_task):
+    task = create_task(title="draft", description="keep me", user=get_user)
+
+    write_client.patch(task_detail(task), {"title": "final"}, format="json")
+
+    task.refresh_from_db()
+    assert task.description == "keep me"
+
+
+def test_completing_a_task_stamps_the_end_date(write_client, get_user, create_task):
+    task = create_task(title="work", user=get_user, is_done=False)
+
+    write_client.patch(task_detail(task), {"is_done": True}, format="json")
+
+    task.refresh_from_db()
+    assert task.is_done is True
+    assert task.end_date == date.today()
+
+
+def test_reopening_a_task_clears_the_end_date(write_client, get_user, create_task):
+    task = create_task(title="work", user=get_user, is_done=True, end_date=str(date.today()))
+
+    write_client.patch(task_detail(task), {"is_done": False}, format="json")
+
+    task.refresh_from_db()
+    assert task.is_done is False
+    assert task.end_date is None
+
+
+def test_completing_a_parent_completes_its_children(write_client, get_user, create_task):
+    """Same rule the app enforces — v1 must not leave subtasks stranded open."""
+    parent = create_task(title="parent", user=get_user)
+    child = create_task(title="child", user=get_user, parent=parent)
+
+    write_client.patch(task_detail(parent), {"is_done": True}, format="json")
+
+    child.refresh_from_db()
+    assert child.is_done is True
+    assert child.end_date == date.today()
+
+
+def test_put_replaces_rather_than_merges(write_client, get_user, create_task, create_project):
+    """PUT that quietly behaved like PATCH would be the worst kind of surprise."""
+    project = create_project(name="Apollo", user=get_user)
+    task = create_task(
+        title="old", description="old description", begin_date="2026-09-01",
+        user=get_user, project=project,
+    )
+    task.priority = "urgent"
+    task.save(update_fields=["priority"])
+
+    response = write_client.put(task_detail(task), {"title": "new"}, format="json")
+
+    assert response.status_code == 200
+    task.refresh_from_db()
+    assert task.title == "new"
+    assert task.description == ""
+    assert task.begin_date is None
+    assert task.project is None
+    assert task.priority == "medium"
+
+
+def test_cannot_update_another_users_task(write_client, other_user, create_task):
+    task = create_task(title="theirs", user=other_user)
+
+    response = write_client.patch(task_detail(task), {"title": "hijacked"}, format="json")
+
+    assert response.status_code == 404
+    task.refresh_from_db()
+    assert task.title == "theirs"
+
+
+def test_cannot_move_a_task_into_another_users_project(
+    write_client, get_user, other_user, create_task, create_project
+):
+    task = create_task(title="mine", user=get_user)
+    theirs = create_project(name="theirs", user=other_user)
+
+    response = write_client.patch(task_detail(task), {"project": theirs.id}, format="json")
+
+    assert response.status_code == 400
+    task.refresh_from_db()
+    assert task.project is None
+
+
+def test_a_task_cannot_become_its_own_parent(write_client, get_user, create_task):
+    task = create_task(title="ouroboros", user=get_user)
+
+    response = write_client.patch(task_detail(task), {"parent": task.id}, format="json")
+
+    assert response.status_code == 400
+    assert "parent" in response.data
+
+
+def test_update_cannot_reassign_ownership(write_client, get_user, other_user, create_task):
+    task = create_task(title="mine", user=get_user)
+
+    write_client.patch(task_detail(task), {"user": other_user.id}, format="json")
+
+    task.refresh_from_db()
+    assert task.user == get_user
+
+
+# --- v1 tasks: delete -------------------------------------------------------
+
+def test_delete_task(write_client, get_user, create_task):
+    task = create_task(title="gone", user=get_user)
+
+    response = write_client.delete(task_detail(task))
+
+    assert response.status_code == 204
+    assert not Task.objects.filter(id=task.id).exists()
+
+
+def test_delete_detaches_children_rather_than_deleting_them(
+    write_client, get_user, create_task
+):
+    parent = create_task(title="parent", user=get_user)
+    child = create_task(title="child", user=get_user, parent=parent)
+
+    write_client.delete(task_detail(parent))
+
+    child.refresh_from_db()
+    assert child.parent is None
+    assert child.is_subtask is False
+
+
+def test_deleting_a_recurring_occurrence_records_a_skip(
+    write_client, get_user, create_task, create_recurring_task
+):
+    """Without the skip, the app would regenerate it and the delete would look ignored."""
+    recurring = create_recurring_task(title="standup", frequency="daily", user=get_user)
+    occurrence = create_task(
+        title="standup", begin_date=str(date.today()), user=get_user, recurring_task=recurring
+    )
+
+    response = write_client.delete(task_detail(occurrence))
+
+    assert response.status_code == 204
+    assert RecurringTaskException.objects.filter(
+        user=get_user,
+        recurring_task=recurring,
+        date=date.today(),
+        type=RecurringTaskException.TYPE_SKIP,
+    ).exists()
+    # The series itself survives; only this occurrence was skipped.
+    assert RecurringTask.objects.filter(id=recurring.id).exists()
+
+
+def test_cannot_delete_another_users_task(write_client, other_user, create_task):
+    task = create_task(title="theirs", user=other_user)
+
+    response = write_client.delete(task_detail(task))
+
+    assert response.status_code == 404
+    assert Task.objects.filter(id=task.id).exists()
+
+
+# --- v1 write: boundaries ---------------------------------------------------
+
+def test_projects_stay_read_only_even_for_a_write_key(
+    write_client, v1_projects_url, get_user, create_project
+):
+    """Project lifecycle stays in the app, so this is 405 rather than a scope error."""
+    project = create_project(name="Apollo", user=get_user)
+    detail_url = reverse("v1-project-detail", args=[project.id])
+
+    assert write_client.post(v1_projects_url, {"name": "new"}, format="json").status_code == 405
+    assert write_client.patch(detail_url, {"name": "edited"}, format="json").status_code == 405
+    assert write_client.delete(detail_url).status_code == 405
+
+    project.refresh_from_db()
+    assert project.name == "Apollo"
+
+
+def test_read_key_gets_405_not_403_where_nobody_may_write(key_client, v1_projects_url):
+    """A scope error would send the caller off to mint a key that changes nothing."""
+    assert key_client.post(v1_projects_url, {"name": "new"}, format="json").status_code == 405
+
+
+def test_write_key_still_cannot_reach_the_apps_own_endpoints(write_client, tasks_list_url):
+    """Scope widens what the key may do in v1, not where it may go."""
+    assert write_client.get(tasks_list_url).status_code == 401
+    assert write_client.post(tasks_list_url, {"title": "x"}, format="json").status_code == 401
+
+
+def test_unauthenticated_write_is_rejected(db, api_client, v1_tasks_url):
+    assert api_client.post(v1_tasks_url, {"title": "x"}, format="json").status_code == 401
+    assert not Task.objects.exists()
+
+
+def test_write_requests_reject_unknown_query_params(write_client, v1_tasks_url):
+    response = write_client.post(f"{v1_tasks_url}?nope=1", {"title": "x"}, format="json")
+
+    assert response.status_code == 400
+    assert not Task.objects.exists()
+
+
+def test_writing_stamps_last_used_at(write_client, v1_tasks_url):
+    write_client.post(v1_tasks_url, {"title": "x"}, format="json")
+
+    assert PersonalAPIToken.objects.get().last_used_at is not None

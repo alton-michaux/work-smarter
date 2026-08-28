@@ -1,11 +1,17 @@
-"""Read-only v1 API.
+"""The v1 API.
 
-A narrow, side-effect-free view of a user's own tasks and projects, intended for
-scripts and third-party integrations authenticating with a personal API key.
+A narrow view of a user's own tasks and projects, intended for scripts and
+third-party integrations authenticating with a personal API key. Tasks are
+readable and writable; projects are read-only, since project lifecycle belongs
+in the app.
 
-Unlike the app's own TaskViewSet, nothing here mutates data as a side effect of
-reading: no recurring occurrences are generated, no past meetings are
-auto-completed. What is stored is what is returned.
+Reads have no side effects. Unlike the app's own TaskViewSet, nothing here
+mutates data as a side effect of reading: no recurring occurrences are
+generated, no past meetings are auto-completed. What is stored is what is
+returned.
+
+Writes require a key scoped ``read_write``. Read is the default scope, so a key
+handed to a script is not incidentally a key that can delete a year of work.
 
 Filters fail loudly. A typo in a parameter name or an unrecognised choice value
 returns a 400 naming what was accepted, rather than a 200 carrying a silently
@@ -15,17 +21,21 @@ unfiltered list — the latter is far more expensive for a client to notice.
 from datetime import datetime
 
 from django.db.models import Count, Q
-from rest_framework import serializers, viewsets
+from rest_framework import mixins, serializers, viewsets
 from rest_framework.pagination import CursorPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from api.authentication import PersonalAPITokenAuthentication
-from api.models import Project, Task
+from api.models import PersonalAPIToken, Project, RecurringTaskException, Task
 from api.serializers import PublicProjectSerializer, PublicTaskSerializer
 
 TRUE_VALUES = {"1", "true", "yes"}
 FALSE_VALUES = {"0", "false", "no"}
+
+# Handled by DRF itself rather than by any viewset's get_queryset, so they are
+# always legal even though no endpoint declares them.
+RESERVED_PARAMS = frozenset({"cursor", "page_size", "format"})
 
 # Handled by DRF itself rather than by any viewset's get_queryset, so they are
 # always legal even though no endpoint declares them.
@@ -88,7 +98,31 @@ def _parse_choice(params, key, choices):
     return raw
 
 
-class ReadOnlyAPIViewSet(viewsets.ReadOnlyModelViewSet):
+class HasRequiredScope(BasePermission):
+    """Gates unsafe methods on the API key's scope.
+
+    Only applies to API-key callers. A JWT request is the account holder acting
+    through the app or a debugging session, and is already as privileged as the
+    app's own endpoints — there is nothing for a scope to restrict.
+    """
+
+    message = "This API key is read-only. Create a read/write key to make changes."
+
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return True
+        if not hasattr(view, request.method.lower()):
+            # The endpoint does not offer this method to anyone. Fall through so
+            # DRF answers 405; blaming the key's scope would send a caller off to
+            # mint a read/write key that changes nothing.
+            return True
+        token = request.auth
+        if isinstance(token, PersonalAPIToken):
+            return token.can_write
+        return True
+
+
+class PublicAPIViewSet(viewsets.GenericViewSet):
     """Shared auth/permission wiring for the v1 endpoints.
 
     JWT is accepted alongside the API key so the app itself and interactive
@@ -96,7 +130,7 @@ class ReadOnlyAPIViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     authentication_classes = [PersonalAPITokenAuthentication, JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasRequiredScope]
 
     #: Query params this endpoint understands, beyond RESERVED_PARAMS.
     filter_params = frozenset()
@@ -133,18 +167,36 @@ class ProjectCursorPagination(CursorPagination):
     max_page_size = 200
 
 
-class PublicTaskViewSet(ReadOnlyAPIViewSet):
-    """GET /api/v1/tasks/ and /api/v1/tasks/<id>/ — the caller's own tasks.
+class PublicTaskViewSet(mixins.CreateModelMixin,
+                        mixins.RetrieveModelMixin,
+                        mixins.UpdateModelMixin,
+                        mixins.DestroyModelMixin,
+                        mixins.ListModelMixin,
+                        PublicAPIViewSet):
+    """/api/v1/tasks/ — the caller's own tasks, readable and writable.
 
-    Filters: category, priority, project, is_done, search, begin_date, end_date.
-    `begin_date`/`end_date` describe a window and select tasks *active* during
-    it, matching how the app itself thinks about a date range: a task overlaps
-    the window if it starts on or before the window ends and has not finished
-    before the window begins.
+    Filters (GET): category, priority, project, is_done, search, begin_date,
+    end_date. `begin_date`/`end_date` describe a window and select tasks
+    *active* during it, matching how the app itself thinks about a date range: a
+    task overlaps the window if it starts on or before the window ends and has
+    not finished before the window begins.
+
+    POST/PATCH/PUT/DELETE require a read/write key. Recurrence is not settable
+    here — a recurring series is defined in the app, and this endpoint edits the
+    individual occurrences it produces.
     """
 
     serializer_class = PublicTaskSerializer
     pagination_class = TaskCursorPagination
+    filter_params = frozenset({
+        "category",
+        "priority",
+        "project",
+        "is_done",
+        "search",
+        "begin_date",
+        "end_date",
+    })
     filter_params = frozenset({
         "category",
         "priority",
@@ -162,9 +214,11 @@ class PublicTaskViewSet(ReadOnlyAPIViewSet):
         )
 
         category = _parse_choice(params, "category", Task.CATEGORY_CHOICES)
+        category = _parse_choice(params, "category", Task.CATEGORY_CHOICES)
         if category:
             queryset = queryset.filter(category=category)
 
+        priority = _parse_choice(params, "priority", Task.PRIORITY_CHOICES)
         priority = _parse_choice(params, "priority", Task.PRIORITY_CHOICES)
         if priority:
             queryset = queryset.filter(priority=priority)
@@ -197,15 +251,59 @@ class PublicTaskViewSet(ReadOnlyAPIViewSet):
 
         return queryset
 
+    def perform_create(self, serializer):
+        # Ownership comes from the credential, never from the payload — `user`
+        # is not a writable field, so this is the only way a task gets an owner.
+        serializer.save(user=self.request.user)
 
-class PublicProjectViewSet(ReadOnlyAPIViewSet):
+    def perform_update(self, serializer):
+        was_done = serializer.instance.is_done
+
+        task = serializer.save()
+
+        # Task.save() maintains end_date; the child cascade is the app's rule
+        # for completing a parent, and v1 must not leave subtasks stranded open.
+        if not was_done and task.is_done:
+            Task.objects.filter(user=task.user, parent=task, is_done=False).update(
+                is_done=True,
+                end_date=task.end_date,
+            )
+
+    def perform_destroy(self, instance):
+        user = instance.user
+
+        # Children outlive their parent as standalone tasks rather than being
+        # silently deleted along with it, matching the app's delete.
+        Task.objects.filter(user=user, parent=instance).update(parent=None, is_subtask=False)
+
+        if instance.recurring_task_id:
+            # Without a skip exception the next range the app renders would
+            # regenerate this occurrence, and the delete would look ignored.
+            day = instance.begin_date or instance.end_date
+            if day:
+                RecurringTaskException.objects.get_or_create(
+                    user=user,
+                    recurring_task=instance.recurring_task,
+                    date=day,
+                    type=RecurringTaskException.TYPE_SKIP,
+                )
+
+        instance.delete()
+
+
+class PublicProjectViewSet(mixins.RetrieveModelMixin,
+                           mixins.ListModelMixin,
+                           PublicAPIViewSet):
     """GET /api/v1/projects/ and /api/v1/projects/<id>/ — the caller's projects.
 
-    Filters: status, search. Each row carries `task_count`.
+    Read-only even for a read/write key: creating and retiring projects is a
+    deliberate act with consequences for every task filed under them, and stays
+    in the app. Filters: status, search. Each row carries `task_count`.
     """
 
     serializer_class = PublicProjectSerializer
     pagination_class = ProjectCursorPagination
+    filter_params = frozenset({"status", "search"})
     filter_params = frozenset({"status", "search"})
 
     def get_queryset(self):
@@ -214,6 +312,7 @@ class PublicProjectViewSet(ReadOnlyAPIViewSet):
             task_count=Count("tasks")
         )
 
+        status_filter = _parse_choice(params, "status", Project.STATUS_CHOICES)
         status_filter = _parse_choice(params, "status", Project.STATUS_CHOICES)
         if status_filter:
             queryset = queryset.filter(status=status_filter)
