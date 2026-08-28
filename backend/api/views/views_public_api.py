@@ -37,6 +37,10 @@ FALSE_VALUES = {"0", "false", "no"}
 # always legal even though no endpoint declares them.
 RESERVED_PARAMS = frozenset({"cursor", "page_size", "format"})
 
+# Handled by DRF itself rather than by any viewset's get_queryset, so they are
+# always legal even though no endpoint declares them.
+RESERVED_PARAMS = frozenset({"cursor", "page_size", "format"})
+
 
 def _parse_date(params, key):
     """Return a date for `key`, or None if absent. Rejects malformed input.
@@ -193,6 +197,15 @@ class PublicTaskViewSet(mixins.CreateModelMixin,
         "begin_date",
         "end_date",
     })
+    filter_params = frozenset({
+        "category",
+        "priority",
+        "project",
+        "is_done",
+        "search",
+        "begin_date",
+        "end_date",
+    })
 
     def get_queryset(self):
         params = self.request.query_params
@@ -201,9 +214,11 @@ class PublicTaskViewSet(mixins.CreateModelMixin,
         )
 
         category = _parse_choice(params, "category", Task.CATEGORY_CHOICES)
+        category = _parse_choice(params, "category", Task.CATEGORY_CHOICES)
         if category:
             queryset = queryset.filter(category=category)
 
+        priority = _parse_choice(params, "priority", Task.PRIORITY_CHOICES)
         priority = _parse_choice(params, "priority", Task.PRIORITY_CHOICES)
         if priority:
             queryset = queryset.filter(priority=priority)
@@ -289,6 +304,7 @@ class PublicProjectViewSet(mixins.RetrieveModelMixin,
     serializer_class = PublicProjectSerializer
     pagination_class = ProjectCursorPagination
     filter_params = frozenset({"status", "search"})
+    filter_params = frozenset({"status", "search"})
 
     def get_queryset(self):
         params = self.request.query_params
@@ -296,6 +312,7 @@ class PublicProjectViewSet(mixins.RetrieveModelMixin,
             task_count=Count("tasks")
         )
 
+        status_filter = _parse_choice(params, "status", Project.STATUS_CHOICES)
         status_filter = _parse_choice(params, "status", Project.STATUS_CHOICES)
         if status_filter:
             queryset = queryset.filter(status=status_filter)

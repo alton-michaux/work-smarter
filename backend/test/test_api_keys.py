@@ -3,6 +3,7 @@
 import pytest
 from datetime import date, timedelta
 from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
