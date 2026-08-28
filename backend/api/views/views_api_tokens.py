@@ -13,11 +13,11 @@ class PersonalAPITokenViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    """Create, list and revoke the requesting user's read-only API keys.
+    """Create, list and revoke the requesting user's API keys.
 
     `authentication_classes` omits PersonalAPITokenAuthentication on purpose: a
-    key must never be able to mint or revoke another key, so key management is
-    reachable only from a logged-in session.
+    key must never be able to mint or revoke another key — least of all widen
+    its own scope — so key management is reachable only from a logged-in session.
     """
 
     serializer_class = PersonalAPITokenSerializer
@@ -42,8 +42,16 @@ class PersonalAPITokenViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        scope = str(request.data.get("scope") or PersonalAPIToken.SCOPE_READ)
+        valid_scopes = [value for value, _label in PersonalAPIToken.SCOPE_CHOICES]
+        if scope not in valid_scopes:
+            return Response(
+                {"scope": f"Expected one of: {', '.join(valid_scopes)}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         name = str(request.data.get("name") or "").strip()[:100]
-        token, raw_key = PersonalAPIToken.generate(request.user, name=name)
+        token, raw_key = PersonalAPIToken.generate(request.user, name=name, scope=scope)
 
         data = self.get_serializer(token).data
         # The only time the secret is ever returned; it is not recoverable later.

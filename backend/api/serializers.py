@@ -268,7 +268,7 @@ class PersonalAPITokenSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PersonalAPIToken
-        fields = ["id", "name", "prefix", "created_at", "last_used_at"]
+        fields = ["id", "name", "prefix", "scope", "created_at", "last_used_at"]
         read_only_fields = fields
 
 
