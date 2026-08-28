@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAPI } from 'context/APIContext';
 import { toast } from 'sonner';
-import { NewPersonalAPIKey, PersonalAPIKey } from 'types/types';
+import { NewPersonalAPIKey, PersonalAPIKey, PersonalAPIKeyScope } from 'types/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -20,6 +20,9 @@ export default function ApiKeysCard() {
   const [keys, setKeys] = useState<PersonalAPIKey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [name, setName] = useState('');
+  // Read by default: a key is easier to hand out than to take back, so write
+  // access is something you opt into rather than something you forget to remove.
+  const [scope, setScope] = useState<PersonalAPIKeyScope>('read');
   const [isCreating, setIsCreating] = useState(false);
   const [revokingId, setRevokingId] = useState<number | null>(null);
   const [confirmRevokeId, setConfirmRevokeId] = useState<number | null>(null);
@@ -42,7 +45,7 @@ export default function ApiKeysCard() {
       const res = await fetch(`${API_URL}/keys/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ name: name.trim(), scope }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -56,6 +59,7 @@ export default function ApiKeysCard() {
       setKeys((prev) => [metadata, ...prev]);
       setNewKey(key);
       setName('');
+      setScope('read');
       toast.success('API key created.');
     } catch {
       toast.error('Failed to create API key.');
@@ -100,8 +104,8 @@ export default function ApiKeysCard() {
       <div>
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">API Keys</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Read-only access to your tasks and projects from scripts and other tools. Keys
-          cannot create, edit or delete anything.
+          Access your tasks and projects from scripts and other tools. Each key is
+          read-only unless you give it write access, and can be revoked at any time.
         </p>
       </div>
 
@@ -146,6 +150,23 @@ export default function ApiKeysCard() {
             className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
         </div>
+        <div className="min-w-[10rem]">
+          <label
+            htmlFor="api-key-scope"
+            className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+          >
+            Access
+          </label>
+          <select
+            id="api-key-scope"
+            value={scope}
+            onChange={(e) => setScope(e.target.value as PersonalAPIKeyScope)}
+            className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+          >
+            <option value="read">Read only</option>
+            <option value="read_write">Read and write</option>
+          </select>
+        </div>
         <button
           onClick={handleCreate}
           disabled={isCreating}
@@ -154,6 +175,12 @@ export default function ApiKeysCard() {
           {isCreating ? 'Creating…' : 'Create key'}
         </button>
       </div>
+      {scope === 'read_write' && (
+        <p className="text-xs text-amber-700 dark:text-amber-400">
+          A read/write key can create, edit and delete your tasks. Anyone holding it
+          can too — keep it out of shared machines and public repositories.
+        </p>
+      )}
 
       {/* List */}
       <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
@@ -171,6 +198,15 @@ export default function ApiKeysCard() {
                 <div className="min-w-0">
                   <p className="truncate text-sm text-gray-800 dark:text-gray-200">
                     {k.name || 'Unnamed key'}
+                    <span
+                      className={`ml-2 align-middle rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                        k.scope === 'read_write'
+                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:bg-opacity-40 dark:text-amber-300'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {k.scope === 'read_write' ? 'read/write' : 'read only'}
+                    </span>
                   </p>
                   <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                     <code>{k.prefix}…</code> · created {formatDate(k.created_at)} · last used{' '}
@@ -212,8 +248,15 @@ export default function ApiKeysCard() {
       <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-2">
         <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Using your key</p>
         <pre className="overflow-x-auto rounded-md bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-3 text-xs text-gray-700 dark:text-gray-300">
-{`curl -H "Authorization: Api-Key YOUR_KEY" \\
-  "${API_URL}/v1/tasks/?is_done=false"`}
+{`# Read (any key)
+curl -H "Authorization: Api-Key YOUR_KEY" \\
+  "${API_URL}/v1/tasks/?is_done=false"
+
+# Write (read/write keys only)
+curl -X POST -H "Authorization: Api-Key YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"title": "Ship the release", "priority": "high"}' \\
+  "${API_URL}/v1/tasks/"`}
         </pre>
         <p className="text-xs text-gray-500 dark:text-gray-400">
           Available: <code>/v1/tasks/</code> and <code>/v1/projects/</code>. Tasks accept{' '}
@@ -223,9 +266,17 @@ export default function ApiKeysCard() {
           <code>search</code>.
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
+          Tasks also accept <code>POST</code>, <code>PATCH</code>, <code>PUT</code> and{' '}
+          <code>DELETE</code> with a read/write key. <code>PUT</code> replaces a task —
+          anything you leave out goes back to its default — while <code>PATCH</code>{' '}
+          changes only the fields you send. Projects are read-only, and recurring series
+          are set up here in the app rather than over the API.
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Unrecognized parameters and invalid filter values return a{' '}
           <code>400</code> rather than being ignored, so a typo never looks like
-          an empty or unfiltered result.
+          an empty or unfiltered result. Writing with a read-only key returns a{' '}
+          <code>403</code>.
         </p>
       </div>
     </div>

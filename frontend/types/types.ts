@@ -498,10 +498,13 @@ export type ResumesContextType = {
   downloadNewGeneratedResume: () => Promise<void>;
 };
 
+export type PersonalAPIKeyScope = 'read' | 'read_write';
+
 export type PersonalAPIKey = {
   id: number;
   name: string;
   prefix: string;
+  scope: PersonalAPIKeyScope;
   created_at: string;
   last_used_at: string | null;
 };
