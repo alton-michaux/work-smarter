@@ -272,7 +272,7 @@ class PersonalAPITokenSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-# --- Public read-only v1 API ------------------------------------------------
+# --- Public v1 API ----------------------------------------------------------
 # These are a deliberately narrow, stable contract for external consumers. They
 # are kept separate from TaskSerializer/ProjectSerializer so that internal
 # reshaping of the app's own payloads cannot silently break third-party clients.
@@ -299,7 +299,33 @@ PUBLIC_TASK_FIELDS = [
 ]
 
 
+# Everything else in PUBLIC_TASK_FIELDS is derived or assigned by the server:
+# `user` comes from the key, `is_subtask` from `parent`, and recurrence is
+# managed in the app rather than over the API.
+PUBLIC_TASK_WRITABLE_FIELDS = [
+    "title",
+    "description",
+    "category",
+    "priority",
+    "is_done",
+    "begin_date",
+    "end_date",
+    "deadline_date",
+    "begin_time",
+    "end_time",
+    "project",
+    "parent",
+]
+
+
 class PublicTaskSerializer(serializers.ModelSerializer):
+    """Reads and writes a task over the v1 API.
+
+    Relations are re-scoped to the requesting user in ``__init__``, so a caller
+    cannot file a task under someone else's project or parent by guessing an id
+    — DRF would otherwise resolve those against every row in the table.
+    """
+
     project_name = serializers.CharField(source="project.name", read_only=True, default=None)
     is_recurring = serializers.SerializerMethodField()
     recurring_frequency = serializers.CharField(
@@ -309,10 +335,88 @@ class PublicTaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = PUBLIC_TASK_FIELDS
-        read_only_fields = PUBLIC_TASK_FIELDS
+        read_only_fields = [
+            field for field in PUBLIC_TASK_FIELDS
+            if field not in PUBLIC_TASK_WRITABLE_FIELDS
+        ]
+        extra_kwargs = {
+            # The model allows null on these; over the API they are optional
+            # rather than required-and-nullable, so a minimal POST is just a title.
+            "begin_date": {"required": False, "allow_null": True},
+            "end_date": {"required": False, "allow_null": True},
+            "deadline_date": {"required": False, "allow_null": True},
+            "begin_time": {"required": False, "allow_null": True},
+            "end_time": {"required": False, "allow_null": True},
+            "project": {"required": False, "allow_null": True},
+            "parent": {"required": False, "allow_null": True},
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = getattr(self.context.get("request"), "user", None)
+        if user is not None and user.is_authenticated:
+            self.fields["project"].queryset = Project.objects.filter(user=user)
+            self.fields["parent"].queryset = Task.objects.filter(user=user)
+        else:
+            # No authenticated user means no writes are possible anyway; an empty
+            # queryset is the safe reading of "no relation is resolvable".
+            self.fields["project"].queryset = Project.objects.none()
+            self.fields["parent"].queryset = Task.objects.none()
 
     def get_is_recurring(self, obj):
         return obj.recurring_task_id is not None
+
+    def validate_title(self, title):
+        title = title.strip()
+        if not title:
+            raise serializers.ValidationError("This field may not be blank.")
+        return title
+
+    def validate_parent(self, parent):
+        # Mirrors TaskSerializer: the app assumes a single level of subtasks, and
+        # the API must not be a way to create shapes the UI cannot render.
+        if parent is None:
+            return None
+        if self.instance and parent.id == self.instance.id:
+            raise serializers.ValidationError("A task cannot be its own parent.")
+        if parent.parent_id is not None:
+            raise serializers.ValidationError("Subtasks cannot have subtasks (max depth is 1).")
+        return parent
+
+    def validate(self, attrs):
+        parent = attrs.get("parent", getattr(self.instance, "parent", None))
+        begin_date = attrs.get("begin_date", getattr(self.instance, "begin_date", None))
+
+        if parent is not None and parent.begin_date is not None:
+            if begin_date is None:
+                # Same convenience the app offers: inherit the parent's date
+                # rather than rejecting a payload whose intent is unambiguous.
+                attrs["begin_date"] = parent.begin_date
+            elif begin_date != parent.begin_date:
+                raise serializers.ValidationError({
+                    "begin_date": "Subtask begin_date must match its parent begin_date."
+                })
+
+        return attrs
+
+    @staticmethod
+    def _replacement_default(name):
+        """The value an omitted field takes on a PUT."""
+        field = Task._meta.get_field(name)
+        if field.has_default():
+            return field.get_default()
+        if field.null:
+            return None
+        return "" if field.empty_strings_allowed else None
+
+    def update(self, instance, validated_data):
+        if not self.partial:
+            # PUT replaces the task. DRF would otherwise leave omitted optional
+            # fields untouched, making PUT a silent alias for PATCH — precisely
+            # the kind of surprise this API is meant not to have.
+            for name in PUBLIC_TASK_WRITABLE_FIELDS:
+                validated_data.setdefault(name, self._replacement_default(name))
+        return super().update(instance, validated_data)
 
 
 PUBLIC_PROJECT_FIELDS = [
@@ -328,6 +432,8 @@ PUBLIC_PROJECT_FIELDS = [
 
 
 class PublicProjectSerializer(serializers.ModelSerializer):
+    """Read-only: projects are created and retired in the app, not over the API."""
+
     task_count = serializers.IntegerField(read_only=True)
 
     class Meta:
