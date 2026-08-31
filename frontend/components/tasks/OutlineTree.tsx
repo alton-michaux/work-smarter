@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { categoryToType } from '../../lib/dailyLog';
 import { OutlineTreeProps, OutlineRowProps } from 'types/types';
 import { useTasks } from 'context/TasksContext';
@@ -50,6 +50,8 @@ function OutlineRow({
   onDelete,
   onToggleDone,
   onAddSubtask,
+  isCollapsed = false,
+  onToggleCollapse,
   density = 'comfortable',
 }: OutlineRowProps) {
   const type = categoryToType(node.category);
@@ -129,9 +131,39 @@ function OutlineRow({
       <div className="relative flex items-start justify-between gap-4">
         {/* LEFT: checkbox/icon + content */}
         <div className={[
-          "min-w-0 flex-1 flex gap-3",
+          "min-w-0 flex-1 flex gap-2",
           isCompact ? "items-center" : "items-start",
         ].join(" ")}>
+          <div className={isCompact ? "shrink-0 flex items-center" : "pt-0.5"}>
+            {childCount > 0 ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleCollapse?.(String(node.id));
+                }}
+                aria-expanded={!isCollapsed}
+                aria-label={isCollapsed ? `Expand ${node.title}` : `Collapse ${node.title}`}
+                title={isCollapsed ? 'Expand subtasks' : 'Collapse subtasks'}
+                className="flex h-4 w-4 items-center justify-center rounded text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              >
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className={[
+                    "h-3.5 w-3.5 transition-transform",
+                    isCollapsed ? "" : "rotate-90",
+                  ].join(" ")}
+                  aria-hidden="true"
+                >
+                  <path d="M7 5l6 5-6 5V5z" />
+                </svg>
+              </button>
+            ) : (
+              <span className="inline-block h-4 w-4" aria-hidden="true" />
+            )}
+          </div>
+
           <div className={isCompact ? "shrink-0 flex items-center" : "pt-0.5"}>
             {type === 'task' ? (
               <input
@@ -319,6 +351,51 @@ function OutlineRow({
   );
 }
 
+
+/**
+ * Collapse state for parent rows, keyed by task id. Owned by the root tree and
+ * threaded down so nested levels share one source of truth. When `storageKey`
+ * is given the state survives reloads and date changes.
+ */
+function useCollapsedIds(storageKey?: string) {
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
+  const hydrated = useRef(false);
+
+  useEffect(() => {
+    if (!storageKey || typeof window === 'undefined') {
+      hydrated.current = true;
+      return;
+    }
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw) setCollapsedIds(new Set(JSON.parse(raw) as string[]));
+    } catch {
+      // Ignore unreadable/malformed state — collapse is a convenience.
+    }
+    hydrated.current = true;
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!storageKey || !hydrated.current || typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify([...collapsedIds]));
+    } catch {
+      // Ignore quota/private-mode failures.
+    }
+  }, [collapsedIds, storageKey]);
+
+  const toggleCollapsed = useCallback((id: string) => {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  return { collapsedIds, toggleCollapsed };
+}
+
 export default function OutlineTree({
   nodes,
   depth = 0,
@@ -327,9 +404,17 @@ export default function OutlineTree({
   onDelete,
   onToggleDone,
   onAddSubtask,
+  collapsedIds: collapsedIdsProp,
+  onToggleCollapse,
+  storageKey,
   density = 'comfortable',
 }: OutlineTreeProps) {
   const { addSubtask } = useTasks();
+
+  // Nested levels receive the root's state; the root owns it.
+  const own = useCollapsedIds(storageKey);
+  const collapsedIds = collapsedIdsProp ?? own.collapsedIds;
+  const toggleCollapsed = onToggleCollapse ?? own.toggleCollapsed;
 
   const handleAddSubtask =
     onAddSubtask ??
@@ -358,7 +443,10 @@ export default function OutlineTree({
 
   return (
     <ul className={depth === 0 ? "divide-y divide-transparent" : ""}>
-      {nodes.map((n) => (
+      {nodes.map((n) => {
+        const isCollapsed = collapsedIds.has(String(n.id));
+
+        return (
         <React.Fragment key={n.id}>
           <OutlineRow
             node={n}
@@ -368,10 +456,12 @@ export default function OutlineTree({
             onDelete={onDelete}
             onToggleDone={onToggleDone}
             onAddSubtask={handleAddSubtask}
+            isCollapsed={isCollapsed}
+            onToggleCollapse={toggleCollapsed}
             density={density}
           />
 
-          {n.children?.length ? (
+          {n.children?.length && !isCollapsed ? (
             <OutlineTree
               nodes={n.children}
               depth={depth + 1}
@@ -380,11 +470,14 @@ export default function OutlineTree({
               onDelete={onDelete}
               onToggleDone={onToggleDone}
               onAddSubtask={handleAddSubtask}
+              collapsedIds={collapsedIds}
+              onToggleCollapse={toggleCollapsed}
               density={density}
             />
           ) : null}
         </React.Fragment>
-      ))}
+        );
+      })}
     </ul>
   );
 }
