@@ -294,7 +294,7 @@ class Task(models.Model):
     end_time = models.TimeField(null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     title = models.TextField()
-    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='task', null=True)
+    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='task')
     is_done = models.BooleanField(default=False)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     description = models.TextField(blank=True)
