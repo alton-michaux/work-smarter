@@ -1,6 +1,7 @@
 from django.utils import timezone
 from datetime import timedelta, timezone as dt_timezone
 from rest_framework import serializers
+from .categories import DEFAULT_CATEGORY
 from .models import Resume, Task, Project, User, RecurringTask, CalendarBlacklist, ResumeProfile, WorkExperience, Education, Skill, PersonalAPIToken
 
 class UserSerializer(serializers.ModelSerializer):
@@ -58,6 +59,12 @@ class TaskSerializer(serializers.ModelSerializer):
                     return True
 
         return bool(obj.is_done)
+
+    def validate_category(self, value):
+        # Clients (and the calendar sync) still send `category: null` for
+        # uncategorized rows; the column is no longer nullable, so fold those
+        # to the model default instead of rejecting the request.
+        return value or DEFAULT_CATEGORY
 
     def validate_parent(self, parent):
         if parent is None:
@@ -154,6 +161,7 @@ class TaskSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "user": {"read_only": True},
             "is_subtask": {"read_only": True},
+            "category": {"required": False, "allow_null": True},
             "recurring_task": {"required": False, "allow_null": True},
             "begin_date": {"required": False, "allow_null": True},
             "end_date": {"required": False, "allow_null": True},

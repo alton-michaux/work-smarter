@@ -99,7 +99,7 @@ def create_task(db):
         user=None,
         recurring_task=None,
         project=None,
-        category=None,
+        category="task",
         parent=None,
         is_subtask=None,  # allow overriding only if you really need it
     ):
