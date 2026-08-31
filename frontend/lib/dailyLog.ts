@@ -26,7 +26,24 @@ export function buildTree<T extends { id: any; parent?: any | null; parent_id?: 
     }
   }
 
+  // Subtasks follow the order the user dragged them into. Roots keep whatever
+  // ordering the caller applied (priority for tasks, start time for meetings).
+  for (const node of byId.values()) {
+    if (node.children.length > 1) sortByPosition(node.children);
+  }
+
   return roots;
+}
+
+/** Sort siblings by their manual `position`, falling back to id for ties. */
+export function sortByPosition(nodes: any[]) {
+  nodes.sort((a, b) => {
+    const pa = Number.isFinite(Number(a?.position)) ? Number(a.position) : 0;
+    const pb = Number.isFinite(Number(b?.position)) ? Number(b.position) : 0;
+    if (pa !== pb) return pa - pb;
+    return Number(a?.id ?? 0) - Number(b?.id ?? 0);
+  });
+  return nodes;
 }
 
 const PRIORITY_RANK: Record<string, number> = {

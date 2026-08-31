@@ -93,6 +93,8 @@
 - [x] Add description to project
 - [x] Add a logo
 - [x] Make navbar and footer sticky
+- [x] Collapsible parent tasks in the daily log
+- [x] Drag to re-order subtasks in the daily log (Alt+↑/↓ from the drag handle)
 
 ---
 
