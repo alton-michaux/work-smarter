@@ -52,12 +52,16 @@ function OutlineRow({
   onAddSubtask,
   isCollapsed = false,
   onToggleCollapse,
+  drag,
   density = 'comfortable',
 }: OutlineRowProps) {
   const type = categoryToType(node.category);
   const isCompact = density === 'compact';
 
   const [showSubtask, setShowSubtask] = useState(false);
+  // The whole row is the drag image, but only the handle starts a drag —
+  // otherwise selecting the title text would drag the row.
+  const [armed, setArmed] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -121,12 +125,29 @@ function OutlineRow({
         "hover:bg-gray-50 dark:hover:bg-gray-700",
         "transition-colors",
         "focus-within:bg-gray-50 dark:focus-within:bg-gray-700",
+        drag?.isDragging ? "opacity-40" : "",
       ].join(" ")}
       style={{
         paddingLeft: 16 + effectiveDepth * 18,
         borderLeft: `3px solid ${priorityBorder}`,
       }}
+      draggable={drag ? armed : undefined}
+      onDragStart={drag?.onDragStart}
+      onDragOver={drag?.onDragOver}
+      onDragLeave={drag?.onDragLeave}
+      onDrop={drag?.onDrop}
+      onDragEnd={drag ? () => { setArmed(false); drag.onDragEnd(); } : undefined}
     >
+      {drag?.dropEdge && (
+        <span
+          aria-hidden="true"
+          className={[
+            "pointer-events-none absolute left-0 right-0 h-0.5 bg-blue-500",
+            drag.dropEdge === 'before' ? "-top-px" : "-bottom-px",
+          ].join(" ")}
+        />
+      )}
+
       {/* Main row */}
       <div className="relative flex items-start justify-between gap-4">
         {/* LEFT: checkbox/icon + content */}
@@ -134,6 +155,34 @@ function OutlineRow({
           "min-w-0 flex-1 flex gap-2",
           isCompact ? "items-center" : "items-start",
         ].join(" ")}>
+          {drag && (
+            <div className={isCompact ? "shrink-0 flex items-center" : "pt-0.5"}>
+              <button
+                type="button"
+                onMouseDown={() => setArmed(true)}
+                onMouseUp={() => setArmed(false)}
+                onKeyDown={(e) => {
+                  if (!e.altKey) return;
+                  if (e.key === 'ArrowUp' && drag.canMoveUp) {
+                    e.preventDefault();
+                    drag.onMove(-1);
+                  }
+                  if (e.key === 'ArrowDown' && drag.canMoveDown) {
+                    e.preventDefault();
+                    drag.onMove(1);
+                  }
+                }}
+                aria-label={`Reorder ${node.title}. Press Alt with the up or down arrow to move it.`}
+                title="Drag to reorder · Alt+↑/↓"
+                className="flex h-4 w-4 cursor-grab items-center justify-center rounded text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200 active:cursor-grabbing transition-opacity"
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5" aria-hidden="true">
+                  <path d="M7 4h2v2H7V4zm4 0h2v2h-2V4zM7 9h2v2H7V9zm4 0h2v2h-2V9zm-4 5h2v2H7v-2zm4 0h2v2h-2v-2z" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           <div className={isCompact ? "shrink-0 flex items-center" : "pt-0.5"}>
             {childCount > 0 ? (
               <button
@@ -407,14 +456,69 @@ export default function OutlineTree({
   collapsedIds: collapsedIdsProp,
   onToggleCollapse,
   storageKey,
+  reorderable = false,
   density = 'comfortable',
 }: OutlineTreeProps) {
-  const { addSubtask } = useTasks();
+  const { addSubtask, reorderSubtasks } = useTasks();
 
   // Nested levels receive the root's state; the root owns it.
   const own = useCollapsedIds(storageKey);
   const collapsedIds = collapsedIdsProp ?? own.collapsedIds;
   const toggleCollapsed = onToggleCollapse ?? own.toggleCollapsed;
+
+  // This list is reorderable only when it *is* a sibling group: every node a
+  // subtask of the same parent. The root list and mixed lists stay static, and
+  // so does any view that might be showing a filtered subset of siblings.
+  const sharedParent =
+    reorderable && depth > 0 && nodes.length > 1 && nodes[0]?.parent != null
+      ? Number(nodes[0].parent)
+      : null;
+  const canReorder =
+    sharedParent != null &&
+    nodes.every((n: any) => Number(n.parent) === sharedParent);
+
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [dropTarget, setDropTarget] = useState<
+    { id: number; edge: 'before' | 'after' } | null
+  >(null);
+
+  const commitMove = useCallback(
+    (movingId: number, targetId: number, edge: 'before' | 'after') => {
+      if (sharedParent == null || movingId === targetId) return;
+
+      const ids = nodes.map((n: any) => Number(n.id));
+      if (!ids.includes(movingId) || !ids.includes(targetId)) return;
+
+      // Compute the insert point against the list the moved row has left, so
+      // dropping below a row that sat above it lands where the user aimed.
+      const without = ids.filter((id) => id !== movingId);
+      const anchor = without.indexOf(targetId);
+      const next = [...without];
+      next.splice(edge === 'before' ? anchor : anchor + 1, 0, movingId);
+
+      // A drop onto the row's own edge changes nothing — don't hit the network.
+      if (next.every((id, i) => id === ids[i])) return;
+
+      reorderSubtasks(sharedParent, next);
+    },
+    [nodes, reorderSubtasks, sharedParent]
+  );
+
+  const moveByOffset = useCallback(
+    (movingId: number, direction: -1 | 1) => {
+      if (sharedParent == null) return;
+
+      const ids = nodes.map((n: any) => Number(n.id));
+      const from = ids.indexOf(movingId);
+      const to = from + direction;
+      if (from < 0 || to < 0 || to >= ids.length) return;
+
+      const next = [...ids];
+      next.splice(to, 0, ...next.splice(from, 1));
+      reorderSubtasks(sharedParent, next);
+    },
+    [nodes, reorderSubtasks, sharedParent]
+  );
 
   const handleAddSubtask =
     onAddSubtask ??
@@ -443,8 +547,56 @@ export default function OutlineTree({
 
   return (
     <ul className={depth === 0 ? "divide-y divide-transparent" : ""}>
-      {nodes.map((n) => {
+      {nodes.map((n, index) => {
         const isCollapsed = collapsedIds.has(String(n.id));
+        const id = Number(n.id);
+
+        const drag = canReorder
+          ? {
+              isDragging: draggingId === id,
+              dropEdge:
+                dropTarget?.id === id && draggingId !== null && draggingId !== id
+                  ? dropTarget.edge
+                  : null,
+              onDragStart: (e: React.DragEvent) => {
+                setDraggingId(id);
+                e.dataTransfer.effectAllowed = 'move';
+                // Firefox ignores drags that carry no payload.
+                e.dataTransfer.setData('text/plain', String(id));
+              },
+              onDragOver: (e: React.DragEvent) => {
+                if (draggingId === null || draggingId === id) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                const rect = e.currentTarget.getBoundingClientRect();
+                const edge =
+                  e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+                setDropTarget((prev) =>
+                  prev?.id === id && prev.edge === edge ? prev : { id, edge }
+                );
+              },
+              onDragLeave: (e: React.DragEvent) => {
+                // dragleave bubbles up from the row's own children, so only
+                // clear the indicator once the pointer has left the row itself.
+                if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                setDropTarget((prev) => (prev?.id === id ? null : prev));
+              },
+              onDrop: (e: React.DragEvent) => {
+                e.preventDefault();
+                const edge = dropTarget?.id === id ? dropTarget.edge : 'before';
+                if (draggingId !== null) commitMove(draggingId, id, edge);
+                setDraggingId(null);
+                setDropTarget(null);
+              },
+              onDragEnd: () => {
+                setDraggingId(null);
+                setDropTarget(null);
+              },
+              onMove: (direction: -1 | 1) => moveByOffset(id, direction),
+              canMoveUp: index > 0,
+              canMoveDown: index < nodes.length - 1,
+            }
+          : undefined;
 
         return (
         <React.Fragment key={n.id}>
@@ -458,6 +610,7 @@ export default function OutlineTree({
             onAddSubtask={handleAddSubtask}
             isCollapsed={isCollapsed}
             onToggleCollapse={toggleCollapsed}
+            drag={drag}
             density={density}
           />
 
@@ -472,6 +625,7 @@ export default function OutlineTree({
               onAddSubtask={handleAddSubtask}
               collapsedIds={collapsedIds}
               onToggleCollapse={toggleCollapsed}
+              reorderable={reorderable}
               density={density}
             />
           ) : null}

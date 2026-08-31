@@ -39,6 +39,7 @@ export function TaskLayout({
             <OutlineTree
               nodes={sections.meetings}
               storageKey="dailyLog:collapsed:meetings"
+              reorderable
               onView={onView}
               onEdit={onEdit}
               onDelete={onDelete}
@@ -58,6 +59,7 @@ export function TaskLayout({
             <OutlineTree
               nodes={sections.tasks}
               storageKey="dailyLog:collapsed:tasks"
+              reorderable
               onView={onView}
               onEdit={onEdit}
               onDelete={onDelete}

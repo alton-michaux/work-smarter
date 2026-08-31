@@ -307,6 +307,66 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  /**
+   * Persist a manual order for one parent's subtasks.
+   *
+   * `orderedIds` must list every subtask of the parent. Positions are applied
+   * locally first so the row lands where it was dropped, then confirmed by the
+   * server; a failure puts the previous order back.
+   */
+  const reorderSubtasks = async (parentId: number, orderedIds: number[]) => {
+    if (!loggedIn) return;
+    setError(null);
+
+    const previous = tasks.filter((t: any) => Number(t.parent) === Number(parentId));
+    const positionById = new Map(orderedIds.map((id, index) => [Number(id), index]));
+
+    setTasks((prev) =>
+      prev.map((t: any) =>
+        positionById.has(Number(t.id))
+          ? { ...t, position: positionById.get(Number(t.id)) }
+          : t
+      )
+    );
+
+    const restore = () =>
+      setTasks((prev) =>
+        prev.map((t: any) => {
+          const before = previous.find((p: any) => Number(p.id) === Number(t.id));
+          return before ? { ...t, position: (before as any).position } : t;
+        })
+      );
+
+    try {
+      const res = await fetch(`${API_URL}/tasks/reorder/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ parent: parentId, order: orderedIds }),
+      });
+
+      if (!res.ok) {
+        restore();
+        setError('Failed to reorder subtasks');
+        return;
+      }
+
+      const updated: Task[] = await res.json();
+      setTasks((prev) =>
+        prev.map((t: any) => {
+          const fresh = updated.find((u: any) => Number(u.id) === Number(t.id));
+          return fresh ? { ...t, ...fresh } : t;
+        })
+      );
+    } catch (err: any) {
+      restore();
+      setError(err.message || 'unknown error');
+      console.error(err);
+    }
+  };
+
   const addSubtask = async (payload: CreateTaskPayload) => {
     if (!loggedIn) return;
 
@@ -564,6 +624,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         setTasks,
         addTask,
         addSubtask,
+        reorderSubtasks,
         updateTaskAndReload,
         deleteTask,
         fetchTasks,
