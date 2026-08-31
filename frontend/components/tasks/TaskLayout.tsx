@@ -38,6 +38,7 @@ export function TaskLayout({
           {meetingsCount ? (
             <OutlineTree
               nodes={sections.meetings}
+              storageKey="dailyLog:collapsed:meetings"
               onView={onView}
               onEdit={onEdit}
               onDelete={onDelete}
@@ -56,6 +57,7 @@ export function TaskLayout({
           {tasksCount ? (
             <OutlineTree
               nodes={sections.tasks}
+              storageKey="dailyLog:collapsed:tasks"
               onView={onView}
               onEdit={onEdit}
               onDelete={onDelete}

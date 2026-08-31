@@ -273,6 +273,10 @@ export type OutlineRowProps = {
   onDelete: (task: any) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
 
+  /** Subtasks are hidden while true. Only meaningful for rows with children. */
+  isCollapsed?: boolean;
+  onToggleCollapse?: (id: string) => void;
+
   density?: OutlineDensity;
 
   onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
@@ -286,6 +290,13 @@ export type OutlineTreeProps = {
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
+
+  /** Ids of collapsed parents; passed down by the root tree to nested levels. */
+  collapsedIds?: Set<string>;
+  onToggleCollapse?: (id: string) => void;
+
+  /** localStorage key for persisting collapse state. Root tree only. */
+  storageKey?: string;
 
   density?: OutlineDensity;
 
