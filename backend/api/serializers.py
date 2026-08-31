@@ -143,6 +143,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "project",
             "title",
             "category",
+            "position",
             "is_done",
             "effective_is_done",
             "priority",

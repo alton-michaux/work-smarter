@@ -300,6 +300,68 @@ class TaskViewSet(viewsets.ModelViewSet):
         # ----- Non-recurring tasks -----
         return super().destroy(request, *args, **kwargs)
 
+    @action(detail=False, methods=["post"], url_path="reorder")
+    def reorder(self, request):
+        """Set the manual sort order of one parent's subtasks.
+
+        Body: {"parent": <task id>, "order": [<task id>, ...]}
+
+        The ids must be exactly the caller's subtasks of that parent — a
+        partial or padded list is rejected rather than silently applied, since
+        a stale client would otherwise scramble rows it never saw.
+        """
+        parent_id = request.data.get("parent")
+        order = request.data.get("order")
+
+        if parent_id is None:
+            return Response(
+                {"error": "parent is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not isinstance(order, list) or not order:
+            return Response(
+                {"error": "order must be a non-empty list of task ids."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            order = [int(i) for i in order]
+        except (TypeError, ValueError):
+            return Response(
+                {"error": "order must contain task ids."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(set(order)) != len(order):
+            return Response(
+                {"error": "order contains duplicate ids."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        parent = Task.objects.filter(user=request.user, pk=parent_id).first()
+        if parent is None:
+            return Response(
+                {"error": "Parent task not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        children = list(Task.objects.filter(user=request.user, parent=parent))
+        if {c.id for c in children} != set(order):
+            return Response(
+                {"error": "order must list every subtask of this parent exactly once."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        by_id = {c.id: c for c in children}
+        for position, task_id in enumerate(order):
+            by_id[task_id].position = position
+
+        Task.objects.bulk_update(children, ["position"])
+
+        serializer = self.get_serializer(
+            sorted(children, key=lambda c: c.position), many=True
+        )
+        return Response(serializer.data)
+
     @action(detail=True, methods=["post"], url_path="push-to-calendar")
     def push_to_calendar(self, request, pk=None):
         from api.services.google_calendar import push_meeting
