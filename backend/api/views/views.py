@@ -33,7 +33,16 @@ def _detach_children(task, user):
     Task.objects.filter(user=user, parent=task).update(parent=None, is_subtask=False)
 
 class TaskCursorPagination(CursorPagination):
-    ordering = "-begin_date"
+    # DRF builds the cursor from ordering[0] alone, so that field has to be
+    # unique or paging never terminates: once a page holds no distinct
+    # positions DRF falls back to an offset, and decode_cursor clamps that
+    # offset at offset_cutoff (1000), so the cursor stops advancing and
+    # repeats the same page forever. begin_date is neither unique nor
+    # non-null, and adding a second ordering field does not help because it
+    # never reaches the cursor. id is unique, non-null, and monotonic with
+    # creation, so it is the only safe position here; clients sort the
+    # results they need.
+    ordering = "-id"
     page_size_query_param = 'page_size'
     max_page_size = 1000
 

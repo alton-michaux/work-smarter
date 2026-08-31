@@ -152,16 +152,20 @@ class PublicAPIViewSet(viewsets.GenericViewSet):
 
 
 class TaskCursorPagination(CursorPagination):
-    # Cursor pagination needs a non-null, stable ordering; begin_date is
-    # nullable, so it cannot be used here even though it reads more naturally.
-    ordering = ("-created_at", "-id")
+    # Cursor pagination needs a non-null, *unique* ordering. created_at is a
+    # DateField, so every task imported on one day shares a position and the
+    # cursor cycles; the trailing "-id" never reaches the cursor because DRF
+    # only ever filters on ordering[0]. id is unique and monotonic with
+    # creation, so it preserves newest-first while actually terminating.
+    ordering = "-id"
     page_size = 50
     page_size_query_param = "page_size"
     max_page_size = 200
 
 
 class ProjectCursorPagination(CursorPagination):
-    ordering = ("-created", "-id")
+    # Same reasoning as TaskCursorPagination above.
+    ordering = "-id"
     page_size = 50
     page_size_query_param = "page_size"
     max_page_size = 200
