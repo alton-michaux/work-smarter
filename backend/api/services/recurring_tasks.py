@@ -1,5 +1,6 @@
 from datetime import timedelta
 from django.db import transaction
+from api.categories import normalize_category
 from api.models import RecurringTask, Task
 from .skippable_tasks import is_skipped
 
@@ -67,7 +68,7 @@ def ensure_recurring_tasks_in_range(date_from, date_to, *, user, project=None):
                 defaults={
                     "title": rt.title,
                     "project": rt.project,
-                    "category": rt.category,
+                    "category": normalize_category(rt.category),
                     "parent": None,
                     "is_subtask": False, 
                 },
