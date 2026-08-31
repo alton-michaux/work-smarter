@@ -308,6 +308,9 @@ class Task(models.Model):
         on_delete=models.SET_NULL,
     )
     is_subtask = models.BooleanField(default=False)
+    # Manual sort order among siblings sharing a parent. Only meaningful for
+    # subtasks; top-level rows are still ordered by priority/time.
+    position = models.PositiveIntegerField(default=0)
     
     carry_over = models.BooleanField(default=True)
     google_event_id = models.CharField(max_length=255, null=True, blank=True)
