@@ -57,6 +57,11 @@ docker-compose exec backend python manage.py makemigrations --check --dry-run
 ```bash
 docker-compose exec db psql -U postgres    # PostgreSQL shell
 docker-compose exec backend python manage.py dbshell
+
+# Seed a day of demo data (parent tasks with subtasks, carry-overs, meeting
+# agendas) for manually exercising the daily log. Idempotent; --clear removes it.
+docker-compose exec backend python manage.py seed_daily_log_demo
+docker-compose exec backend python manage.py seed_daily_log_demo --clear
 ```
 
 ## Architecture
