@@ -2,10 +2,10 @@ import React from "react";
 import OutlineTree from "./OutlineTree";
 import { TaskLayoutProps, PanelProps } from "types/types";
 
-function SectionPanel({ title, right, children, className = "", fill = true }: PanelProps) {
+function SectionPanel({ title, right, children, className = "" }: PanelProps) {
   return (
     <section
-      className={`rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm flex flex-col ${fill ? "h-full" : "max-h-full"} ${className}`}
+      className={`rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm flex flex-col h-full ${className}`}
     >
       <div className="shrink-0 flex items-baseline justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-t-lg">
         <h2 className="text-[11px] font-semibold tracking-widest text-gray-600 dark:text-gray-400">
@@ -32,9 +32,9 @@ export function TaskLayout({
 
   return (
     <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
-      {/* LEFT: Meetings — narrow, hugs its content instead of stretching */}
-      <div className="lg:w-[28%] lg:shrink-0 min-w-0 lg:self-start lg:max-h-full">
-        <SectionPanel title="MEETINGS" right={`${meetingsCount} total`} fill={false}>
+      {/* LEFT: Meetings — narrow, but full height and scrollable like tasks */}
+      <div className="min-h-[200px] lg:min-h-0 lg:w-[28%] lg:shrink-0 min-w-0 lg:h-full">
+        <SectionPanel title="MEETINGS" right={`${meetingsCount} total`}>
           {meetingsCount ? (
             <OutlineTree
               nodes={sections.meetings}

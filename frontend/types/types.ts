@@ -336,10 +336,6 @@ export type PanelProps = {
   right?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
-
-  /** Stretch to the full height of the parent (default). When false the panel
-   *  hugs its content and only scrolls once it would exceed the parent. */
-  fill?: boolean;
 };
 
 //--------UI---------//
