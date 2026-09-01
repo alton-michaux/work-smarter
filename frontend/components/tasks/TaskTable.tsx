@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import NoteCard from "components/notes/NoteCard";
 import { AnyTask, TrackerProps } from "types/types";
-import { SectionPanel, sectionMaxHeightClass } from "components/ui/trackerSection";
+import { SectionPanel, sectionBodyClass } from "components/ui/trackerSection";
 import { useProjects } from "context/ProjectsContext";
 
 const PROJECT_COLORS = [
@@ -90,11 +90,11 @@ export default function TaskTable({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:h-full lg:min-h-0">
       {/* MEETINGS */}
-      <div className="lg:col-span-3">
+      <div className="lg:col-span-3 lg:min-h-0">
       <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`} children={(
-        <div className={`${sectionMaxHeightClass(meetingsToRender.length)} overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-10`}>
+        <div className={`${sectionBodyClass} rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-10`}>
             <table className="w-full text-sm table-fixed">
               <tbody>
                 {meetingsToRender.map((t: AnyTask) => (
@@ -164,9 +164,9 @@ export default function TaskTable({
       </div>
 
       {/* WORK */}
-      <div className="lg:col-span-6">
+      <div className="lg:col-span-6 lg:min-h-0">
       <SectionPanel title="WORK" right={`${workToRender.length} total`} children={(
-        <div className={`${sectionMaxHeightClass(workToRender.length)} overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-10`}>
+        <div className={`${sectionBodyClass} rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-10`}>
           <table className="w-full text-sm table-fixed">
             <tbody>
               {workToRender.map((t: AnyTask) => (
@@ -219,9 +219,9 @@ export default function TaskTable({
       </div>
 
       {/* NOTES */}
-      <div className="lg:col-span-3">
+      <div className="lg:col-span-3 lg:min-h-0">
       <SectionPanel title="NOTES" right={<a href="/notes" className="text-xs text-blue-500 hover:underline">All notes →</a>} children={(
-        <div className={`${sectionMaxHeightClass(notes.length)} overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-10`}>
+        <div className={`${sectionBodyClass} rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-10`}>
           {notes.length ? (
             <div className="space-y-3">
               {notes.map((n: any) => (
