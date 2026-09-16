@@ -404,13 +404,76 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const updateTaskAndReload = async (task: Task) => {
     if (!loggedIn) return;
 
-    const res = await fetch(`${API_URL}/tasks/${task.id}/`, {
+    const taskAny: any = task;
+
+    // Existing recurring series this task was linked to (if any), sent through
+    // by TaskForm as `recurring_task`.
+    let recurringTaskId: number | null =
+      typeof taskAny.recurring_task === "number" ? taskAny.recurring_task : null;
+
+    if (taskAny?.recurrence?.repeats) {
+      // 1) "Repeats" is checked: create the RecurringTask if this task wasn't
+      // already part of one, otherwise update the existing series in place.
+      const payload: any = {
+        title: taskAny.title,
+        project: taskAny.project === "" ? null : (taskAny.project ?? null),
+        category: taskAny.category || null,
+        frequency: taskAny.recurrence.frequency,
+        start_date: taskAny.recurrence.start_date || taskAny.begin_date,
+        is_active: true,
+      };
+
+      if (taskAny.recurrence.frequency === "weekly" || taskAny.recurrence.frequency === "biweekly") {
+        payload.day_of_week = taskAny.recurrence.day_of_week;
+      }
+
+      if (taskAny.recurrence.frequency === "daily") {
+        payload.skip_weekends = taskAny.recurrence.skip_weekends ?? false;
+      }
+
+      const rtRes = await fetch(
+        recurringTaskId
+          ? `${API_URL}/recurring-tasks/${recurringTaskId}/`
+          : `${API_URL}/recurring-tasks/`,
+        {
+          method: recurringTaskId ? "PATCH" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!rtRes.ok) {
+        const text = await rtRes.text();
+        throw new Error(`Failed to save recurring task: ${text}`);
+      }
+
+      const savedRt = await rtRes.json();
+      recurringTaskId = savedRt.id;
+    } else {
+      // "Repeats" is unchecked: make sure the task isn't left linked to a series.
+      recurringTaskId = null;
+    }
+
+    // 2) Build the task payload safely (no accidental recurring fields)
+    const taskPayload: any = { ...taskAny };
+    delete taskPayload.recurrence;
+    delete taskPayload.recurring_task_id;
+    delete taskPayload.is_recurring;
+
+    if (taskPayload.project === "") taskPayload.project = null;
+    taskPayload.recurring_task = recurringTaskId;
+
+    // 3) Update the Task row
+    const res = await fetch(`${API_URL}/tasks/${taskPayload.id}/`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         ...getAuthHeaders(),
       },
-      body: JSON.stringify(task),
+      body: JSON.stringify(taskPayload),
     });
 
     if (!res.ok) {
