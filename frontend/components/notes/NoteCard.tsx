@@ -17,6 +17,7 @@ export default function NoteCard({
   const date = (note.begin_date ?? '').slice(0, 10);
   const priority = note.priority ? String(note.priority).toUpperCase() : '';
   const hasDescription = Boolean(note.description?.trim());
+  const isEncrypted = Boolean(note.is_encrypted);
 
   const border =
     variant === 'dashed'
@@ -45,7 +46,12 @@ export default function NoteCard({
             >
               {note.title}
             </h3>
-            {hasDescription && (
+            {isEncrypted ? (
+              <div className="mt-1 flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500 italic">
+                <span aria-hidden="true">🔒</span>
+                Encrypted note — click to unlock
+              </div>
+            ) : hasDescription && (
               <div className={`mt-1 text-sm leading-snug ${note.is_done ? 'opacity-60' : ''}`}>
                 <MarkdownBody
                   value={note.description}
@@ -61,7 +67,7 @@ export default function NoteCard({
                 {date}
               </div>
             ) : null}
-            {collapsible && hasDescription && (
+            {collapsible && hasDescription && !isEncrypted && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
