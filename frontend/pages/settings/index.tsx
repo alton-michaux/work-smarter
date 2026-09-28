@@ -76,7 +76,8 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!loggedIn) return;
 
-    fetch(`${API_URL}/calendar/status/`, { headers: getAuthHeaders() })
+    fetch(`${API_URL}/calendar/status/`, {
+        credentials: 'include', headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((data: GoogleCalendarStatus) => {
         setCalendarStatus(data);
@@ -89,13 +90,15 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!calendarStatus?.connected) return;
 
-    fetch(`${API_URL}/calendar/calendars/`, { headers: getAuthHeaders() })
+    fetch(`${API_URL}/calendar/calendars/`, {
+        credentials: 'include', headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((data: CalendarOption[]) => setCalendars(data))
       .catch(() => {});
 
     setIsLoadingBlacklist(true);
-    fetch(`${API_URL}/calendar/blacklist/list/`, { headers: getAuthHeaders() })
+    fetch(`${API_URL}/calendar/blacklist/list/`, {
+        credentials: 'include', headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((data: CalendarBlacklistEntry[]) => setBlacklist(data))
       .catch(() => {})
@@ -105,7 +108,8 @@ export default function SettingsPage() {
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      const res = await fetch(`${API_URL}/calendar/oauth/init/`, { headers: getAuthHeaders() });
+      const res = await fetch(`${API_URL}/calendar/oauth/init/`, {
+        credentials: 'include', headers: getAuthHeaders() });
       const data = await res.json();
       if (data.auth_url) {
         window.location.href = data.auth_url;
@@ -123,6 +127,7 @@ export default function SettingsPage() {
     setIsSaving(true);
     try {
       const res = await fetch(`${API_URL}/calendar/select/`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ calendar_id: selectedCalendarId }),
@@ -158,6 +163,7 @@ export default function SettingsPage() {
   const handleRemoveBlacklist = async (id: number) => {
     try {
       const res = await fetch(`${API_URL}/calendar/blacklist/${id}/`, {
+        credentials: 'include',
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -176,6 +182,7 @@ export default function SettingsPage() {
     setIsSavingAccount(true);
     try {
       const res = await fetch(`${API_URL}/auth/user/`, {
+        credentials: 'include',
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ username, email }),
@@ -199,6 +206,7 @@ export default function SettingsPage() {
     setIsSavingPassword(true);
     try {
       const res = await fetch(`${API_URL}/auth/password/change/`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ old_password: oldPassword, new_password1: newPassword1, new_password2: newPassword2 }),
@@ -224,6 +232,7 @@ export default function SettingsPage() {
     setIsDeleting(true);
     try {
       const res = await fetch(`${API_URL}/auth/account/delete/`, {
+        credentials: 'include',
         method: 'DELETE',
         headers: getAuthHeaders(),
       });

@@ -32,7 +32,7 @@ export default function ApiKeysCard() {
   const [newKey, setNewKey] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/keys/`, { headers: getAuthHeaders() })
+    fetch(`${API_URL}/keys/`, { credentials: 'include', headers: getAuthHeaders() })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: PersonalAPIKey[]) => setKeys(data))
       .catch(() => toast.error('Failed to load API keys.'))
@@ -44,6 +44,7 @@ export default function ApiKeysCard() {
     try {
       const res = await fetch(`${API_URL}/keys/`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ name: name.trim(), scope }),
       });
@@ -73,6 +74,7 @@ export default function ApiKeysCard() {
     try {
       const res = await fetch(`${API_URL}/keys/${id}/`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: getAuthHeaders(),
       });
       if (res.ok) {

@@ -36,8 +36,8 @@ export const SystemsProvider = ({ children }: { children: ReactNode }) => {
   const exportCsv = async () => {
     try {
       const res = await fetch(`${API_URL}/export/csv`, {
-        method: 'GET',
         credentials: 'include',
+        method: 'GET',
         headers: {
           ...getAuthHeaders(),
         },

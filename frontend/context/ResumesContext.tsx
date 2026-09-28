@@ -26,7 +26,8 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/resumes/`, { headers: getAuthHeaders() });
+      const res = await fetch(`${API_URL}/resumes/`, {
+        credentials: 'include', headers: getAuthHeaders() });
       if (res.status === 401) { setError('Unauthorized'); return; }
       if (!res.ok) throw new Error(`Failed to fetch resumes: ${res.status}`);
       const data = await res.json();
@@ -51,6 +52,7 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
       delete (headers as any)['Content-Type'];
 
       const res = await fetch(`${API_URL}/resumes/`, {
+        credentials: 'include',
         method: 'POST',
         headers,
         body: formData,
@@ -75,6 +77,7 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       const res = await fetch(`${API_URL}/resumes/${id}/`, {
+        credentials: 'include',
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -88,7 +91,8 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
 
   const analyzeResume = useCallback(async (id: number, forceRefresh = false): Promise<ResumeAnalysis> => {
     const url = `${API_URL}/resumes/${id}/analyze/${forceRefresh ? '?refresh=1' : ''}`;
-    const res = await fetch(url, { method: 'POST', headers: getAuthHeaders() });
+    const res = await fetch(url, {
+        credentials: 'include', method: 'POST', headers: getAuthHeaders() });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error ?? `Analysis failed: ${res.status}`);
@@ -98,7 +102,8 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
 
   const generateResume = useCallback(async (id: number, forceRefresh = false): Promise<GeneratedResume> => {
     const url = `${API_URL}/resumes/${id}/generate/${forceRefresh ? '?refresh=1' : ''}`;
-    const res = await fetch(url, { method: 'POST', headers: getAuthHeaders() });
+    const res = await fetch(url, {
+        credentials: 'include', method: 'POST', headers: getAuthHeaders() });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error ?? `Generation failed: ${res.status}`);
@@ -110,6 +115,7 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       const res = await fetch(`${API_URL}/resumes/${resumeId}/generate/download/`, {
+        credentials: 'include',
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error(`Download failed: ${res.status}`);
@@ -134,7 +140,8 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
     if (userInfo?.phone) qs.set('phone', userInfo.phone);
     if (userInfo?.location) qs.set('location', userInfo.location);
     const url = `${API_URL}/resumes/generate-new/${qs.toString() ? `?${qs.toString()}` : ''}`;
-    const res = await fetch(url, { method: 'POST', headers: getAuthHeaders() });
+    const res = await fetch(url, {
+        credentials: 'include', method: 'POST', headers: getAuthHeaders() });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error ?? `Generation failed: ${res.status}`);
@@ -146,6 +153,7 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       const res = await fetch(`${API_URL}/resumes/generate-new/download/`, {
+        credentials: 'include',
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error(`Download failed: ${res.status}`);
@@ -168,6 +176,7 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       const res = await fetch(`${API_URL}/resumes/${id}/download/`, {
+        credentials: 'include',
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error(`Download failed: ${res.status}`);

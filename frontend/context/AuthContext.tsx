@@ -2,6 +2,7 @@
 import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { User, AuthContextType } from 'types/types';
+import { getCsrfHeaders } from 'lib/csrf';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -12,7 +13,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // Starts true: the initial session check (getUser() on mount) hasn't run
+  // yet, and consumers like withAuth must not redirect before it resolves.
+  const [isLoading, setIsLoading] = useState(true);
 
   // guards re-hydration from running multiple times per session
   const hydratedOnce = useRef(false);
@@ -23,7 +26,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const res = await fetch(`${API_URL}/auth/registration/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify(form),
       });
 
@@ -41,23 +45,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const getAuthHeaders = () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
+  // The access/refresh JWTs live in httpOnly cookies now, so there's no
+  // client-readable signal of auth state — this is the only way to check it.
   const getUser = async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-    if (!token) return;
-
     try {
       setIsLoading(true);
       setError(null);
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/`, {
         method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
+
+      if (res.status === 401) {
+        setUser(null);
+        setLoggedIn(false);
+        return;
+      }
 
       const data = await res.json();
 
@@ -68,11 +72,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Handle either {results: [...]} or a single object
       const maybeUser = Array.isArray(data?.results) ? data?.results[0] ?? null : data;
       setUser(maybeUser);
+      setLoggedIn(true);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch user');
       setUser(null);
       setLoggedIn(false);
-      localStorage.removeItem('authToken');
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +88,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const res = await fetch(`${API_URL}/auth/login/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify(form),
       });
 
@@ -93,18 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error(JSON.stringify(data));
       }
 
-      // jwt payload (dj-rest-auth/jwt): adjust if your shape differs
-      if (data?.access) {
-        localStorage.setItem('authToken', data.access);
-        if (data?.refresh) localStorage.setItem('refreshToken', data.refresh);
-        hydratedOnce.current = true;
-      } else if (data?.key) {
-        // fallback if using token auth
-        localStorage.setItem('authToken', data.key);
-        hydratedOnce.current = true;
-      } else {
-        throw new Error('No token returned from login');
-      }
+      hydratedOnce.current = true;
 
       // One-time user fetch immediately after login
       await getUser();
@@ -116,82 +110,56 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setError(msg?.non_field_errors?.[0] || msg?.error || 'Login failed');
       setLoggedIn(false);
       setUser(null);
-      localStorage.removeItem('authToken');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loginWithToken = async (accessToken: string) => {
-    localStorage.setItem('authToken', accessToken);
-    hydratedOnce.current = true;
-    await getUser();
-    setLoggedIn(true);
-  };
-
-  const refreshAccessToken = async (): Promise<string | null> => {
-    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-    if (!refreshToken) return null;
+  const refreshAccessToken = async (): Promise<boolean> => {
     try {
       const res = await fetch(`${API_URL}/auth/refresh/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh: refreshToken }),
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
       });
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (data.access) {
-        localStorage.setItem('authToken', data.access);
-        return data.access;
-      }
-      return null;
+      return res.ok;
     } catch {
-      return null;
+      return false;
     }
   };
 
   const logout = () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-
     // Clear local state and redirect immediately — don't wait on the server
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('refreshToken');
     setLoggedIn(false);
     setUser(null);
     setError(null);
     hydratedOnce.current = false;
     router.replace('/login');
 
-    // Fire-and-forget server-side token invalidation
-    if (token) {
-      fetch(`${API_URL}/auth/logout/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      }).catch((err) => console.error('Server logout failed:', err));
-    }
+    // Fire-and-forget server-side cookie clearing / refresh-token blacklist
+    fetch(`${API_URL}/auth/logout/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
+    }).catch((err) => console.error('Server logout failed:', err));
   };
 
-  // Rehydrate on first mount if a token exists
+  // Rehydrate on first mount — seed the CSRF cookie, then check for an
+  // existing session via the httpOnly access cookie.
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-    if (token && !hydratedOnce.current) {
-      setLoggedIn(true);
-      getUser().catch(() => {
-        // if rehydrate fails, force logout state
-        localStorage.removeItem('authToken');
-        setLoggedIn(false);
-        setUser(null);
+    if (hydratedOnce.current) return;
+    hydratedOnce.current = true;
+    fetch(`${API_URL}/auth/csrf/`, { credentials: 'include' })
+      .catch(() => {})
+      .finally(() => {
+        getUser();
       });
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ user, loggedIn, isLoading, error, setLoggedIn, register, login, loginWithToken, logout, getUser, getAuthHeaders, refreshAccessToken }}
+      value={{ user, loggedIn, isLoading, error, setLoggedIn, register, login, logout, getUser, refreshAccessToken }}
     >
       {children}
     </AuthContext.Provider>

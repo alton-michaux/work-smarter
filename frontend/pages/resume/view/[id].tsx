@@ -43,12 +43,16 @@ export default function ResumeViewPage() {
     setPreviewLoading(true);
 
     const fetchBlob = async () => {
-      let res = await fetch(`${API_URL}/resumes/${resume.id}/download/`, { headers: getAuthHeaders() });
+      let res = await fetch(`${API_URL}/resumes/${resume.id}/download/`, {
+        credentials: 'include',
+        headers: getAuthHeaders(),
+      });
       if (res.status === 401) {
-        const newToken = await refreshAccessToken();
-        if (newToken) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
           res = await fetch(`${API_URL}/resumes/${resume.id}/download/`, {
-            headers: { Authorization: `Bearer ${newToken}`, Accept: 'application/json' },
+            credentials: 'include',
+            headers: getAuthHeaders(),
           });
         }
       }
