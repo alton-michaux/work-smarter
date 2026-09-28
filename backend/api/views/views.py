@@ -2,6 +2,8 @@ import io
 from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import FileResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -14,6 +16,7 @@ from api.models import Resume, ResumeAnalysis, GeneratedResume, Project, Task, R
 from api.serializers import ResumeSerializer, ResumeAnalysisSerializer, GeneratedResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range
 from api.services.meeting_completion import auto_complete_past_meetings
+from api.validators import validate_resume_file
 from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
 from loguru import logger
@@ -49,7 +52,13 @@ class TaskCursorPagination(CursorPagination):
 class TaskViewSet(viewsets.ModelViewSet):
     pagination_class = TaskCursorPagination
     serializer_class = TaskSerializer
-    
+
+    def get_throttles(self):
+        if self.action == 'decrypt':
+            self.throttle_scope = 'note_decrypt'
+            return [ScopedRateThrottle()]
+        return []
+
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx["user"] = self.request.user
@@ -69,6 +78,9 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         search = self.request.query_params.get("search", "").strip()
         if search:
+            # description is always blank for encrypted notes, so this can
+            # never match their body content — intentional, not a bug: the
+            # server has no readable copy of it to search.
             queryset = queryset.filter(
                 Q(title__icontains=search) | Q(description__icontains=search)
             )
@@ -401,6 +413,25 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(task)
         return Response(serializer.data)
 
+    @action(detail=True, methods=["post"], url_path="decrypt")
+    def decrypt(self, request, pk=None):
+        from api.services.note_encryption import decrypt_text, InvalidToken
+
+        task = self.get_object()
+        if not task.is_encrypted:
+            return Response({"error": "Note is not encrypted."}, status=status.HTTP_400_BAD_REQUEST)
+
+        passphrase = request.data.get("passphrase", "")
+        if not passphrase:
+            return Response({"error": "Passphrase is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            plaintext = decrypt_text(task.encrypted_description, task.encryption_salt, passphrase)
+        except InvalidToken:
+            return Response({"error": "Incorrect passphrase."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"description": plaintext})
+
 class RecurringTaskViewSet(viewsets.ModelViewSet):
     serializer_class = RecurringTaskSerializer
 
@@ -449,6 +480,14 @@ class ResumeViewSet(viewsets.ViewSet):
         'application/msword',
     }
 
+    AI_THROTTLE_ACTIONS = {'analyze', 'generate', 'generate_new'}
+
+    def get_throttles(self):
+        if self.action in self.AI_THROTTLE_ACTIONS:
+            self.throttle_scope = 'ai_resume'
+            return [ScopedRateThrottle()]
+        return []
+
     def _get_resume_or_404(self, request, pk):
         try:
             return Resume.objects.get(pk=pk, user=request.user)
@@ -476,6 +515,11 @@ class ResumeViewSet(viewsets.ViewSet):
                     {"error": "Invalid file type. Only PDF and Word documents are accepted."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            try:
+                validate_resume_file(file)
+            except DjangoValidationError as e:
+                return Response({"error": e.message}, status=status.HTTP_400_BAD_REQUEST)
 
             title = request.data.get('title', '').strip() or file.name
             resume = Resume(file=file, user=request.user, title=title)

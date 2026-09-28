@@ -299,6 +299,14 @@ class Task(models.Model):
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     description = models.TextField(blank=True)
     created_at = models.DateField(auto_now_add=True)
+
+    # Encrypted notes: when is_encrypted is True, `description` is kept
+    # blank and the ciphertext lives here instead, so every other consumer
+    # of `description` (task/meeting rendering, search, markdown editors)
+    # is unaffected by rows that happen to be encrypted notes.
+    is_encrypted = models.BooleanField(default=False)
+    encrypted_description = models.BinaryField(null=True, blank=True)
+    encryption_salt = models.BinaryField(null=True, blank=True)
     
     parent = models.ForeignKey(
         'self',
