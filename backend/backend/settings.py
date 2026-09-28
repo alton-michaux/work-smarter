@@ -10,7 +10,7 @@ env.read_env(BASE_DIR / ".env")  # Reads from .env in /backend
 
 # --- Security ---
 SECRET_KEY = env("SECRET_KEY")
-DEBUG = env.bool("DEBUG", default=True)
+DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list(
     "ALLOWED_HOSTS",
     default=[
@@ -19,6 +19,37 @@ ALLOWED_HOSTS = env.list(
         ".fly.dev",
     ]
 )
+
+# Fly.io terminates TLS at the edge and forwards over plain HTTP internally;
+# without this, Django can never see the request as "secure" and every
+# SECURE_*/cookie-secure check below would be permanently false in prod.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Deliberately NOT derived from DEBUG: CI and other non-DEBUG-but-non-HTTPS
+# environments (e.g. `DEBUG=0` with no TLS, like the test suite) would
+# otherwise get every request 301-redirected to https by SecurityMiddleware
+# instead of the response the test expects. Turn this on explicitly once
+# SECURE_PROXY_SSL_HEADER is confirmed to be forwarded correctly in prod.
+SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
+SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=0 if DEBUG else 31536000)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = env.str("SESSION_COOKIE_SAMESITE", default="Lax" if DEBUG else "None")
+
+# The frontend (Vercel) and backend (Fly.io) are different registrable
+# domains in production, so cookies must be SameSite=None+Secure there to
+# survive cross-site requests; locally (same-site http://localhost) browsers
+# reject SameSite=None without Secure, so we fall back to Lax under DEBUG.
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = False  # frontend JS reads this to send X-CSRFToken
+CSRF_COOKIE_SAMESITE = env.str("CSRF_COOKIE_SAMESITE", default="Lax" if DEBUG else "None")
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://localhost:3000"])
 
 # --- Installed Apps ---
 INSTALLED_APPS = [
@@ -63,21 +94,35 @@ MIDDLEWARE = [
 # --- REST Framework ---
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ],    
+    ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.CursorPagination",
     "PAGE_SIZE": 50,
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '10/min',
+        'registration': '5/hour',
+        'password_reset': '5/hour',
+        'ai_resume': '20/hour',
+        'note_decrypt': '10/min',
+        'token_refresh': '30/min',
+    },
 }
 
 # --- REST Auth Customization ---
+# JWTCookieAuthentication (above) checks the Authorization header first and
+# falls back to the cookie, so existing Bearer-token API clients/tests keep
+# working unchanged while the frontend moves to httpOnly cookies.
 REST_AUTH = {
     'USE_JWT': True,
-    'JWT_AUTH_COOKIE': None,
-    'JWT_AUTH_REFRESH_COOKIE': None,
+    'JWT_AUTH_COOKIE': 'ws-access',
+    'JWT_AUTH_REFRESH_COOKIE': 'ws-refresh',
+    'JWT_AUTH_HTTPONLY': True,
+    'JWT_AUTH_SECURE': not DEBUG,
+    'JWT_AUTH_SAMESITE': env.str("JWT_AUTH_SAMESITE", default="Lax" if DEBUG else "None"),
     'USER_DETAILS_SERIALIZER': 'backend.adapters.WritableEmailUserSerializer',
 }
 
@@ -166,6 +211,10 @@ STATIC_URL = '/static/'
 # --- Media Files (uploaded resumes etc.) ---
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# --- Upload size limits ---
+DATA_UPLOAD_MAX_MEMORY_SIZE = env.int("DATA_UPLOAD_MAX_MEMORY_SIZE", default=12 * 1024 * 1024)
+FILE_UPLOAD_MAX_MEMORY_SIZE = env.int("FILE_UPLOAD_MAX_MEMORY_SIZE", default=12 * 1024 * 1024)
 
 # --- OpenAI ---
 OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
