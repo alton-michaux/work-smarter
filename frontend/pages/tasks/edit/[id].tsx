@@ -31,7 +31,8 @@ export default function TaskEditPage() {
     if (!id || isLoading || taskInContext || fetchedTask) return;
     if (!loggedIn) return;
     setIsFetchingTask(true);
-    fetch(`${API_URL}/tasks/${id}/`, { headers: getAuthHeaders() })
+    fetch(`${API_URL}/tasks/${id}/`, {
+        credentials: 'include', headers: getAuthHeaders() })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: Task) => setFetchedTask(data))
       .catch(() => {})

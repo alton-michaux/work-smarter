@@ -6,6 +6,7 @@ import { useAuth } from '../../../context/AuthContext';
 import Spinner from 'components/shared/Spinner';
 import EmptyStateCard from 'components/shared/EmptyStateCard';
 import MarkdownBody from 'components/shared/MarkdownBody';
+import EncryptedNoteUnlock from 'components/notes/EncryptedNoteUnlock';
 import { toast } from 'sonner';
 import { GoogleCalendarStatus, Task } from 'types/types';
 
@@ -24,10 +25,12 @@ const TaskShowPage = () => {
   const [isBlacklisting, setIsBlacklisting] = useState(false);
   const [fetchedTask, setFetchedTask] = useState<Task | null>(null);
   const [isFetchingTask, setIsFetchingTask] = useState(false);
+  const [unlockedDescription, setUnlockedDescription] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loggedIn) return;
-    fetch(`${API_URL}/calendar/status/`, { headers: getAuthHeaders() })
+    fetch(`${API_URL}/calendar/status/`, {
+        credentials: 'include', headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((data: GoogleCalendarStatus) => setCalendarStatus(data))
       .catch(() => {});
@@ -37,10 +40,15 @@ const TaskShowPage = () => {
   const task = taskInContext ?? fetchedTask;
 
   useEffect(() => {
+    setUnlockedDescription(null);
+  }, [id]);
+
+  useEffect(() => {
     if (!id || isLoading || taskInContext || fetchedTask) return;
     if (!loggedIn) return;
     setIsFetchingTask(true);
-    fetch(`${API_URL}/tasks/${id}/`, { headers: getAuthHeaders() })
+    fetch(`${API_URL}/tasks/${id}/`, {
+        credentials: 'include', headers: getAuthHeaders() })
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data: Task) => setFetchedTask(data))
       .catch(() => {})
@@ -223,7 +231,17 @@ const TaskShowPage = () => {
             </span>
           </div>
 
-          <MarkdownBody value={task.description} emptyText="No notes yet." />
+          {task.is_encrypted && unlockedDescription === null ? (
+            <EncryptedNoteUnlock
+              taskId={task.id}
+              onUnlock={(plaintext) => setUnlockedDescription(plaintext)}
+            />
+          ) : (
+            <MarkdownBody
+              value={task.is_encrypted ? (unlockedDescription ?? '') : task.description}
+              emptyText="No notes yet."
+            />
+          )}
         </div>
 
         {/* Details */}
