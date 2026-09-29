@@ -1,4 +1,5 @@
 import pytest
+from rest_framework.test import APIClient
 
 
 def _login(api_client, user, password):
@@ -71,7 +72,11 @@ def test_refresh_rotates_cookies(api_client, create_user):
 
 
 @pytest.mark.django_db
-def test_refresh_without_csrf_header_is_rejected(api_client, create_user):
+def test_refresh_without_csrf_header_is_rejected(create_user):
+    # APIClient skips CSRF checks by default (it flags the request with
+    # _dont_enforce_csrf_checks, which Django's CSRF middleware honors), so
+    # this test needs a client that behaves like a real browser.
+    api_client = APIClient(enforce_csrf_checks=True)
     user = create_user(username="alice", email="alice@wonderland.com", password="madhatter")
     _login(api_client, user, "madhatter")
 
