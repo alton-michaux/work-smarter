@@ -1,8 +1,8 @@
+from dj_rest_auth.jwt_auth import JWTCookieAuthentication
 from rest_framework import mixins, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from api.models import PersonalAPIToken
 from api.serializers import PersonalAPITokenSerializer
@@ -21,7 +21,7 @@ class PersonalAPITokenViewSet(
     """
 
     serializer_class = PersonalAPITokenSerializer
-    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    authentication_classes = [JWTCookieAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated]
     pagination_class = None
 
