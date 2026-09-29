@@ -127,8 +127,21 @@ class CsrfCookieView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class IPScopedRateThrottle(ScopedRateThrottle):
+    """ScopedRateThrottle that always keys on client IP.
+
+    The stock class keys authenticated requests by user id. Registration
+    sets auth cookies on success, so a client that keeps its cookies would
+    make each next signup as the account it just created — a fresh,
+    empty throttle bucket every time, never hitting the limit.
+    """
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
+
+
 class ThrottledRegisterView(RegisterView):
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [IPScopedRateThrottle]
     throttle_scope = "registration"
 
     def create(self, request, *args, **kwargs):
