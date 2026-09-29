@@ -34,6 +34,9 @@ def encrypt_text(plaintext: str, passphrase: str) -> tuple[bytes, bytes]:
 
 def decrypt_text(ciphertext: bytes, salt: bytes, passphrase: str) -> str:
     """Raises cryptography.fernet.InvalidToken on a wrong passphrase or
-    tampered ciphertext."""
-    key = _derive_key(passphrase, salt)
+    tampered ciphertext.
+
+    Both args come straight off BinaryFields, which Postgres hands back as
+    memoryview, not bytes — so coerce them before use."""
+    key = _derive_key(passphrase, bytes(salt))
     return Fernet(key).decrypt(bytes(ciphertext)).decode()
