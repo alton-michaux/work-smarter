@@ -98,3 +98,23 @@ def test_logout_clears_cookies_and_revokes_session(api_client, create_user):
 
     response = api_client.get("/api/user/")
     assert response.status_code == 401
+
+
+@pytest.mark.django_db
+def test_api_key_management_accepts_cookie_auth(create_user):
+    # Key management overrides authentication_classes, so it doesn't inherit
+    # the cookie-aware default — force_authenticate in test_api_keys.py can't
+    # catch that, hence a real login + CSRF-enforcing client here.
+    api_client = APIClient(enforce_csrf_checks=True)
+    user = create_user(username="alice", email="alice@wonderland.com", password="madhatter")
+    _login(api_client, user, "madhatter")
+
+    assert api_client.get("/api/keys/").status_code == 200
+
+    response = api_client.post(
+        "/api/keys/", {"name": "laptop", "scope": "read"}, format="json",
+        **_csrf_header(api_client),
+    )
+    assert response.status_code == 201
+
+    assert api_client.get("/api/v1/tasks/").status_code == 200
