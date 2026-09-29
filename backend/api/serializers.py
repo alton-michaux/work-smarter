@@ -83,6 +83,18 @@ class TaskSerializer(serializers.ModelSerializer):
 
         return parent
 
+    def to_internal_value(self, data):
+        attrs = super().to_internal_value(data)
+        # DRF auto-adds a UniqueTogetherValidator for the model's
+        # (recurring_task, begin_date) constraint, and on create it rejects
+        # any payload that omits one of those fields — overriding our
+        # required=False. Treat an omitted recurring_task as "not recurring"
+        # on create only; a default=None on the field would instead null the
+        # FK on every full PUT that leaves it out.
+        if self.instance is None:
+            attrs.setdefault("recurring_task", None)
+        return attrs
+
     def validate(self, attrs):
         parent = attrs.get("parent", getattr(self.instance, "parent", None))
         begin_date = attrs.get("begin_date", getattr(self.instance, "begin_date", None))
