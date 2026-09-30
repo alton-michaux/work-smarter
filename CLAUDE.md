@@ -62,6 +62,11 @@ docker-compose exec backend python manage.py dbshell
 # agendas) for manually exercising the daily log. Idempotent; --clear removes it.
 docker-compose exec backend python manage.py seed_daily_log_demo
 docker-compose exec backend python manage.py seed_daily_log_demo --clear
+
+# Build (or rebuild) an isolated demo account with stress-test data across every
+# feature. Login: demo@worksmarter.test / demo-pass-1234; note passphrase
+# demo-passphrase; API keys are printed on each run. --clear deletes it.
+docker-compose exec backend python manage.py seed_demo_account
 ```
 
 ## Architecture
