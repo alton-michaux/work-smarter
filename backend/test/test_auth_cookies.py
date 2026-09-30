@@ -118,3 +118,47 @@ def test_api_key_management_accepts_cookie_auth(create_user):
     assert response.status_code == 201
 
     assert api_client.get("/api/v1/tasks/").status_code == 200
+
+
+def _refresh_with(raw_refresh):
+    """POST to the refresh endpoint from a fresh client holding only this token."""
+    client = APIClient()
+    client.cookies["ws-refresh"] = raw_refresh
+    return client.post("/api/auth/refresh/")
+
+
+@pytest.mark.django_db
+def test_logout_revokes_refresh_token(api_client, create_user):
+    # Clearing cookies only protects a well-behaved browser. A copied refresh
+    # token must stop working too, or logout doesn't actually end the session.
+    user = create_user(username="alice", email="alice@wonderland.com", password="madhatter")
+    _login(api_client, user, "madhatter")
+    refresh = api_client.cookies["ws-refresh"].value
+
+    assert api_client.post("/api/auth/logout/").status_code == 200
+
+    assert _refresh_with(refresh).status_code == 401
+
+
+@pytest.mark.django_db
+def test_logout_deletes_refresh_cookie_on_the_path_it_was_set(api_client, create_user):
+    user = create_user(username="alice", email="alice@wonderland.com", password="madhatter")
+    login = _login(api_client, user, "madhatter")
+    set_path = login.cookies["ws-refresh"]["path"]
+
+    logout = api_client.post("/api/auth/logout/")
+
+    cleared = logout.cookies["ws-refresh"]
+    assert cleared.value == ""
+    # A delete on any other path leaves the browser's cookie in place.
+    assert cleared["path"] == set_path
+
+
+@pytest.mark.django_db
+def test_rotated_refresh_token_cannot_be_reused(api_client, create_user):
+    user = create_user(username="alice", email="alice@wonderland.com", password="madhatter")
+    _login(api_client, user, "madhatter")
+    old_refresh = api_client.cookies["ws-refresh"].value
+
+    assert _refresh_with(old_refresh).status_code == 200
+    assert _refresh_with(old_refresh).status_code == 401
