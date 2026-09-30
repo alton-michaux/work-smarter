@@ -296,8 +296,7 @@ class Command(BaseCommand):
             self._task(user, title, parent=parent, position=pos, is_done=done,
                        begin_date=t - timedelta(days=8), project=p["mobile"])
 
-        # carry_over=False. The daily-log query doesn't consult this flag yet, so
-        # today this row still carries over; it's here to probe that behaviour.
+        # carry_over=False: shows on its begin date only, not on today's log.
         self._task(user, "One-off: check staging banner", carry_over=False,
                    begin_date=t - timedelta(days=2), priority="low")
 
