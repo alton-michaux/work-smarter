@@ -15,7 +15,7 @@
 - [x] Weekly tracker UI / Task edit button
 - [x] Unfinished tasks aren't being returned from API in weekly view
 - [x] Not able to associate new task to project
-- [x] Recurring tasks seem to be piling up in daily log (fixed in weekly tracker)
+- [x] Recurring tasks seem to be piling up in daily log (fixed in weekly tracker; daily log now carries over only a series' latest missed occurrence)
 - [x] Need to truncate meeting/work on daily log
 - [x] Make Type dropdown
 - [x] Recurring tasks aren't pre-populated as recurring in edit task form
@@ -48,6 +48,8 @@
 - [x] Importing meetings creates duplicate events (imported meeting from calendar and separate recurring event?)
 - [x] Meetings should be marked as done after time of completion (frontend and backend)
 - [x] Long term tasks don't persist in daily view: I have to search the task even though it's marked as carry_over: true and done: false. Even when marked done it only shows for the day it was created. This is a long running bug that has yet to be fixed.
+- [x] Settings page fails to load/save API keys (key management and /v1/ endpoints still used header-only JWT auth after the move to httpOnly cookies)
+- [x] `carry_over=False` was ignored: tasks now stay on their own day (daily log) or week (weekly tracker). The create form and TXT import defaulted it to false, so they now default to true
 
 ---
 
