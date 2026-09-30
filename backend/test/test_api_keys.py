@@ -915,3 +915,73 @@ def test_writing_stamps_last_used_at(write_client, v1_tasks_url):
     write_client.post(v1_tasks_url, {"title": "x"}, format="json")
 
     assert PersonalAPIToken.objects.get().last_used_at is not None
+
+
+# --- Encrypted notes ----------------------------------------------------------
+
+@pytest.fixture
+def encrypted_note(get_user):
+    from api.services.note_encryption import encrypt_text
+
+    ciphertext, salt = encrypt_text("the secret", "passphrase")
+    return Task.objects.create(
+        user=get_user, title="Private", category="note", description="",
+        is_encrypted=True, encrypted_description=ciphertext, encryption_salt=salt,
+    )
+
+
+@pytest.mark.django_db
+def test_encrypted_note_is_flagged_and_content_withheld(key_client, encrypted_note):
+    res = key_client.get(task_detail(encrypted_note))
+    assert res.status_code == 200
+    assert res.data["is_encrypted"] is True
+    assert res.data["description"] == ""
+    assert "the secret" not in str(res.content)
+
+
+@pytest.mark.django_db
+def test_patch_description_on_encrypted_note_is_rejected(write_client, encrypted_note):
+    res = write_client.patch(task_detail(encrypted_note), {"description": "plaintext"},
+                             format="json")
+    assert res.status_code == 400
+    assert "description" in res.data
+
+    encrypted_note.refresh_from_db()
+    assert encrypted_note.description == ""
+
+
+@pytest.mark.django_db
+def test_encrypted_note_cannot_change_category(write_client, encrypted_note):
+    res = write_client.patch(task_detail(encrypted_note), {"category": "task"}, format="json")
+    assert res.status_code == 400
+
+    encrypted_note.refresh_from_db()
+    assert encrypted_note.category == "note"
+
+
+@pytest.mark.django_db
+def test_encrypted_note_accepts_non_content_edits(write_client, encrypted_note):
+    """Title, dates and the like are not encrypted, so they stay editable — and a
+    PUT that omits category must not reset the note to the default category."""
+    res = write_client.patch(task_detail(encrypted_note), {"title": "Renamed"}, format="json")
+    assert res.status_code == 200
+
+    body = write_client.get(task_detail(encrypted_note)).data
+    writable = {k: body[k] for k in ("title", "description", "priority", "is_done")}
+    res = write_client.put(task_detail(encrypted_note), writable, format="json")
+    assert res.status_code == 200
+
+    encrypted_note.refresh_from_db()
+    assert encrypted_note.title == "Renamed"
+    assert encrypted_note.category == "note"
+    assert encrypted_note.is_encrypted
+    assert bytes(encrypted_note.encrypted_description)
+
+
+@pytest.mark.django_db
+def test_is_encrypted_is_read_only(write_client, v1_tasks_url):
+    res = write_client.post(v1_tasks_url, {"title": "Note", "category": "note",
+                                           "is_encrypted": True}, format="json")
+    # Unknown/read-only fields are ignored on write, never honored.
+    assert res.status_code == 201
+    assert Task.objects.get(id=res.data["id"]).is_encrypted is False

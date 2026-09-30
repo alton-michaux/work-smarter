@@ -275,6 +275,11 @@ curl -X POST -H "Authorization: Api-Key YOUR_KEY" \\
           are set up here in the app rather than over the API.
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
+          Encrypted notes are returned with <code>is_encrypted: true</code> and a blank{' '}
+          <code>description</code>; their contents never leave the app. You can still
+          edit their title and dates, but not their description or category.
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Unrecognized parameters and invalid filter values return a{' '}
           <code>400</code> rather than being ignored, so a typo never looks like
           an empty or unfiltered result. Writing with a read-only key returns a{' '}
