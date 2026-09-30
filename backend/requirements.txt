@@ -19,7 +19,7 @@ colorama==0.4.3
 configobj==5.0.6
 constantly==15.1.0
 coverage==7.9.2
-cryptography==46.0.7
+cryptography==50.0.0
 Cython==3.1.2
 defer==1.0.4
 distlib==0.3.9
@@ -105,7 +105,7 @@ PyHamcrest==1.9.0
 PyJWT==2.15.0
 pymacaroons==0.13.0
 PyNaCl==1.6.2
-pyOpenSSL==26.0.0
+pyOpenSSL==26.4.0
 pyparsing==3.1.2
 pyRFC3339==1.1
 pyrsistent==0.20.0
