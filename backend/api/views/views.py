@@ -169,9 +169,11 @@ class TaskViewSet(viewsets.ModelViewSet):
                             |
                             (
                                 # Non-recurring, unfinished tasks:
-                                # - dated tasks carry over until done
+                                # - dated tasks carry over until done, unless
+                                #   carry_over is off: then only on their own day
                                 Q(recurring_task__isnull=True, is_done=False, begin_date__lte=day)
                                 & (Q(end_date__isnull=True) | Q(end_date__gte=day))
+                                & (Q(carry_over=True) | Q(begin_date=day))
                             )
                             |
                             (
@@ -228,8 +230,9 @@ class TaskViewSet(viewsets.ModelViewSet):
                             Q(recurring_task__isnull=True) &
                             Q(begin_date__lte=end_of_week) &
                             (
-                                # active/ongoing
-                                (Q(is_done=False) & (Q(end_date__isnull=True) | Q(end_date__gte=start_of_week)))
+                                # active/ongoing; carry_over=False stays in its own week
+                                (Q(is_done=False) & (Q(end_date__isnull=True) | Q(end_date__gte=start_of_week))
+                                 & (Q(carry_over=True) | Q(begin_date__gte=start_of_week)))
                                 |
                                 # completed within this week
                                 Q(end_date__range=(start_of_week, end_of_week))

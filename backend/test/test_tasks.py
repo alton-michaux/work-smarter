@@ -1356,6 +1356,50 @@ def test_active_on_recurring_carry_over_is_per_series(auth_client, get_user, cre
 
 
 @pytest.mark.django_db
+def test_active_on_carry_over_false_task_stays_on_its_day(auth_client, get_user):
+    """carry_over=False pins an unfinished task to its begin_date; the default
+    (True) keeps carrying it forward."""
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    Task.objects.create(user=get_user, title="One-off", begin_date=yesterday, carry_over=False)
+    Task.objects.create(user=get_user, title="Ongoing", begin_date=yesterday)
+
+    assert {"One-off", "Ongoing"} <= {t["title"] for t in _daily_log(auth_client, yesterday)}
+
+    today_titles = {t["title"] for t in _daily_log(auth_client, today)}
+    assert "Ongoing" in today_titles
+    assert "One-off" not in today_titles
+
+
+@pytest.mark.django_db
+def test_active_on_carry_over_false_undated_task_still_shows(auth_client, get_user):
+    """With no begin_date there is no day to pin the task to, so it keeps showing."""
+    Task.objects.create(user=get_user, title="Undated one-off", begin_date=None, carry_over=False)
+
+    assert "Undated one-off" in {t["title"] for t in _daily_log(auth_client, date.today())}
+
+
+@pytest.mark.django_db
+def test_weekly_carry_over_false_task_stays_in_its_week(auth_client, get_user):
+    today = date.today()
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+    Task.objects.create(user=get_user, title="Last week one-off", carry_over=False,
+                        begin_date=start_of_week - timedelta(days=3))
+    Task.objects.create(user=get_user, title="This week one-off", carry_over=False,
+                        begin_date=start_of_week + timedelta(days=1))
+    Task.objects.create(user=get_user, title="Last week ongoing",
+                        begin_date=start_of_week - timedelta(days=3))
+
+    res = auth_client.get(f"/api/tasks/?begin_date={start_of_week}&end_date={end_of_week}")
+    assert res.status_code == 200
+    titles = {t["title"] for t in res.data["results"]}
+    assert "This week one-off" in titles
+    assert "Last week ongoing" in titles
+    assert "Last week one-off" not in titles
+
+
+@pytest.mark.django_db
 def test_active_on_recurring_task_stops_carrying_over_when_done(auth_client, get_user, create_task, create_recurring_task):
     """Once a recurring task is marked done it no longer carries over."""
     today = date.today()
