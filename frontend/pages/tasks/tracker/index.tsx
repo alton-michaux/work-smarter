@@ -81,11 +81,11 @@ export default function TaskTrackerPage() {
   if (!selectedWeek) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center px-4 py-10">
-      <div className="w-full max-w-6xl bg-white dark:bg-gray-800 rounded-lg shadow">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 flex justify-center px-4 py-6">
+      <div className="w-full max-w-6xl min-h-0 flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
 
-        {/* Sticky header */}
-        <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        {/* Fixed header */}
+        <div className="shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="px-6 py-3">
             <div className="flex items-center justify-between mb-3">
               <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
@@ -131,9 +131,9 @@ export default function TaskTrackerPage() {
           </div>
         </div>
 
-        {/* Scrollable content */}
-        <div className="px-6 pb-6">
-          <div className="mt-6">
+        {/* Content fills the remaining height; each section scrolls on its own */}
+        <div className="flex-1 min-h-0 px-6 pt-6 pb-6 overflow-y-auto lg:overflow-hidden">
+          <div className="h-full min-h-0">
             {isLoading ? (
               <div className="flex justify-center py-8">
                 <Spinner />

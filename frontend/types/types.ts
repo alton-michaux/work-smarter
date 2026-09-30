@@ -32,7 +32,10 @@ export type Task = {
   category: string;
   carry_over?: boolean;
   is_subtask?: boolean;
-  
+
+  /** Manual sort order among siblings; only meaningful for subtasks. */
+  position?: number;
+
   parent?: number | null;
 
   project?: number;
@@ -96,6 +99,7 @@ export type TasksContextType = {
   setTasks: (tasks: Task[]) => void;
   addTask: (task: Omit<Task, 'id'>) => Promise<void>;
   addSubtask: (payload: CreateTaskPayload) => Promise<void>;
+  reorderSubtasks: (parentId: number, orderedIds: number[]) => Promise<void>;
   updateTaskAndReload: (task: Task) => Promise<void>;
   deleteTask: (taskOrId: TaskIdLike, options?: DeleteTaskOptions) => Promise<void>;
   fetchTasks: () => Promise<void>;
@@ -265,6 +269,22 @@ export type Filters = {
  *  'compact' puts them on a single line to fit more rows on screen. */
 export type OutlineDensity = 'comfortable' | 'compact';
 
+/** Wiring for dragging one subtask row within its sibling list. */
+export type OutlineRowDrag = {
+  isDragging: boolean;
+  /** Which edge of this row the drop indicator sits on, if any. */
+  dropEdge: 'before' | 'after' | null;
+  onDragStart: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
+  /** Keyboard fallback: -1 moves the row up, 1 moves it down. */
+  onMove: (direction: -1 | 1) => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+};
+
 export type OutlineRowProps = {
   node: Node;
   depth: number;
@@ -272,6 +292,13 @@ export type OutlineRowProps = {
   onEdit: (id: number) => void;
   onDelete: (task: any) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
+
+  /** Subtasks are hidden while true. Only meaningful for rows with children. */
+  isCollapsed?: boolean;
+  onToggleCollapse?: (id: string) => void;
+
+  /** Present only on rows the user is allowed to drag. */
+  drag?: OutlineRowDrag;
 
   density?: OutlineDensity;
 
@@ -287,6 +314,18 @@ export type OutlineTreeProps = {
   onDelete: (id: number) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
 
+  /** Ids of collapsed parents; passed down by the root tree to nested levels. */
+  collapsedIds?: Set<string>;
+  onToggleCollapse?: (id: string) => void;
+
+  /** localStorage key for persisting collapse state. Root tree only. */
+  storageKey?: string;
+
+  /** Enable drag-to-reorder for subtask rows. Off by default because it
+   *  requires the tree to hold every sibling of a parent — true in the daily
+   *  log, not in filtered views like search results. */
+  reorderable?: boolean;
+
   density?: OutlineDensity;
 
   onAddSubtask?: (args: { parentId: number; title: string; beginDate?: string | null; category?: string | null; project?: number | null }) => Promise<void>;
@@ -297,10 +336,6 @@ export type PanelProps = {
   right?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
-
-  /** Stretch to the full height of the parent (default). When false the panel
-   *  hugs its content and only scrolls once it would exceed the parent. */
-  fill?: boolean;
 };
 
 //--------UI---------//
@@ -497,3 +532,17 @@ export type ResumesContextType = {
   generateNewResume: (forceRefresh?: boolean, userInfo?: { phone?: string; location?: string }) => Promise<GeneratedResume>;
   downloadNewGeneratedResume: () => Promise<void>;
 };
+
+export type PersonalAPIKeyScope = 'read' | 'read_write';
+
+export type PersonalAPIKey = {
+  id: number;
+  name: string;
+  prefix: string;
+  scope: PersonalAPIKeyScope;
+  created_at: string;
+  last_used_at: string | null;
+};
+
+/** Only returned by POST /keys/ — the secret is never retrievable again. */
+export type NewPersonalAPIKey = PersonalAPIKey & { key: string };
