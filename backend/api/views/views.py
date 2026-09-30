@@ -20,7 +20,7 @@ from api.validators import validate_resume_file
 from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
 from loguru import logger
-from django.db.models import Count, Min, Max
+from django.db.models import Count, Min, Max, OuterRef, Subquery
 
 
 class DeleteAccountView(APIView):
@@ -151,6 +151,15 @@ class TaskViewSet(viewsets.ModelViewSet):
                             tz_offset = 0
                         auto_complete_past_meetings(user, tz_offset=tz_offset)
 
+                        latest_occurrence = (
+                            Task.objects.filter(
+                                recurring_task=OuterRef("recurring_task"),
+                                begin_date__lte=day,
+                            )
+                            .order_by("-begin_date", "-id")
+                            .values("pk")[:1]
+                        )
+
                         filtered_queryset = queryset.filter(
                             (
                                 # Non-recurring, unfinished tasks:
@@ -179,10 +188,12 @@ class TaskViewSet(viewsets.ModelViewSet):
                             |
                             (
                                 # Recurring tasks (not meetings):
-                                # - past undone occurrences carry over until completed,
-                                #   just like non-recurring tasks do
+                                # - a missed occurrence carries over, but only while it
+                                #   is the series' latest occurrence. A newer one (done
+                                #   or not) supersedes it, so a daily series shows one
+                                #   row instead of one per missed day.
                                 Q(recurring_task__isnull=False, is_done=False, category='task', begin_date__lt=day)
-                                & (Q(end_date__isnull=True) | Q(end_date__gte=day))
+                                & Q(pk=Subquery(latest_occurrence))
                             )
                             |
                             (
