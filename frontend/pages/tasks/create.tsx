@@ -12,7 +12,7 @@ const emptyTask = {
   description: '',
   is_done: false,
   is_subtask: false,
-  carry_over: false,
+  carry_over: true,
   user: '',
   project: '',
 };
