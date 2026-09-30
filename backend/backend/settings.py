@@ -69,6 +69,9 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'dj_rest_auth',
     'dj_rest_auth.registration',
+    # Without this, logout can't revoke the refresh token and
+    # BLACKLIST_AFTER_ROTATION below is silently a no-op.
+    'rest_framework_simplejwt.token_blacklist',
 
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.linkedin_oauth2',
@@ -120,6 +123,9 @@ REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'ws-access',
     'JWT_AUTH_REFRESH_COOKIE': 'ws-refresh',
+    # Only the auth endpoints need the refresh token. dj-rest-auth's logout
+    # clears the cookie on this path too, so it must match where it was set.
+    'JWT_AUTH_REFRESH_COOKIE_PATH': '/api/auth/',
     'JWT_AUTH_HTTPONLY': True,
     'JWT_AUTH_SECURE': not DEBUG,
     'JWT_AUTH_SAMESITE': env.str("JWT_AUTH_SAMESITE", default="Lax" if DEBUG else "None"),

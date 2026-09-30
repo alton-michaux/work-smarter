@@ -42,7 +42,7 @@ def set_jwt_cookies(response, access=None, refresh=None):
             cfg["JWT_AUTH_REFRESH_COOKIE"],
             str(refresh),
             max_age=int(simplejwt_settings.REFRESH_TOKEN_LIFETIME.total_seconds()),
-            path="/api/auth/",
+            path=cfg["JWT_AUTH_REFRESH_COOKIE_PATH"],
             **kwargs,
         )
 
@@ -52,7 +52,7 @@ def unset_jwt_cookies(response):
     if cfg.get("JWT_AUTH_COOKIE"):
         response.delete_cookie(cfg["JWT_AUTH_COOKIE"], path="/")
     if cfg.get("JWT_AUTH_REFRESH_COOKIE"):
-        response.delete_cookie(cfg["JWT_AUTH_REFRESH_COOKIE"], path="/api/auth/")
+        response.delete_cookie(cfg["JWT_AUTH_REFRESH_COOKIE"], path=cfg["JWT_AUTH_REFRESH_COOKIE_PATH"])
 
 
 def _csrf_failure_reason(request):
