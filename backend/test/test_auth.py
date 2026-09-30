@@ -13,7 +13,8 @@ def test_registration_success(api_client):
         format="json"
     )
     assert response.status_code == 201
-    assert "key" in response.data or "access" in response.data
+    # Tokens are delivered as httpOnly cookies now, never in the JSON body.
+    assert "access" not in response.data and "refresh" not in response.data
 
 @pytest.mark.django_db
 def test_registration_password_mismatch(api_client):
@@ -35,7 +36,11 @@ def test_login_success(api_client, create_user):
     user = create_user(username= "alice", email="alice@wonderland.com", password="madhatter")
     response = api_client.post("/api/auth/login/", {"email": user.email, "password": "madhatter"}, format="json")
     assert response.status_code == 200
-    assert "key" in response.data or "access" in response.data
+    # Tokens are delivered as httpOnly cookies now, never in the JSON body.
+    assert "access" not in response.data and "refresh" not in response.data
+    assert response.cookies["ws-access"].value
+    assert response.cookies["ws-access"]["httponly"]
+    assert response.cookies["ws-refresh"].value
 
 @pytest.mark.django_db
 def test_login_fail(api_client):

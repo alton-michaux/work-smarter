@@ -2,9 +2,9 @@ import React, { createContext, useState, useContext, ReactNode, useCallback } fr
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Task, Filters, TasksContextType, CreateTaskPayload, DeleteTaskOptions } from 'types/types'
+import { API_URL } from 'lib/api';
 
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
@@ -49,7 +49,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       const url = buildUrl({ ordering: '-begin_date', tz_offset: -new Date().getTimezoneOffset() });
-      const res = await fetch(url, { headers: getAuthHeaders() });
+      const res = await fetch(url, {
+        credentials: 'include', headers: getAuthHeaders() });
 
       if (res.status === 401) {
         setError('Unauthorized');
@@ -86,7 +87,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         let nextUrl: string | null = buildUrl(params);
 
         while (nextUrl) {
-          const res = await fetch(nextUrl, { headers: getAuthHeaders() });
+          const res = await fetch(nextUrl, {
+        credentials: 'include', headers: getAuthHeaders() });
 
           if (res.status === 401) {
             setError("Unauthorized");
@@ -117,7 +119,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     setIsLoadingNotes(true);
     try {
       const url = buildUrl({ category: 'note', page_size: 500, ordering: '-begin_date', tz_offset: -new Date().getTimezoneOffset() });
-      const res = await fetch(url, { headers: getAuthHeaders() });
+      const res = await fetch(url, {
+        credentials: 'include', headers: getAuthHeaders() });
       if (res.status === 401) return;
       if (!res.ok) throw new Error(`Failed to fetch notes: ${res.status}`);
       const data = await res.json();
@@ -144,7 +147,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           ordering: 'begin_date',
         });
         while (nextUrl) {
-          const res = await fetch(nextUrl, { headers: getAuthHeaders() });
+          const res = await fetch(nextUrl, {
+        credentials: 'include', headers: getAuthHeaders() });
           if (res.status === 401) { setError('Unauthorized'); return; }
           if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
           const data = await res.json();
@@ -166,6 +170,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     setError(null)
     try {
       const res = await fetch(`${API_URL}/recurring-tasks/${recurring_task_id}/`, {
+        credentials: 'include',
         headers: {
           "Content-Type": "application/json",
           ...getAuthHeaders(),
@@ -198,6 +203,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const res = await fetch(`${API_URL}/tasks/${taskId}/`, {
+        credentials: 'include',
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -246,6 +252,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const res = await fetch(`${API_URL}/recurring-tasks/`, {
+        credentials: 'include',
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -282,6 +289,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
       // 3) Create the Task row
       const res2 = await fetch(`${API_URL}/tasks/`, {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -339,6 +347,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const res = await fetch(`${API_URL}/tasks/reorder/`, {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -372,6 +381,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const res = await fetch(`${API_URL}/tasks/`, {
+        credentials: 'include',
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -436,6 +446,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           ? `${API_URL}/recurring-tasks/${recurringTaskId}/`
           : `${API_URL}/recurring-tasks/`,
         {
+        credentials: 'include',
           method: recurringTaskId ? "PATCH" : "POST",
           headers: {
             "Content-Type": "application/json",
@@ -468,6 +479,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
     // 3) Update the Task row
     const res = await fetch(`${API_URL}/tasks/${taskPayload.id}/`, {
+        credentials: 'include',
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -514,6 +526,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     else if (isRecurring && deleteFuture) url = `${API_URL}/tasks/${id}/?delete_future=1`;
 
     const res = await fetch(url, {
+        credentials: 'include',
       method: "DELETE",
       headers: {
         ...getAuthHeaders(),
@@ -560,6 +573,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (!loggedIn) throw new Error('Not logged in');
 
     const res = await fetch(`${API_URL}/calendar/pull/`, {
+        credentials: 'include',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -590,6 +604,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (!loggedIn) throw new Error('Not logged in');
 
     const res = await fetch(`${API_URL}/calendar/push-deadline/${taskId}/`, {
+        credentials: 'include',
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     });
@@ -612,6 +627,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (!loggedIn) throw new Error('Not logged in');
 
     const res = await fetch(`${API_URL}/calendar/blacklist/`, {
+        credentials: 'include',
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ google_event_id: googleEventId, title, delete_task: deleteTask }),
@@ -645,7 +661,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         };
         if (category) filters.category = category;
         const url = buildUrl(filters);
-        const res = await fetch(url, { headers: getAuthHeaders() });
+        const res = await fetch(url, {
+        credentials: 'include', headers: getAuthHeaders() });
         if (res.status === 401) { setError('Unauthorized'); return; }
         if (!res.ok) throw new Error(`Failed to search: ${res.status}`);
         const data = await res.json();
@@ -663,6 +680,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (!loggedIn) throw new Error('Not logged in');
 
     const res = await fetch(`${API_URL}/tasks/${taskId}/push-to-calendar/`, {
+        credentials: 'include',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -1,6 +1,8 @@
 // context/APIContext.tsx
 import React, { useState, createContext, useContext, ReactNode } from 'react';
 import { APIContextType } from 'types/types';
+import { getCsrfHeaders } from 'lib/csrf';
+import { API_URL } from 'lib/api';
 
 const APIContext = createContext<APIContextType | undefined>(undefined);
 
@@ -16,32 +18,26 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   const getAuthHeaders = () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     return {
-      Authorization: token ? `Bearer ${token}` : '',
       Accept: 'application/json',
       'Content-Type': 'application/json',
+      ...getCsrfHeaders(),
     };
   };
 
   const getAuthHeadersForForm = () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     // IMPORTANT: do NOT set Content-Type for FormData
     return {
-      Authorization: token ? `Bearer ${token}` : '',
       Accept: 'application/json',
+      ...getCsrfHeaders(),
     };
   };
 
   const getImportCsvSpec = async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     setIsLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/import/csv/spec/`,{
-        headers: {
-          Authorization: token ? `Bearer ${token}` : '',
-          // "Content-Type": "multipart/form-data"
-        },
+      const res = await fetch(`${API_URL}/import/csv/spec/`, {
+        credentials: 'include',
       });
       const data = await res.json().catch(() => ({}));
       return data;
@@ -55,27 +51,24 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const importTasksCsv = async (file: File, dryRun: boolean) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     const formData = new FormData();
     formData.append("file", file); // this MUST match upload_field: "file"
 
-    const url = `${process.env.NEXT_PUBLIC_API_URL}${dryRun ? "/import/csv/?dry_run=true" : "/import/csv/"}`;
+    const url = `${API_URL}${dryRun ? "/import/csv/?dry_run=true" : "/import/csv/"}`;
     try {
       setIsLoading(true);
       setError(null);
 
       const res = await fetch(url, {
         method: 'POST',
-        headers: {
-          Authorization: token ? `Bearer ${token}` : '',
-          // "Content-Type": "multipart/form-data" 
-        },
+        credentials: 'include',
+        headers: getAuthHeadersForForm(),
         body: formData
       });
 
       const data = await res.json().catch(() => ({}));
       console.log("IMPORT RESPONSE DATA:", data);
-     
+
       return data
     } catch (err: any) {
       const message = err?.message?.detail || 'Unknown error';
@@ -83,11 +76,10 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
       setUploadStatus(message);
     } finally {
       setIsLoading(false);
-    } 
+    }
   };
 
   const fileUpload = async (selectedFile: File | null) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     if (!selectedFile) return;
 
     const formData = new FormData();
@@ -97,12 +89,10 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       setError(null);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/import/`, {
+      const res = await fetch(`${API_URL}/import/`, {
         method: 'POST',
-        headers: {
-          Authorization: token ? `Bearer ${token}` : '',
-          // Do NOT set Content-Type manually with FormData
-        },
+        credentials: 'include',
+        headers: getAuthHeadersForForm(),
         body: formData,
       });
 
@@ -124,15 +114,15 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <APIContext.Provider
-      value={{ 
-        getAuthHeaders, 
+      value={{
+        getAuthHeaders,
         getImportCsvSpec,
         importTasksCsv,
-        getAuthHeadersForForm, 
-        fileUpload, 
-        uploadStatus, 
-        isLoading, 
-        error 
+        getAuthHeadersForForm,
+        fileUpload,
+        uploadStatus,
+        isLoading,
+        error
       }}
     >
       {children}

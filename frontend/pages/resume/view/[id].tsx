@@ -7,8 +7,8 @@ import { Resume, ResumeAnalysisState, ResumeGenerationState } from 'types/types'
 import { toast } from 'sonner';
 import ResumeAnalysisPanel from 'components/resume/ResumeAnalysisPanel';
 import ResumeGenerationPanel from 'components/resume/ResumeGenerationPanel';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const isPdf = (url: string) => url.toLowerCase().split('?')[0].endsWith('.pdf');
 
@@ -43,12 +43,16 @@ export default function ResumeViewPage() {
     setPreviewLoading(true);
 
     const fetchBlob = async () => {
-      let res = await fetch(`${API_URL}/resumes/${resume.id}/download/`, { headers: getAuthHeaders() });
+      let res = await fetch(`${API_URL}/resumes/${resume.id}/download/`, {
+        credentials: 'include',
+        headers: getAuthHeaders(),
+      });
       if (res.status === 401) {
-        const newToken = await refreshAccessToken();
-        if (newToken) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
           res = await fetch(`${API_URL}/resumes/${resume.id}/download/`, {
-            headers: { Authorization: `Bearer ${newToken}`, Accept: 'application/json' },
+            credentials: 'include',
+            headers: getAuthHeaders(),
           });
         }
       }

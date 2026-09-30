@@ -2,6 +2,8 @@ import io
 from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import FileResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -14,10 +16,11 @@ from api.models import Resume, ResumeAnalysis, GeneratedResume, Project, Task, R
 from api.serializers import ResumeSerializer, ResumeAnalysisSerializer, GeneratedResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range
 from api.services.meeting_completion import auto_complete_past_meetings
+from api.validators import validate_resume_file
 from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
 from loguru import logger
-from django.db.models import Count, Min, Max
+from django.db.models import Count, Min, Max, OuterRef, Subquery
 
 
 class DeleteAccountView(APIView):
@@ -49,7 +52,13 @@ class TaskCursorPagination(CursorPagination):
 class TaskViewSet(viewsets.ModelViewSet):
     pagination_class = TaskCursorPagination
     serializer_class = TaskSerializer
-    
+
+    def get_throttles(self):
+        if self.action == 'decrypt':
+            self.throttle_scope = 'note_decrypt'
+            return [ScopedRateThrottle()]
+        return []
+
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx["user"] = self.request.user
@@ -69,6 +78,9 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         search = self.request.query_params.get("search", "").strip()
         if search:
+            # description is always blank for encrypted notes, so this can
+            # never match their body content — intentional, not a bug: the
+            # server has no readable copy of it to search.
             queryset = queryset.filter(
                 Q(title__icontains=search) | Q(description__icontains=search)
             )
@@ -139,6 +151,15 @@ class TaskViewSet(viewsets.ModelViewSet):
                             tz_offset = 0
                         auto_complete_past_meetings(user, tz_offset=tz_offset)
 
+                        latest_occurrence = (
+                            Task.objects.filter(
+                                recurring_task=OuterRef("recurring_task"),
+                                begin_date__lte=day,
+                            )
+                            .order_by("-begin_date", "-id")
+                            .values("pk")[:1]
+                        )
+
                         filtered_queryset = queryset.filter(
                             (
                                 # Non-recurring, unfinished tasks:
@@ -148,9 +169,11 @@ class TaskViewSet(viewsets.ModelViewSet):
                             |
                             (
                                 # Non-recurring, unfinished tasks:
-                                # - dated tasks carry over until done
+                                # - dated tasks carry over until done, unless
+                                #   carry_over is off: then only on their own day
                                 Q(recurring_task__isnull=True, is_done=False, begin_date__lte=day)
                                 & (Q(end_date__isnull=True) | Q(end_date__gte=day))
+                                & (Q(carry_over=True) | Q(begin_date=day))
                             )
                             |
                             (
@@ -167,10 +190,12 @@ class TaskViewSet(viewsets.ModelViewSet):
                             |
                             (
                                 # Recurring tasks (not meetings):
-                                # - past undone occurrences carry over until completed,
-                                #   just like non-recurring tasks do
+                                # - a missed occurrence carries over, but only while it
+                                #   is the series' latest occurrence. A newer one (done
+                                #   or not) supersedes it, so a daily series shows one
+                                #   row instead of one per missed day.
                                 Q(recurring_task__isnull=False, is_done=False, category='task', begin_date__lt=day)
-                                & (Q(end_date__isnull=True) | Q(end_date__gte=day))
+                                & Q(pk=Subquery(latest_occurrence))
                             )
                             |
                             (
@@ -205,8 +230,9 @@ class TaskViewSet(viewsets.ModelViewSet):
                             Q(recurring_task__isnull=True) &
                             Q(begin_date__lte=end_of_week) &
                             (
-                                # active/ongoing
-                                (Q(is_done=False) & (Q(end_date__isnull=True) | Q(end_date__gte=start_of_week)))
+                                # active/ongoing; carry_over=False stays in its own week
+                                (Q(is_done=False) & (Q(end_date__isnull=True) | Q(end_date__gte=start_of_week))
+                                 & (Q(carry_over=True) | Q(begin_date__gte=start_of_week)))
                                 |
                                 # completed within this week
                                 Q(end_date__range=(start_of_week, end_of_week))
@@ -401,6 +427,25 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(task)
         return Response(serializer.data)
 
+    @action(detail=True, methods=["post"], url_path="decrypt")
+    def decrypt(self, request, pk=None):
+        from api.services.note_encryption import decrypt_text, InvalidToken
+
+        task = self.get_object()
+        if not task.is_encrypted:
+            return Response({"error": "Note is not encrypted."}, status=status.HTTP_400_BAD_REQUEST)
+
+        passphrase = request.data.get("passphrase", "")
+        if not passphrase:
+            return Response({"error": "Passphrase is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            plaintext = decrypt_text(task.encrypted_description, task.encryption_salt, passphrase)
+        except InvalidToken:
+            return Response({"error": "Incorrect passphrase."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"description": plaintext})
+
 class RecurringTaskViewSet(viewsets.ModelViewSet):
     serializer_class = RecurringTaskSerializer
 
@@ -449,6 +494,14 @@ class ResumeViewSet(viewsets.ViewSet):
         'application/msword',
     }
 
+    AI_THROTTLE_ACTIONS = {'analyze', 'generate', 'generate_new'}
+
+    def get_throttles(self):
+        if self.action in self.AI_THROTTLE_ACTIONS:
+            self.throttle_scope = 'ai_resume'
+            return [ScopedRateThrottle()]
+        return []
+
     def _get_resume_or_404(self, request, pk):
         try:
             return Resume.objects.get(pk=pk, user=request.user)
@@ -476,6 +529,11 @@ class ResumeViewSet(viewsets.ViewSet):
                     {"error": "Invalid file type. Only PDF and Word documents are accepted."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            try:
+                validate_resume_file(file)
+            except DjangoValidationError as e:
+                return Response({"error": e.message}, status=status.HTTP_400_BAD_REQUEST)
 
             title = request.data.get('title', '').strip() or file.name
             resume = Resume(file=file, user=request.user, title=title)

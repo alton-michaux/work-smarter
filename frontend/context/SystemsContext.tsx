@@ -1,8 +1,8 @@
 import React, { useState, createContext, useContext, ReactNode } from 'react';
 import { SystemsContextType } from 'types/types';
 import { useAPI } from './APIContext';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const SystemsContext = createContext<SystemsContextType | undefined>(undefined);
 
@@ -36,8 +36,8 @@ export const SystemsProvider = ({ children }: { children: ReactNode }) => {
   const exportCsv = async () => {
     try {
       const res = await fetch(`${API_URL}/export/csv`, {
-        method: 'GET',
         credentials: 'include',
+        method: 'GET',
         headers: {
           ...getAuthHeaders(),
         },

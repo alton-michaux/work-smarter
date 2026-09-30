@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useAPI } from 'context/APIContext';
 import { toast } from 'sonner';
 import { NewPersonalAPIKey, PersonalAPIKey, PersonalAPIKeyScope } from 'types/types';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 function formatDate(value: string | null) {
   if (!value) return 'Never';
@@ -32,7 +32,7 @@ export default function ApiKeysCard() {
   const [newKey, setNewKey] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/keys/`, { headers: getAuthHeaders() })
+    fetch(`${API_URL}/keys/`, { credentials: 'include', headers: getAuthHeaders() })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: PersonalAPIKey[]) => setKeys(data))
       .catch(() => toast.error('Failed to load API keys.'))
@@ -44,6 +44,7 @@ export default function ApiKeysCard() {
     try {
       const res = await fetch(`${API_URL}/keys/`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ name: name.trim(), scope }),
       });
@@ -73,6 +74,7 @@ export default function ApiKeysCard() {
     try {
       const res = await fetch(`${API_URL}/keys/${id}/`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: getAuthHeaders(),
       });
       if (res.ok) {
@@ -271,6 +273,11 @@ curl -X POST -H "Authorization: Api-Key YOUR_KEY" \\
           anything you leave out goes back to its default — while <code>PATCH</code>{' '}
           changes only the fields you send. Projects are read-only, and recurring series
           are set up here in the app rather than over the API.
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Encrypted notes are returned with <code>is_encrypted: true</code> and a blank{' '}
+          <code>description</code>; their contents never leave the app. You can still
+          edit their title and dates, but not their description or category.
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
           Unrecognized parameters and invalid filter values return a{' '}
