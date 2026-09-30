@@ -7,8 +7,8 @@ import { Resume, ResumeAnalysisState, ResumeGenerationState } from 'types/types'
 import { toast } from 'sonner';
 import ResumeAnalysisPanel from 'components/resume/ResumeAnalysisPanel';
 import ResumeGenerationPanel from 'components/resume/ResumeGenerationPanel';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const isPdf = (url: string) => url.toLowerCase().split('?')[0].endsWith('.pdf');
 

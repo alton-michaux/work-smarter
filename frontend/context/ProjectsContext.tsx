@@ -2,8 +2,8 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Project, NewProject, ProjectsContextType } from 'types/types';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined);
 

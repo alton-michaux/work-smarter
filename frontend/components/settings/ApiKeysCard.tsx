@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useAPI } from 'context/APIContext';
 import { toast } from 'sonner';
 import { NewPersonalAPIKey, PersonalAPIKey, PersonalAPIKeyScope } from 'types/types';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 function formatDate(value: string | null) {
   if (!value) return 'Never';

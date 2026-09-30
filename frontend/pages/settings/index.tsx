@@ -7,8 +7,8 @@ import { useTheme } from 'context/ThemeContext';
 import { toast } from 'sonner';
 import { CalendarBlacklistEntry, GoogleCalendarStatus } from 'types/types';
 import ApiKeysCard from 'components/settings/ApiKeysCard';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 type CalendarOption = { id: string; summary: string };
 

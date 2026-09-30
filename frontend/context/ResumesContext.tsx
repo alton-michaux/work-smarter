@@ -2,8 +2,8 @@ import React, { createContext, useState, useContext, ReactNode, useCallback } fr
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Resume, ResumeAnalysis, GeneratedResume, ResumesContextType } from 'types/types';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const ResumesContext = createContext<ResumesContextType | undefined>(undefined);
 
