@@ -366,7 +366,7 @@ class ImportTasksTXTView(APIView):
                         title=t["title"],
                         is_done=t.get("done", False),
                         priority=t.get("priority", "medium"),
-                        carry_over=t.get("carry_over", False),
+                        carry_over=t.get("carry_over", True),
                         description=t.get("description", ""),
                         is_subtask=t.get("sub_task", False),
                         begin_date=t.get("begin_date"),
