@@ -3,6 +3,8 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 from loguru import logger
 
+from api.categories import normalize_category
+
 class TxtParser(ABC):
     def __init__(self, content):
         if not isinstance(content, str):
@@ -123,7 +125,9 @@ class DevParser(TxtParser):
                         )
 
                     task = {
-                        "category": current_category,
+                        # Headers are free text ("Tasks:", "Admin:", a project
+                        # name); fold them to a real category.
+                        "category": normalize_category(current_category),
                         "title": title,
                         "done": done,
                         "priority": current_priority,

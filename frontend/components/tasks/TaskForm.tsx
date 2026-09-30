@@ -100,6 +100,7 @@ export default function TaskForm({
       is_subtask: !!task.is_subtask,
       carry_over: !!task.carry_over,
       user: task.user,
+      recurring_task: recurringTemplateId,
       ...(recurrence.repeats ? { recurrence } : {}),
     };
 

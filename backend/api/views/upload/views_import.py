@@ -9,11 +9,10 @@ from rest_framework import status
 from backend.management.utils.txt_parser import DevParser
 from loguru import logger
 from api.models import Task, Project
+from api.categories import DEFAULT_CATEGORY, VALID_CATEGORIES, normalize_category
 from rest_framework.exceptions import ParseError
 
 VALID_PRIORITIES = {"urgent", "high", "medium", "low"}
-
-VALID_CATEGORIES = {"task", "meeting", "note"}
 
 def _parse_date(s: str | None):
     if not s:
@@ -112,8 +111,8 @@ class ImportTasksCSVView(APIView):
                     errors.append({"line": idx, "field": "priority", "error": f"Invalid priority '{priority}'."})
                     continue
                 
-                category = (r.get("category") or "").strip().lower() or None
-                if category and category not in VALID_CATEGORIES:
+                category = (r.get("category") or "").strip().lower() or DEFAULT_CATEGORY
+                if category not in VALID_CATEGORIES:
                     errors.append({
                         "line": idx,
                         "field": "category",
@@ -132,7 +131,6 @@ class ImportTasksCSVView(APIView):
                 carry_over = _parse_bool(r.get("carry_over"), default=True)
 
                 project_name = (r.get("project") or "").strip() or None
-                category = (r.get("category") or "").strip() or None
                 description = (r.get("description") or "").strip()
 
                 row_id = (r.get("row_id") or "").strip() or None
@@ -364,7 +362,7 @@ class ImportTasksTXTView(APIView):
                     Task.objects.create(
                         user=request.user,
                         project=task_project,
-                        category=t.get("category"),
+                        category=normalize_category(t.get("category")),
                         title=t["title"],
                         is_done=t.get("done", False),
                         priority=t.get("priority", "medium"),

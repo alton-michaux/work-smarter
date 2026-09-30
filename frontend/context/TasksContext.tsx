@@ -307,6 +307,66 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  /**
+   * Persist a manual order for one parent's subtasks.
+   *
+   * `orderedIds` must list every subtask of the parent. Positions are applied
+   * locally first so the row lands where it was dropped, then confirmed by the
+   * server; a failure puts the previous order back.
+   */
+  const reorderSubtasks = async (parentId: number, orderedIds: number[]) => {
+    if (!loggedIn) return;
+    setError(null);
+
+    const previous = tasks.filter((t: any) => Number(t.parent) === Number(parentId));
+    const positionById = new Map(orderedIds.map((id, index) => [Number(id), index]));
+
+    setTasks((prev) =>
+      prev.map((t: any) =>
+        positionById.has(Number(t.id))
+          ? { ...t, position: positionById.get(Number(t.id)) }
+          : t
+      )
+    );
+
+    const restore = () =>
+      setTasks((prev) =>
+        prev.map((t: any) => {
+          const before = previous.find((p: any) => Number(p.id) === Number(t.id));
+          return before ? { ...t, position: (before as any).position } : t;
+        })
+      );
+
+    try {
+      const res = await fetch(`${API_URL}/tasks/reorder/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ parent: parentId, order: orderedIds }),
+      });
+
+      if (!res.ok) {
+        restore();
+        setError('Failed to reorder subtasks');
+        return;
+      }
+
+      const updated: Task[] = await res.json();
+      setTasks((prev) =>
+        prev.map((t: any) => {
+          const fresh = updated.find((u: any) => Number(u.id) === Number(t.id));
+          return fresh ? { ...t, ...fresh } : t;
+        })
+      );
+    } catch (err: any) {
+      restore();
+      setError(err.message || 'unknown error');
+      console.error(err);
+    }
+  };
+
   const addSubtask = async (payload: CreateTaskPayload) => {
     if (!loggedIn) return;
 
@@ -344,13 +404,76 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const updateTaskAndReload = async (task: Task) => {
     if (!loggedIn) return;
 
-    const res = await fetch(`${API_URL}/tasks/${task.id}/`, {
+    const taskAny: any = task;
+
+    // Existing recurring series this task was linked to (if any), sent through
+    // by TaskForm as `recurring_task`.
+    let recurringTaskId: number | null =
+      typeof taskAny.recurring_task === "number" ? taskAny.recurring_task : null;
+
+    if (taskAny?.recurrence?.repeats) {
+      // 1) "Repeats" is checked: create the RecurringTask if this task wasn't
+      // already part of one, otherwise update the existing series in place.
+      const payload: any = {
+        title: taskAny.title,
+        project: taskAny.project === "" ? null : (taskAny.project ?? null),
+        category: taskAny.category || null,
+        frequency: taskAny.recurrence.frequency,
+        start_date: taskAny.recurrence.start_date || taskAny.begin_date,
+        is_active: true,
+      };
+
+      if (taskAny.recurrence.frequency === "weekly" || taskAny.recurrence.frequency === "biweekly") {
+        payload.day_of_week = taskAny.recurrence.day_of_week;
+      }
+
+      if (taskAny.recurrence.frequency === "daily") {
+        payload.skip_weekends = taskAny.recurrence.skip_weekends ?? false;
+      }
+
+      const rtRes = await fetch(
+        recurringTaskId
+          ? `${API_URL}/recurring-tasks/${recurringTaskId}/`
+          : `${API_URL}/recurring-tasks/`,
+        {
+          method: recurringTaskId ? "PATCH" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!rtRes.ok) {
+        const text = await rtRes.text();
+        throw new Error(`Failed to save recurring task: ${text}`);
+      }
+
+      const savedRt = await rtRes.json();
+      recurringTaskId = savedRt.id;
+    } else {
+      // "Repeats" is unchecked: make sure the task isn't left linked to a series.
+      recurringTaskId = null;
+    }
+
+    // 2) Build the task payload safely (no accidental recurring fields)
+    const taskPayload: any = { ...taskAny };
+    delete taskPayload.recurrence;
+    delete taskPayload.recurring_task_id;
+    delete taskPayload.is_recurring;
+
+    if (taskPayload.project === "") taskPayload.project = null;
+    taskPayload.recurring_task = recurringTaskId;
+
+    // 3) Update the Task row
+    const res = await fetch(`${API_URL}/tasks/${taskPayload.id}/`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         ...getAuthHeaders(),
       },
-      body: JSON.stringify(task),
+      body: JSON.stringify(taskPayload),
     });
 
     if (!res.ok) {
@@ -564,6 +687,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         setTasks,
         addTask,
         addSubtask,
+        reorderSubtasks,
         updateTaskAndReload,
         deleteTask,
         fetchTasks,

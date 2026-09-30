@@ -20,6 +20,33 @@ def test_import_csv_creates_tasks(auth_client, import_tasks_csv_url, create_csv_
     assert tasks[1].title == "Child"
     assert tasks[1].parent_id == tasks[0].id
     assert tasks[1].is_subtask is True
+    # "Task" in the file is stored lowercase so the exact-match filter finds it
+    assert [t.category for t in tasks] == ["task", "task"]
+
+
+@pytest.mark.django_db
+def test_import_csv_defaults_blank_category(auth_client, import_tasks_csv_url, create_csv_file):
+    csv_content = """title,begin_date,category
+No Category,2026-02-10,
+"""
+    f = create_csv_file(csv_content)
+    resp = auth_client.post(import_tasks_csv_url, {"file": f}, format="multipart")
+
+    assert resp.status_code == 201
+    assert Task.objects.get(title="No Category").category == "task"
+
+
+@pytest.mark.django_db
+def test_import_csv_still_rejects_unknown_category(auth_client, import_tasks_csv_url, create_csv_file):
+    csv_content = """title,begin_date,category
+Bad,2026-02-10,Errand
+"""
+    f = create_csv_file(csv_content)
+    resp = auth_client.post(import_tasks_csv_url, {"file": f}, format="multipart")
+
+    assert resp.status_code == 400
+    assert resp.data["errors"][0]["field"] == "category"
+    assert Task.objects.count() == 0
 
 
 @pytest.mark.django_db
@@ -72,7 +99,7 @@ def test_import_csv_skips_existing_row(import_tasks_csv_url, auth_client, create
         title="Same Task",
         begin_date="2026-02-03",
         user=alice,
-        category="Task",
+        category="task",
     )
 
     csv = """title,begin_date,category,description,is_done

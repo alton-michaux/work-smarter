@@ -6,6 +6,7 @@ import { useTasks } from 'context/TasksContext';
 import { useTheme } from 'context/ThemeContext';
 import { toast } from 'sonner';
 import { CalendarBlacklistEntry, GoogleCalendarStatus } from 'types/types';
+import ApiKeysCard from 'components/settings/ApiKeysCard';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -471,6 +472,9 @@ export default function SettingsPage() {
           </>
         )}
       </div>
+      {/* API Keys card */}
+      <ApiKeysCard />
+
       {/* Danger Zone card */}
       <div className="bg-white dark:bg-gray-800 border border-red-200 dark:border-red-900 rounded-lg shadow-sm p-6 space-y-4">
         <div>
