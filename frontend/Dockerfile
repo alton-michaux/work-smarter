@@ -1,5 +1,5 @@
 # Dev stage: what `docker compose up` runs locally (bind-mounted source, HMR).
-FROM node:18 AS dev
+FROM node:22 AS dev
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install
@@ -9,12 +9,12 @@ CMD ["npm", "run", "dev"]
 
 # --- Production image (default target for a plain `docker build`) ---
 
-FROM node:18 AS deps
+FROM node:22 AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:18 AS builder
+FROM node:22 AS builder
 WORKDIR /app
 # NEXT_PUBLIC_* vars are inlined into the client bundle at build time, not
 # read at runtime — .env.local is excluded from the build context (see
@@ -25,7 +25,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-FROM node:18-slim AS runner
+FROM node:22-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=builder /app/public ./public
