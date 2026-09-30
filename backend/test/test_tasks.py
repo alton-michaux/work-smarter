@@ -1290,17 +1290,69 @@ def test_active_on_recurring_meeting_pinned_to_its_day(auth_client, get_user, cr
 
 @pytest.mark.django_db
 def test_active_on_recurring_task_carries_over_when_undone(auth_client, get_user, create_task, create_recurring_task):
-    """Undone recurring tasks (category=task) carry over to later days like non-recurring tasks."""
+    """A missed recurring task (category=task) carries over until the next occurrence."""
     today = date.today()
     three_days_ago = today - timedelta(days=3)
 
-    rt = create_recurring_task(user=get_user, frequency="daily", start_date=three_days_ago)
+    rt = create_recurring_task(user=get_user, title="Weekly review", frequency="weekly",
+                               day_of_week=three_days_ago.weekday(), start_date=three_days_ago)
     create_task(title="Weekly review", begin_date=three_days_ago, is_done=False,
                 recurring_task=rt, category="task", user=get_user)
 
     res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
     assert res.status_code == 200
-    assert any(t["title"] == "Weekly review" for t in res.data["results"])
+    assert [t["begin_date"] for t in res.data["results"] if t["title"] == "Weekly review"] == [
+        str(three_days_ago)
+    ]
+
+
+def _daily_log(auth_client, day):
+    res = auth_client.get(f"/api/tasks/?begin_date={day}&end_date={day}&active_on={day}")
+    assert res.status_code == 200
+    return res.data["results"]
+
+
+@pytest.mark.django_db
+def test_active_on_daily_recurring_task_does_not_pile_up(auth_client, get_user, create_recurring_task):
+    """Missed occurrences of a daily series collapse into today's single row
+    instead of each carrying over on its own."""
+    today = date.today()
+    create_recurring_task(user=get_user, title="Water the plants", frequency="daily",
+                          start_date=today - timedelta(days=10))
+
+    rows = [t for t in _daily_log(auth_client, today) if t["title"] == "Water the plants"]
+    assert [t["begin_date"] for t in rows] == [str(today)]
+
+
+@pytest.mark.django_db
+def test_active_on_missed_recurring_task_superseded_by_done_occurrence(
+    auth_client, get_user, create_task, create_recurring_task
+):
+    """Doing today's occurrence retires yesterday's missed one too."""
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    rt = create_recurring_task(user=get_user, title="Standup notes", frequency="daily",
+                               start_date=yesterday)
+    create_task(title="Standup notes", begin_date=yesterday, is_done=False,
+                recurring_task=rt, category="task", user=get_user)
+    create_task(title="Standup notes", begin_date=today, is_done=True,
+                recurring_task=rt, category="task", user=get_user)
+
+    rows = [t for t in _daily_log(auth_client, today) if t["title"] == "Standup notes"]
+    assert [(t["begin_date"], t["is_done"]) for t in rows] == [(str(today), True)]
+
+
+@pytest.mark.django_db
+def test_active_on_recurring_carry_over_is_per_series(auth_client, get_user, create_recurring_task):
+    """Collapsing one series' occurrences must not hide another series' row."""
+    today = date.today()
+    for title in ("Series A", "Series B"):
+        create_recurring_task(user=get_user, title=title, frequency="daily",
+                              start_date=today - timedelta(days=5))
+
+    titles = [t["title"] for t in _daily_log(auth_client, today)]
+    assert titles.count("Series A") == 1
+    assert titles.count("Series B") == 1
 
 
 @pytest.mark.django_db

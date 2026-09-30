@@ -388,9 +388,9 @@ class Command(BaseCommand):
                                                       date=d)
 
         # Materialise past occurrences and check them off, as a regular user
-        # would have. Undone past task occurrences carry over, so leaving 60
-        # days of them open would bury the daily log. Keep two missed ones
-        # from this week so the carry-over path still has something to show.
+        # would have, so the timeline has real recurring history. Two missed
+        # ones this week exercise the carry-over path: each should collapse
+        # into its series' newer row rather than showing on its own.
         ensure_recurring_tasks_in_range(t - timedelta(days=180), t - timedelta(days=1),
                                         user=user)
         missed = {("Check error dashboards", 1), ("Water the plants", 3)}
