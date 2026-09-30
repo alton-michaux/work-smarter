@@ -19,12 +19,8 @@ from api.views.views_resume_profile import ResumeProfileViewSet, WorkExperienceV
 from api.views.views_api_tokens import PersonalAPITokenViewSet
 from api.views.views_public_api import PublicTaskViewSet, PublicProjectViewSet
 
-# JWT views
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-from backend.adapters import EmailTokenObtainPairSerializer
+# JWT views (httpOnly-cookie-based; see api/views/views_auth.py)
+from api.views.views_auth import CookieTokenObtainPairView, CookieTokenRefreshView, CsrfCookieView
 
 router = DefaultRouter()
 router.register(r'projects', ProjectViewSet, basename='project')
@@ -50,9 +46,10 @@ urlpatterns = [
     path("import/csv/spec/", ImportTasksCSVSpecView.as_view(), name="import-tasks-csv-spec"),
     path('import/csv/', ImportTasksCSVView.as_view(), name="import-tasks-csv"),
     path('export/csv/', ExportTasksCSV.as_view(), name='export-tasks-csv'),
-    # JWT endpoints
-    path('auth/login/', TokenObtainPairView.as_view(serializer_class=EmailTokenObtainPairSerializer), name='token_obtain_pair'),
-    path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # JWT endpoints (set/read httpOnly cookies; see api/views/views_auth.py)
+    path('auth/login/', CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/csrf/', CsrfCookieView.as_view(), name='csrf-cookie'),
     # Google Calendar
     path('calendar/oauth/init/', GoogleOAuthInitView.as_view(), name='calendar-oauth-init'),
     path('calendar/oauth/callback/', GoogleOAuthCallbackView.as_view(), name='calendar-oauth-callback'),

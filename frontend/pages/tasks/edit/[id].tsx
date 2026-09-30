@@ -9,8 +9,8 @@ import TaskForm from "../../../components/tasks/TaskForm";
 import Spinner from "components/shared/Spinner";
 import EmptyStateCard from "components/shared/EmptyStateCard";
 import { Task } from "types/types";
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function TaskEditPage() {
   const router = useRouter();
@@ -31,7 +31,8 @@ export default function TaskEditPage() {
     if (!id || isLoading || taskInContext || fetchedTask) return;
     if (!loggedIn) return;
     setIsFetchingTask(true);
-    fetch(`${API_URL}/tasks/${id}/`, { headers: getAuthHeaders() })
+    fetch(`${API_URL}/tasks/${id}/`, {
+        credentials: 'include', headers: getAuthHeaders() })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: Task) => setFetchedTask(data))
       .catch(() => {})

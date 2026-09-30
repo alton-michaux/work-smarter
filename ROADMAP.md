@@ -15,7 +15,7 @@
 - [x] Weekly tracker UI / Task edit button
 - [x] Unfinished tasks aren't being returned from API in weekly view
 - [x] Not able to associate new task to project
-- [x] Recurring tasks seem to be piling up in daily log (fixed in weekly tracker)
+- [x] Recurring tasks seem to be piling up in daily log (fixed in weekly tracker; daily log now carries over only a series' latest missed occurrence)
 - [x] Need to truncate meeting/work on daily log
 - [x] Make Type dropdown
 - [x] Recurring tasks aren't pre-populated as recurring in edit task form
@@ -48,6 +48,8 @@
 - [x] Importing meetings creates duplicate events (imported meeting from calendar and separate recurring event?)
 - [x] Meetings should be marked as done after time of completion (frontend and backend)
 - [x] Long term tasks don't persist in daily view: I have to search the task even though it's marked as carry_over: true and done: false. Even when marked done it only shows for the day it was created. This is a long running bug that has yet to be fixed.
+- [x] Settings page fails to load/save API keys (key management and /v1/ endpoints still used header-only JWT auth after the move to httpOnly cookies)
+- [x] `carry_over=False` was ignored: tasks now stay on their own day (daily log) or week (weekly tracker). The create form and TXT import defaulted it to false, so they now default to true
 
 ---
 
@@ -63,7 +65,7 @@
 - [x] Add role to project
 - [x] Expose API endpoints for tasks (read only)
 - [x] Expose API endpoints for tasks (write)
-- [ ] Allow encryption for notes
+- [x] Allow encryption for notes
 
 ### UI
 - [x] Make daily recurring tasks/meetings appear as one in weekly tracker (dropdown on click?)
@@ -140,17 +142,32 @@
 ## User-facing (go-live features)
 
 - [x] Account show/edit page
-- [ ] Beef up account security
+- [x] Beef up account security
 - [ ] Tutorial section
 - [ ] About page
+
+### Production hardening follow-ups
+
+Go-live blockers (rate limiting, Django SECURE_*/cookie hardening, httpOnly
+JWT cookies, frontend production Docker build, resume upload validation,
+note encryption) are done. These are lower-priority cleanup items identified
+during that pass but deliberately deferred:
+
+- [ ] Audit and prune backend/requirements.txt (unused/transitive deps, pin `pdfplumber`/`python-docx`)
+- [ ] Add CI security scanning (pip-audit, npm audit, CodeQL/secret-scanning)
+- [ ] Add backend/.env.example and frontend/.env.local.example
+- [ ] Add Docker healthchecks (backend, frontend, db)
+- [ ] Run Docker containers as non-root users
+- [ ] Revisit migrate-on-boot behavior in backend/entrypoint.sh (make migrations a deliberate deploy step)
+- [ ] Enable frontend lint/test/build checks in CI (currently commented out)
 
 
 ## Ongoing (these actions need to be performed whenever a box in this file is checked)
 
-- [ ] Update tests
+- [x] Update tests
 - [ ] Ensure app is aligned with design principles
 
-## Action Plan (updated 5/2/2026)
+## Action Plan (updated 9/28/2026)
 
   │ Priority │            Item             │                   Rationale                    │
   ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
@@ -158,8 +175,11 @@
   ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
   │ 2        │ AI resume generation/edits  │ Completes the resume feature end-to-end        │
   ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
-  │ 3        │ Beef up account security    │ Go-live blocker — don't launch without this    │
+  │ 3        │ [x] Beef up account security │ Go-live blocker — done (rate limiting, cookie  │
+  │          │                              │ JWT auth, SECURE_* hardening, prod Docker      │
+  │          │                              │ build, resume upload validation)               │
   ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
   │ 4        │ About page + Tutorial       │ Needed for new users to understand the product │
   ├──────────┼─────────────────────────────┼────────────────────────────────────────────────┤
-  │ 5        │ Notes subtasks + encryption │ Quality-of-life, lower urgency                 │
+  │ 5        │ [x] Notes encryption         │ Done — server-side, passphrase-based, per-note │
+  │          │ Notes subtasks               │ Still open                                     │

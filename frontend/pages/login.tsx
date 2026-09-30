@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Spinner from 'components/shared/Spinner';
 import Button from "../components/ui/button";
+import { API_URL } from 'lib/api';
 
-const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').replace(/\/api$/, '');
+const BACKEND_URL = API_URL.replace(/\/api$/, '');
 
 const Login = () => {
     const { login, isLoading, error } = useAuth();

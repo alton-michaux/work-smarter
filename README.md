@@ -137,6 +137,48 @@ docker-compose exec backend pytest --cov=backend || pytest
 
 ---
 
+### 🌱 Demo Data (local only)
+
+**Build a demo account full of test data**
+
+```bash
+docker-compose exec backend python manage.py seed_demo_account          # create or rebuild
+docker-compose exec backend python manage.py seed_demo_account --clear  # delete it
+```
+
+This creates a separate login, so it never mixes with real accounts. Re-running
+deletes the account and rebuilds it from scratch; log in again afterwards. It
+refuses to run with `DEBUG` off unless you pass `--force`.
+
+| What | Value |
+| --- | --- |
+| Email | `demo@worksmarter.test` |
+| Password | `demo-pass-1234` |
+| Encrypted-note passphrase | `demo-passphrase` |
+| API keys | Printed by the command each run; only hashes are stored, so copy them then |
+
+What's in it:
+
+- **Projects:** 5, including a completed one, two with near-identical colors, and one with 120+ tasks (more than a 50-row page)
+- **Daily log:** subtasks stored out of position order, three-level nesting, a 15-item checklist, carry-overs from 1–160 days ago, overdue/today/upcoming deadlines, long and HTML/emoji titles, overlapping evening meetings with agenda items
+- **Recurring:** every frequency, skip-weekends, skip exceptions, and an ended series
+- **Notes:** markdown, plain, very long, and two encrypted
+- **Timeline:** six months of completed work across projects
+- **API keys:** read-only, read/write, and a never-used key
+- **Resume:** a profile (experience, education, skills) and an uploaded PDF
+
+Try an API key:
+
+```bash
+curl -H "Authorization: Api-Key <key from the command output>" \
+  "http://localhost:8000/api/v1/tasks/?is_done=false"
+```
+
+For a single day of daily-log data on an existing account, use
+`seed_daily_log_demo` instead (`--user`, `--date`, `--clear`).
+
+---
+
 ### 🐘 PostgreSQL (via Docker)
 
 **Access PostgreSQL shell**
