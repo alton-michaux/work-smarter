@@ -121,7 +121,7 @@ pyudorandom==1.0.0
 PyYAML==5.3.1
 pyzmq==25.1.2
 referencing==0.34.0
-requests==2.31.0
+requests==2.33.0
 requests-mock==1.11.0
 requests-unixsocket==0.2.0
 rpds-py==0.18.0
