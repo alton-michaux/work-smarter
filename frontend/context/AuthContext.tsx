@@ -3,8 +3,8 @@ import React, { createContext, useState, useEffect, useContext, useRef } from 'r
 import { useRouter } from 'next/router';
 import { User, AuthContextType } from 'types/types';
 import { getCsrfHeaders } from 'lib/csrf';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(true);
       setError(null);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/`, {
+      const res = await fetch(`${API_URL}/user/`, {
         method: 'GET',
         credentials: 'include',
       });

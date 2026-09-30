@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useAPI } from 'context/APIContext';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 type EncryptedNoteUnlockProps = {
   taskId: number;

@@ -2,9 +2,9 @@ import React, { createContext, useState, useContext, ReactNode, useCallback } fr
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Task, Filters, TasksContextType, CreateTaskPayload, DeleteTaskOptions } from 'types/types'
+import { API_URL } from 'lib/api';
 
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 

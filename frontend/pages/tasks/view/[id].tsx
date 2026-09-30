@@ -9,8 +9,8 @@ import MarkdownBody from 'components/shared/MarkdownBody';
 import EncryptedNoteUnlock from 'components/notes/EncryptedNoteUnlock';
 import { toast } from 'sonner';
 import { GoogleCalendarStatus, Task } from 'types/types';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const TaskShowPage = () => {
   const router = useRouter();

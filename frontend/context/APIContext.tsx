@@ -2,6 +2,7 @@
 import React, { useState, createContext, useContext, ReactNode } from 'react';
 import { APIContextType } from 'types/types';
 import { getCsrfHeaders } from 'lib/csrf';
+import { API_URL } from 'lib/api';
 
 const APIContext = createContext<APIContextType | undefined>(undefined);
 
@@ -35,7 +36,7 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
   const getImportCsvSpec = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/import/csv/spec/`, {
+      const res = await fetch(`${API_URL}/import/csv/spec/`, {
         credentials: 'include',
       });
       const data = await res.json().catch(() => ({}));
@@ -53,7 +54,7 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
     const formData = new FormData();
     formData.append("file", file); // this MUST match upload_field: "file"
 
-    const url = `${process.env.NEXT_PUBLIC_API_URL}${dryRun ? "/import/csv/?dry_run=true" : "/import/csv/"}`;
+    const url = `${API_URL}${dryRun ? "/import/csv/?dry_run=true" : "/import/csv/"}`;
     try {
       setIsLoading(true);
       setError(null);
@@ -88,7 +89,7 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       setError(null);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/import/`, {
+      const res = await fetch(`${API_URL}/import/`, {
         method: 'POST',
         credentials: 'include',
         headers: getAuthHeadersForForm(),
