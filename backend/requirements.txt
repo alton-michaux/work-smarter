@@ -10,7 +10,7 @@ Automat==0.8.0
 blinker==1.4
 boto3==1.35.71
 botocore==1.35.71
-certifi==2019.11.28
+certifi==2026.7.22
 cffi==2.0.0
 chardet==3.0.4
 charset-normalizer==3.3.2
@@ -121,7 +121,7 @@ pyudorandom==1.0.0
 PyYAML==5.3.1
 pyzmq==25.1.2
 referencing==0.34.0
-requests==2.31.0
+requests==2.33.0
 requests-mock==1.11.0
 requests-unixsocket==0.2.0
 rpds-py==0.18.0
