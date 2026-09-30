@@ -21,10 +21,10 @@ unfiltered list — the latter is far more expensive for a client to notice.
 from datetime import datetime
 
 from django.db.models import Count, Q
+from dj_rest_auth.jwt_auth import JWTCookieAuthentication
 from rest_framework import mixins, serializers, viewsets
 from rest_framework.pagination import CursorPagination
 from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from api.authentication import PersonalAPITokenAuthentication
 from api.models import PersonalAPIToken, Project, RecurringTaskException, Task
@@ -129,7 +129,7 @@ class PublicAPIViewSet(viewsets.GenericViewSet):
     debugging can hit these endpoints without minting a key.
     """
 
-    authentication_classes = [PersonalAPITokenAuthentication, JWTAuthentication]
+    authentication_classes = [PersonalAPITokenAuthentication, JWTCookieAuthentication]
     permission_classes = [IsAuthenticated, HasRequiredScope]
 
     #: Query params this endpoint understands, beyond RESERVED_PARAMS.

@@ -32,6 +32,7 @@ export type Task = {
   category: string;
   carry_over?: boolean;
   is_subtask?: boolean;
+  is_encrypted?: boolean;
 
   /** Manual sort order among siblings; only meaningful for subtasks. */
   position?: number;
@@ -203,6 +204,7 @@ export type Note = {
   category?: string | null;
   description?: string;
   is_done: boolean;
+  is_encrypted?: boolean;
 };
 
 export type NoteProps = {
@@ -446,11 +448,9 @@ export type AuthContextType = {
   setLoggedIn: (v: boolean) => void;
   register: (form: { email: string; password1: string; password2: string }) => Promise<void>;
   login: (form: { email: string; password: string }) => Promise<void>;
-  loginWithToken: (token: string) => Promise<void>;
   logout: () => void;
   getUser: () => Promise<void>;
-  getAuthHeaders: () => Record<string, string>;
-  refreshAccessToken: () => Promise<string | null>;
+  refreshAccessToken: () => Promise<boolean>;
 };
 
 export type APIContextType = {

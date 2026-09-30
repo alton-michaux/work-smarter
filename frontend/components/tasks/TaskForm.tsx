@@ -4,6 +4,7 @@ import { RecurrenceState, TaskFormProps } from "types/types";
 import { useTasks } from "../../context/TasksContext";
 import { useAPI } from "context/APIContext";
 import MarkdownEditor from "components/shared/MarkdownEditor";
+import EncryptedNoteUnlock from "components/notes/EncryptedNoteUnlock";
 import Button from "components/ui/button";
 import Link from "next/link";
 
@@ -13,7 +14,7 @@ export default function TaskForm({
   submitLabel = "Save",
   projects,
 }: TaskFormProps) {
-  const { user, getAuthHeaders } = useAuth();
+  const { user } = useAuth();
   const { isLoading } = useAPI();
 
   const [task, setTask] = useState<any>(() => ({
@@ -34,6 +35,19 @@ export default function TaskForm({
 
   const isEditing = Boolean(initialTask?.id);
   const { fetchRecurringTemplate } = useTasks();
+
+  // Encrypted notes: `task.description` is always "" from the API for a
+  // locked note, so editing requires unlocking first via the passphrase the
+  // note was encrypted with. That same passphrase is then sent back on
+  // submit so the backend can re-encrypt (or decrypt, if turned off).
+  const wasEncrypted = Boolean(initialTask?.is_encrypted);
+  const [isUnlocked, setIsUnlocked] = useState(!wasEncrypted);
+  const [passphrase, setPassphrase] = useState("");
+
+  useEffect(() => {
+    setIsUnlocked(!initialTask?.is_encrypted);
+    setPassphrase("");
+  }, [initialTask?.id]);
 
   const recurringTemplateId = useMemo(() => {
     if (initialTask?.recurring_task_id) return initialTask.recurring_task_id;
@@ -74,6 +88,18 @@ export default function TaskForm({
     if (!String(task.category ?? "").trim()) next.category = "Category is required.";
     if (!String(task.priority ?? "").trim()) next.priority = "Priority is required.";
     if (!task.begin_date) next.begin_date = "Date is required.";
+
+    // A passphrase is only needed when this save actually touches the
+    // ciphertext: turning encryption on/off, or editing an unlocked note's
+    // content. A locked note's other fields (title, priority, ...) can be
+    // saved without ever unlocking it.
+    const touchingEncryption =
+      (task.is_encrypted && !wasEncrypted) ||
+      (wasEncrypted && !task.is_encrypted) ||
+      (wasEncrypted && task.is_encrypted && isUnlocked);
+    if (touchingEncryption && !passphrase) {
+      next.passphrase = "A passphrase is required.";
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -102,6 +128,8 @@ export default function TaskForm({
       user: task.user,
       recurring_task: recurringTemplateId,
       ...(recurrence.repeats ? { recurrence } : {}),
+      ...(task.category === "note" ? { is_encrypted: !!task.is_encrypted } : {}),
+      ...(passphrase ? { passphrase } : {}),
     };
 
     try {
@@ -149,7 +177,7 @@ export default function TaskForm({
 
       fetchRecurringTemplate(recurringTemplateId, initialTask, setRecurrence);
     }
-  }, [isEditing, recurringTemplateId, initialTask, getAuthHeaders]);
+  }, [isEditing, recurringTemplateId, initialTask]);
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-8">
@@ -337,11 +365,59 @@ export default function TaskForm({
           </span>
         </div>
 
-        <MarkdownEditor
-          value={task.description ?? ""}
-          onChange={(next) => setTask((prev: any) => ({ ...prev, description: next }))}
-          placeholder={`### Notes\n- [ ] Follow up\n- [x] Done`}
-        />
+        {wasEncrypted && !isUnlocked ? (
+          <EncryptedNoteUnlock
+            taskId={initialTask.id}
+            onUnlock={(plaintext, unlockPassphrase) => {
+              setTask((prev: any) => ({ ...prev, description: plaintext }));
+              setPassphrase(unlockPassphrase);
+              setIsUnlocked(true);
+            }}
+          />
+        ) : (
+          <>
+            {task.category === "note" && (
+              <div className="rounded-md border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 p-3 space-y-2">
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={!!task.is_encrypted}
+                    onChange={(e) =>
+                      setTask((prev: any) => ({ ...prev, is_encrypted: e.target.checked }))
+                    }
+                    className="h-4 w-4"
+                  />
+                  Encrypt this note
+                </label>
+
+                {(task.is_encrypted || (wasEncrypted && !task.is_encrypted)) && (
+                  <div>
+                    <input
+                      type="password"
+                      value={passphrase}
+                      onChange={(e) => setPassphrase(e.target.value)}
+                      placeholder="Passphrase"
+                      className={inputClass}
+                    />
+                    {errors.passphrase ? (
+                      <p className="text-sm text-red-600 mt-1">{errors.passphrase}</p>
+                    ) : (
+                      <p className="mt-1 text-xs text-amber-600">
+                        There is no way to recover this note if you forget the passphrase.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <MarkdownEditor
+              value={task.description ?? ""}
+              onChange={(next) => setTask((prev: any) => ({ ...prev, description: next }))}
+              placeholder={`### Notes\n- [ ] Follow up\n- [x] Done`}
+            />
+          </>
+        )}
       </div>
 
       {/* Recurrence */}

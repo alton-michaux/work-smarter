@@ -2,8 +2,8 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Project, NewProject, ProjectsContextType } from 'types/types';
+import { API_URL } from 'lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined);
 
@@ -26,7 +26,8 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null); // Reset error
     try {
-      const res = await fetch(`${API_URL}/projects/`, { headers: getAuthHeaders() });
+      const res = await fetch(`${API_URL}/projects/`, {
+        credentials: 'include', headers: getAuthHeaders() });
       if (!res.ok) throw new Error('Failed to fetch projects');
       const data = await res.json();
       setProjects(Array.isArray(data) ? data : data.results ?? []);
@@ -49,6 +50,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     setError(null); // Reset error
     try {
       const res = await fetch(`${API_URL}/projects/`, {
+        credentials: 'include',
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(project),
@@ -70,6 +72,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     setError(null); // Reset error
     try {
       const res = await fetch(`${API_URL}/projects/${updatedProject.id}/`, {
+        credentials: 'include',
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify(updatedProject),
@@ -91,6 +94,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     setError(null); // Reset error
     try {
       const res = await fetch(`${API_URL}/projects/${id}/`, {
+        credentials: 'include',
         method: 'DELETE',
         headers: getAuthHeaders(),
       });

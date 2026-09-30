@@ -3,6 +3,7 @@ from datetime import timedelta, timezone as dt_timezone
 from rest_framework import serializers
 from .categories import DEFAULT_CATEGORY
 from .models import Resume, Task, Project, User, RecurringTask, CalendarBlacklist, ResumeProfile, WorkExperience, Education, Skill, PersonalAPIToken
+from .services.note_encryption import encrypt_text, decrypt_text, InvalidToken
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -33,6 +34,10 @@ class TaskSerializer(serializers.ModelSerializer):
 
     is_recurring = serializers.SerializerMethodField()
     effective_is_done = serializers.SerializerMethodField()
+
+    # Accepted on write only, used to encrypt/decrypt `description` — never
+    # stored as-is and never returned. See create()/update() below.
+    passphrase = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,6 +83,18 @@ class TaskSerializer(serializers.ModelSerializer):
 
         return parent
 
+    def to_internal_value(self, data):
+        attrs = super().to_internal_value(data)
+        # DRF auto-adds a UniqueTogetherValidator for the model's
+        # (recurring_task, begin_date) constraint, and on create it rejects
+        # any payload that omits one of those fields — overriding our
+        # required=False. Treat an omitted recurring_task as "not recurring"
+        # on create only; a default=None on the field would instead null the
+        # FK on every full PUT that leaves it out.
+        if self.instance is None:
+            attrs.setdefault("recurring_task", None)
+        return attrs
+
     def validate(self, attrs):
         parent = attrs.get("parent", getattr(self.instance, "parent", None))
         begin_date = attrs.get("begin_date", getattr(self.instance, "begin_date", None))
@@ -100,22 +117,38 @@ class TaskSerializer(serializers.ModelSerializer):
                     "begin_date": "Subtask requires a begin_date when parent has a begin_date."
                 })
 
+        category = attrs.get("category", getattr(self.instance, "category", None))
+        is_encrypted = attrs.get("is_encrypted", getattr(self.instance, "is_encrypted", False))
+        if is_encrypted and category != "note":
+            raise serializers.ValidationError({"is_encrypted": "Only notes can be encrypted."})
+
         return attrs
 
     def create(self, validated_data):
         request = self.context.get("request")
         validated_data["user"] = request.user
         validated_data.pop("is_subtask", None)  # derived
+        passphrase = validated_data.pop("passphrase", "")
 
         # If created as done, stamp end_date if missing
         if validated_data.get("is_done") and not validated_data.get("end_date"):
             validated_data["end_date"] = timezone.localdate()
+
+        if validated_data.get("is_encrypted"):
+            if not passphrase:
+                raise serializers.ValidationError({"passphrase": "A passphrase is required."})
+            plaintext = validated_data.get("description", "")
+            ciphertext, salt = encrypt_text(plaintext, passphrase)
+            validated_data["encrypted_description"] = ciphertext
+            validated_data["encryption_salt"] = salt
+            validated_data["description"] = ""
 
         return super().create(validated_data)
 
 
     def update(self, instance, validated_data):
         validated_data.pop("is_subtask", None)  # derived
+        passphrase = validated_data.pop("passphrase", "")
 
         next_done = validated_data.get("is_done", instance.is_done)
 
@@ -127,6 +160,41 @@ class TaskSerializer(serializers.ModelSerializer):
         # Transition: done → not done
         if not next_done and instance.is_done:
             validated_data["end_date"] = None
+
+        was_encrypted = instance.is_encrypted
+        next_is_encrypted = validated_data.get("is_encrypted", was_encrypted)
+        # Callers that PUT the whole task (e.g. the generic task-edit form)
+        # always send `description`, even unchanged — for a locked encrypted
+        # note that's always "" (the API never returns plaintext), so an
+        # empty string here means "not touched", not "clear the note".
+        incoming_description = validated_data.get("description") or None
+
+        turning_on = next_is_encrypted and not was_encrypted
+        turning_off = was_encrypted and not next_is_encrypted
+        rewriting = was_encrypted and next_is_encrypted and incoming_description is not None
+
+        if turning_on or rewriting:
+            if not passphrase:
+                raise serializers.ValidationError({"passphrase": "A passphrase is required."})
+            plaintext = incoming_description or ""
+            ciphertext, salt = encrypt_text(plaintext, passphrase)
+            validated_data["encrypted_description"] = ciphertext
+            validated_data["encryption_salt"] = salt
+            validated_data["description"] = ""
+        elif turning_off:
+            if not passphrase:
+                raise serializers.ValidationError({"passphrase": "A passphrase is required."})
+            try:
+                plaintext = decrypt_text(instance.encrypted_description, instance.encryption_salt, passphrase)
+            except InvalidToken:
+                raise serializers.ValidationError({"passphrase": "Incorrect passphrase."})
+            validated_data["description"] = plaintext
+            validated_data["encrypted_description"] = None
+            validated_data["encryption_salt"] = None
+        elif was_encrypted and next_is_encrypted:
+            # Encrypted note, no real content change in this request — never
+            # let a blank placeholder description overwrite real ciphertext.
+            validated_data.pop("description", None)
 
         return super().update(instance, validated_data)
 
@@ -148,6 +216,8 @@ class TaskSerializer(serializers.ModelSerializer):
             "effective_is_done",
             "priority",
             "description",
+            "is_encrypted",
+            "passphrase",
             "created_at",
             "parent",
             "is_subtask",
@@ -304,6 +374,7 @@ PUBLIC_TASK_FIELDS = [
     "is_subtask",
     "is_recurring",
     "recurring_frequency",
+    "is_encrypted",
     "created_at",
 ]
 
@@ -393,6 +464,20 @@ class PublicTaskSerializer(serializers.ModelSerializer):
         return parent
 
     def validate(self, attrs):
+        if self.instance is not None and self.instance.is_encrypted:
+            # An encrypted note keeps `description` blank and its content in
+            # ciphertext. The API has no passphrase to encrypt with, so text
+            # written here would sit in plaintext beside it. Blank is allowed
+            # so a GET body can be sent straight back as a PUT.
+            if attrs.get("description"):
+                raise serializers.ValidationError({
+                    "description": "This note is encrypted; edit its contents in the app."
+                })
+            if attrs.get("category", "note") != "note":
+                raise serializers.ValidationError({
+                    "category": "An encrypted note must stay a note."
+                })
+
         parent = attrs.get("parent", getattr(self.instance, "parent", None))
         begin_date = attrs.get("begin_date", getattr(self.instance, "begin_date", None))
 
@@ -423,6 +508,9 @@ class PublicTaskSerializer(serializers.ModelSerializer):
             # PUT replaces the task. DRF would otherwise leave omitted optional
             # fields untouched, making PUT a silent alias for PATCH — precisely
             # the kind of surprise this API is meant not to have.
+            if instance.is_encrypted:
+                # Resetting to the model default would turn it into a task.
+                validated_data.setdefault("category", "note")
             for name in PUBLIC_TASK_WRITABLE_FIELDS:
                 validated_data.setdefault(name, self._replacement_default(name))
         return super().update(instance, validated_data)

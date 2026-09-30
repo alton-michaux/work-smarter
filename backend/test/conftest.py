@@ -1,11 +1,25 @@
 import pytest
 import io
 from datetime import date
+from django.core.cache import cache
 from rest_framework.test import APIClient
 from django.contrib.auth.models import User
 from api.models import Task, Project, RecurringTask
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+
+# DRF's ScopedRateThrottle counters live in Django's cache, which (with the
+# default LocMemCache) persists for the whole pytest process, not per-test.
+# Login/registration throttling is IP-keyed for anonymous requests, and many
+# unrelated tests authenticate via the get_token fixture below by POSTing to
+# /api/auth/login/ — without clearing the cache between tests, that shared
+# counter would eventually exhaust the login throttle and start failing
+# tests that have nothing to do with rate limiting.
+@pytest.fixture(autouse=True)
+def _clear_throttle_cache():
+    cache.clear()
+    yield
+    cache.clear()
 
 # --- API Client Fixtures ---
 
@@ -68,9 +82,12 @@ def get_user(db):
 @pytest.fixture()
 def get_token(api_client, create_user):
     """
-    Instantiates a user, logs them in, and returns the token.
-    Usage:
-        token = get_token
+    Instantiates a user, logs them in, and returns the access token.
+
+    Login no longer returns tokens in the response body (they're set as
+    httpOnly cookies instead — see api/views/views_auth.py), so this reads
+    the access cookie directly. The returned string is still a valid JWT for
+    use as a Bearer header, which is what auth_client below does with it.
     """
     user = create_user(username="alice", email="alice@wonderland.com", password="madhatter")
     login_response = api_client.post(
@@ -78,7 +95,7 @@ def get_token(api_client, create_user):
         {"email": user.email, "password": "madhatter"},
         format="json"
     )
-    token = login_response.data["access"]
+    token = login_response.cookies["ws-access"].value
     return token
 
 # --- API Endpoint Fixtures ---

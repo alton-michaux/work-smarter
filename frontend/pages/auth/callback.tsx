@@ -5,21 +5,19 @@ import Spinner from 'components/shared/Spinner';
 
 export default function AuthCallback() {
   const router = useRouter();
-  const { loginWithToken } = useAuth();
+  const { getUser } = useAuth();
 
   useEffect(() => {
     if (!router.isReady) return;
 
-    const { access } = router.query;
-    if (!access || typeof access !== 'string') {
-      router.replace('/login?error=auth_failed');
-      return;
-    }
-
-    loginWithToken(access)
-      .then(() => router.replace('/dashboard'))
-      .catch(() => router.replace('/login?error=auth_failed'));
-  }, [router.isReady, router.query]);
+    // The backend sets httpOnly auth cookies directly on the redirect to
+    // this page — no token is passed in the URL. getUser() reports failure
+    // via context state (not a rejected promise), so unconditionally head
+    // to /dashboard; withAuth bounces back to /login if the session didn't
+    // actually get established.
+    getUser().finally(() => router.replace('/dashboard'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
