@@ -374,6 +374,7 @@ PUBLIC_TASK_FIELDS = [
     "is_subtask",
     "is_recurring",
     "recurring_frequency",
+    "is_encrypted",
     "created_at",
 ]
 
@@ -463,6 +464,20 @@ class PublicTaskSerializer(serializers.ModelSerializer):
         return parent
 
     def validate(self, attrs):
+        if self.instance is not None and self.instance.is_encrypted:
+            # An encrypted note keeps `description` blank and its content in
+            # ciphertext. The API has no passphrase to encrypt with, so text
+            # written here would sit in plaintext beside it. Blank is allowed
+            # so a GET body can be sent straight back as a PUT.
+            if attrs.get("description"):
+                raise serializers.ValidationError({
+                    "description": "This note is encrypted; edit its contents in the app."
+                })
+            if attrs.get("category", "note") != "note":
+                raise serializers.ValidationError({
+                    "category": "An encrypted note must stay a note."
+                })
+
         parent = attrs.get("parent", getattr(self.instance, "parent", None))
         begin_date = attrs.get("begin_date", getattr(self.instance, "begin_date", None))
 
@@ -493,6 +508,9 @@ class PublicTaskSerializer(serializers.ModelSerializer):
             # PUT replaces the task. DRF would otherwise leave omitted optional
             # fields untouched, making PUT a silent alias for PATCH — precisely
             # the kind of surprise this API is meant not to have.
+            if instance.is_encrypted:
+                # Resetting to the model default would turn it into a task.
+                validated_data.setdefault("category", "note")
             for name in PUBLIC_TASK_WRITABLE_FIELDS:
                 validated_data.setdefault(name, self._replacement_default(name))
         return super().update(instance, validated_data)
