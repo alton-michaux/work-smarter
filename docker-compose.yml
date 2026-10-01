@@ -28,9 +28,12 @@ services:
       - backend
 
   db:
-    image: postgres:13
+    image: postgres:18
     volumes:
-      - dbdata:/var/lib/postgresql/data
+      # Postgres 18 images keep data under /var/lib/postgresql/18/docker, so mount
+      # the parent. New volume name: the old `dbdata` volume holds 13-format data
+      # that 18 cannot open; it is left in place untouched.
+      - dbdata18:/var/lib/postgresql
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
@@ -41,4 +44,4 @@ networks:
     driver: bridge
 
 volumes:
-  dbdata:
+  dbdata18:
