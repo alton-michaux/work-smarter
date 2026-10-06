@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Task, Filters, TasksContextType, CreateTaskPayload, DeleteTaskOptions } from 'types/types'
@@ -26,6 +26,21 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // fetchTasks, fetchTasksByDateRange and fetchTasksForTimeline all replace the
+  // shared `tasks` list. When pages change quickly (e.g. back-navigating from a
+  // task to the daily log) an older page's request can resolve after the new
+  // page's request and overwrite it. Only the most recently started list fetch
+  // may commit results or clear isLoading; earlier ones are aborted.
+  const listRequest = useRef<{ id: number; controller: AbortController | null }>({ id: 0, controller: null });
+
+  const beginListRequest = () => {
+    listRequest.current.controller?.abort();
+    const controller = new AbortController();
+    const id = listRequest.current.id + 1;
+    listRequest.current = { id, controller };
+    return { signal: controller.signal, isCurrent: () => listRequest.current.id === id };
+  };
+
   const buildUrl = (filters: Filters = { ordering: '-begin_date' }) => {
     const qs = new URLSearchParams();
     if (filters.search) qs.set('search', filters.search);
@@ -45,13 +60,15 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchTasks = useCallback(async () => {
     if (!loggedIn) return;
+    const { signal, isCurrent } = beginListRequest();
     setIsLoading(true);
     setError(null);
     try {
       const url = buildUrl({ ordering: '-begin_date', tz_offset: -new Date().getTimezoneOffset() });
       const res = await fetch(url, {
-        credentials: 'include', headers: getAuthHeaders() });
+        credentials: 'include', headers: getAuthHeaders(), signal });
 
+      if (!isCurrent()) return;
       if (res.status === 401) {
         setError('Unauthorized');
         return;
@@ -60,17 +77,19 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
 
       const data = await res.json();
+      if (!isCurrent()) return;
       setTasks(data.results || []);
     } catch (e: any) {
-      setError(e.message ?? 'unknown error');
+      if (isCurrent()) setError(e.message ?? 'unknown error');
     } finally {
-      setIsLoading(false);
+      if (isCurrent()) setIsLoading(false);
     }
   }, [loggedIn, getAuthHeaders]);
 
   const fetchTasksByDateRange = useCallback(
     async (begin: string, end: string, active_on?: string | null) => {
       if (!loggedIn) return;
+      const { signal, isCurrent } = beginListRequest();
       setIsLoading(true);
       setError(null);
 
@@ -88,8 +107,9 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
         while (nextUrl) {
           const res = await fetch(nextUrl, {
-        credentials: 'include', headers: getAuthHeaders() });
+        credentials: 'include', headers: getAuthHeaders(), signal });
 
+          if (!isCurrent()) return;
           if (res.status === 401) {
             setError("Unauthorized");
             return;
@@ -98,6 +118,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
 
           const data = await res.json();
+          if (!isCurrent()) return;
           allResults.push(...(data.results || []));
           nextUrl = data.next
             ? data.next.replace(/^https?:\/\/[^/]+/, API_URL)
@@ -106,9 +127,9 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
         setTasks(allResults);
       } catch (e: any) {
-        setError(e.message ?? "unknown error");
+        if (isCurrent()) setError(e.message ?? "unknown error");
       } finally {
-        setIsLoading(false);
+        if (isCurrent()) setIsLoading(false);
       }
     },
     [loggedIn, getAuthHeaders]
@@ -135,6 +156,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   const fetchTasksForTimeline = useCallback(
     async (begin: string, end: string) => {
       if (!loggedIn) return;
+      const { signal, isCurrent } = beginListRequest();
       setIsLoading(true);
       setError(null);
       try {
@@ -148,18 +170,20 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         });
         while (nextUrl) {
           const res = await fetch(nextUrl, {
-        credentials: 'include', headers: getAuthHeaders() });
+        credentials: 'include', headers: getAuthHeaders(), signal });
+          if (!isCurrent()) return;
           if (res.status === 401) { setError('Unauthorized'); return; }
           if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
           const data = await res.json();
+          if (!isCurrent()) return;
           allResults.push(...(data.results || []));
           nextUrl = data.next ? data.next.replace(/^https?:\/\/[^/]+/, API_URL) : null;
         }
         setTasks(allResults);
       } catch (e: any) {
-        setError(e.message ?? 'unknown error');
+        if (isCurrent()) setError(e.message ?? 'unknown error');
       } finally {
-        setIsLoading(false);
+        if (isCurrent()) setIsLoading(false);
       }
     },
     [loggedIn, getAuthHeaders]
