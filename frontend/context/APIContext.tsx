@@ -1,5 +1,5 @@
 // context/APIContext.tsx
-import React, { useState, createContext, useContext, ReactNode } from 'react';
+import React, { useState, createContext, useContext, ReactNode, useCallback } from 'react';
 import { APIContextType } from 'types/types';
 import { getCsrfHeaders } from 'lib/csrf';
 import { API_URL } from 'lib/api';
@@ -17,21 +17,24 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
-  const getAuthHeaders = () => {
+  // Stable identities: fetchers in other contexts list these as useCallback
+  // deps, so a new function each render would re-trigger page fetch effects.
+  // The CSRF cookie is read at call time, so memoizing is safe.
+  const getAuthHeaders = useCallback(() => {
     return {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       ...getCsrfHeaders(),
     };
-  };
+  }, []);
 
-  const getAuthHeadersForForm = () => {
+  const getAuthHeadersForForm = useCallback(() => {
     // IMPORTANT: do NOT set Content-Type for FormData
     return {
       Accept: 'application/json',
       ...getCsrfHeaders(),
     };
-  };
+  }, []);
 
   const getImportCsvSpec = async () => {
     setIsLoading(true);
