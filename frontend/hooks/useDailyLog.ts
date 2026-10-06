@@ -33,19 +33,23 @@ function lastNDays(selectedDate: string, n = 7) {
 export function useDailyLog(
     tasks: any[],
     queryDate?: string,
-    options?: { activeOn?: boolean }
+    options?: { activeOn?: boolean; ready?: boolean }
   ) {
 
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const ready = options?.ready ?? true;
 
-  // client-safe init + sync with query param
+  // client-safe init + sync with query param. Wait until the caller says the
+  // query is known (router.isReady); otherwise a back-navigation to
+  // /tasks?date=X would pick today first and fetch the wrong day.
   useEffect(() => {
+    if (!ready) return;
     if (queryDate) {
       setSelectedDate(queryDate);
       return;
     }
     setSelectedDate(todayYMD());
-  }, [queryDate]);
+  }, [queryDate, ready]);
 
   const days = useMemo(() => lastNDays(selectedDate, 7), [selectedDate]);
   

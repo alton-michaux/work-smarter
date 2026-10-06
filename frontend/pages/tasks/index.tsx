@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useTasks } from 'context/TasksContext';
+import { useAuth } from 'context/AuthContext';
 import { useProjects } from 'context/ProjectsContext';
 import { useRouter } from 'next/router';
 import { DateToggleUI } from 'components/ui/dateToggleUI';
@@ -9,13 +10,13 @@ import QuickAddBar from '../../components/tasks/quickAddBar';
 import SearchBar from '../../components/tasks/SearchBar';
 import SearchResults from '../../components/tasks/SearchResults';
 import ConfirmDeleteRecurringModal from 'components/ui/confirmDeleteRecurringModal';
+import Spinner from 'components/shared/Spinner';
 import { toast } from 'sonner';
 
 const TasksPage = () => {
   const {
     tasks,
     deleteTask,
-    isLoading,
     error,
     fetchTasksByDateRange,
     toggleTaskDone,
@@ -29,6 +30,11 @@ const TasksPage = () => {
   const [taskPendingDelete, setTaskPendingDelete] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  // The date whose fetch has finished. `tasks` is shared with other pages, so
+  // until this matches selectedDate it may hold another view's data.
+  const [loadedDate, setLoadedDate] = useState<string | null>(null);
+
+  const { loggedIn } = useAuth();
 
   const router = useRouter();
   const queryDate =
@@ -73,26 +79,37 @@ const TasksPage = () => {
   };
 
   const { selectedDate, setSelectedDate, last7Days, dailyTasks, sections } =
-    useDailyLog(tasks, queryDate, { activeOn: true });
+    useDailyLog(tasks, queryDate, { activeOn: true, ready: router.isReady });
 
   const isSearchMode = Boolean(debouncedQuery.trim());
 
+  // Depends on loggedIn/fetchTasksByDateRange too: on a fresh page load (e.g.
+  // browser back after a full reload) auth resolves after the date is set, and
+  // a fetch attempted before then is a no-op that would otherwise never retry.
   useEffect(() => {
-    if (!selectedDate) return;
-    fetchTasksByDateRange(selectedDate, selectedDate, selectedDate);
+    if (!selectedDate || !loggedIn) return;
+    let cancelled = false;
+    fetchTasksByDateRange(selectedDate, selectedDate, selectedDate).finally(() => {
+      if (!cancelled) setLoadedDate(selectedDate);
+    });
     setProjects(projects);
-  }, [selectedDate]); // keeping your existing behavior
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDate, loggedIn, fetchTasksByDateRange]);
 
   // Re-fetch every 2 minutes when viewing today so meeting done-state stays current
   useEffect(() => {
-    if (!selectedDate) return;
+    if (!selectedDate || !loggedIn) return;
     const today = new Date().toISOString().slice(0, 10);
     if (selectedDate !== today) return;
     const interval = setInterval(() => {
       fetchTasksByDateRange(selectedDate, selectedDate, selectedDate);
     }, 2 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [selectedDate]);
+  }, [selectedDate, loggedIn, fetchTasksByDateRange]);
+
+  const isDayLoaded = Boolean(selectedDate) && loadedDate === selectedDate;
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(searchQuery), 300);
@@ -199,9 +216,9 @@ const TasksPage = () => {
                 onDelete={handleDelete}
                 onToggleDone={handleToggleDone}
               />
-            ) : !selectedDate ? (
-              <p className="text-gray-600 text-center">Loading…</p>
-            ) : !isLoading && dailyTasks.length === 0 ? (
+            ) : !isDayLoaded ? (
+              <Spinner />
+            ) : dailyTasks.length === 0 ? (
               <div className="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 px-4 py-8 text-center">
                 <p className="text-sm text-gray-700 dark:text-gray-300">
                   No entries for{' '}
