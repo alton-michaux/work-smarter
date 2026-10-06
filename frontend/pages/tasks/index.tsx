@@ -81,6 +81,22 @@ const TasksPage = () => {
   const { selectedDate, setSelectedDate, last7Days, dailyTasks, sections } =
     useDailyLog(tasks, queryDate, { activeOn: true, ready: router.isReady });
 
+  // Keep the date in the URL so returning to the daily log (e.g. back from a
+  // task) restores the same day. replace, not push: flipping between days
+  // shouldn't add history entries the back button has to step through.
+  const selectDate = useCallback(
+    (date: string) => {
+      if (!date) return;
+      setSelectedDate(date);
+      router.replace(
+        { pathname: router.pathname, query: { ...router.query, date } },
+        undefined,
+        { shallow: true }
+      );
+    },
+    [router, setSelectedDate]
+  );
+
   const isSearchMode = Boolean(debouncedQuery.trim());
 
   // Depends on loggedIn/fetchTasksByDateRange too: on a fresh page load (e.g.
@@ -167,7 +183,7 @@ const TasksPage = () => {
                   <div className="mt-3 flex flex-wrap items-center gap-3">
                     <DateToggleUI
                       selectedDate={selectedDate}
-                      setSelectedDate={setSelectedDate}
+                      setSelectedDate={selectDate}
                       last7Days={last7Days}
                       compact
                     />
@@ -175,7 +191,7 @@ const TasksPage = () => {
                     <input
                       type="date"
                       value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
+                      onChange={(e) => selectDate(e.target.value)}
                       className="shrink-0 w-[150px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
                     />
 
