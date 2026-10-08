@@ -1,14 +1,16 @@
-export function taskDay(t: any) {
+type Dated = { begin_date?: string | null };
+
+export function taskDay(t: Dated) {
   return (t.begin_date ?? '').slice(0, 10);
 }
 
-export function isMeetingTask(t: any) {
+export function isMeetingTask(t: { category?: string | null }) {
   const c = String(t.category ?? '').trim().toLowerCase();
   return c === 'meeting' || c === 'meetings';
 }
 
-export function groupByBeginDate(tasks: any[], direction: 'asc' | 'desc' = 'desc') {
-  const groups: Record<string, any[]> = {};
+export function groupByBeginDate<T extends Dated>(tasks: T[], direction: 'asc' | 'desc' = 'desc') {
+  const groups: Record<string, T[]> = {};
 
   for (const t of tasks || []) {
     const day = (t.begin_date ?? '—').slice(0, 10);

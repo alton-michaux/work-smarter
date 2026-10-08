@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import { useAuth } from "../context/AuthContext";
 import { useTasks } from "../context/TasksContext";
 import { useProjects } from "../context/ProjectsContext";
-import { useAPI } from "../context/APIContext";
 import { useSystem } from "context/SystemsContext";
 
 function Dashboard() {
@@ -12,7 +11,6 @@ function Dashboard() {
   const { logout, loggedIn } = useAuth();
 
   const { exportCsv } = useSystem();
-  const { fileUpload } = useAPI();
   const { fetchTasks } = useTasks();
   const { fetchProjects } = useProjects();
 
@@ -23,7 +21,7 @@ function Dashboard() {
 
   const handleLogout = () => logout();
 
-  const go = (path: string) => (e?: any) => {
+  const go = (path: string) => (e?: React.SyntheticEvent) => {
     if (e?.preventDefault) e.preventDefault();
     router.push(path);
   };

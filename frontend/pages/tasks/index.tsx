@@ -3,6 +3,7 @@ import { useTasks } from 'context/TasksContext';
 import { useAuth } from 'context/AuthContext';
 import { useProjects } from 'context/ProjectsContext';
 import { useRouter } from 'next/router';
+import type { TaskNode } from 'types/types';
 import { DateToggleUI } from 'components/ui/dateToggleUI';
 import { TaskLayout } from 'components/tasks/TaskLayout';
 import { useDailyLog } from '../../hooks/useDailyLog';
@@ -27,7 +28,7 @@ const TasksPage = () => {
 
   
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [taskPendingDelete, setTaskPendingDelete] = useState<any>(null);
+  const [taskPendingDelete, setTaskPendingDelete] = useState<TaskNode | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   // The date whose fetch has finished. `tasks` is shared with other pages, so
@@ -40,7 +41,7 @@ const TasksPage = () => {
   const queryDate =
     typeof router.query.date === 'string' ? router.query.date : null;
   
-  const isRecurring = (t: any) => Boolean(t?.recurring_task_id || t?.recurring_task?.id);
+  const isRecurring = (t: TaskNode) => Boolean(t?.recurring_task_id);
 
   const { projects, setProjects } = useProjects();
 
@@ -56,7 +57,7 @@ const TasksPage = () => {
 
   const handleToggleDone = useCallback(
     async (id: number, isDone: boolean) => {
-      const task = tasks.find((t: any) => Number(t.id) === Number(id));
+      const task = tasks.find((t) => Number(t.id) === Number(id));
       if (!task) return;
 
       try {
@@ -68,7 +69,7 @@ const TasksPage = () => {
     [tasks, toggleTaskDone]
   );
 
-  const handleDelete = async (task: any) => {
+  const handleDelete = async (task: TaskNode) => {
     if (isRecurring(task)) {
       setTaskPendingDelete(task);
       setDeleteModalOpen(true);

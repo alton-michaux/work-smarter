@@ -1,5 +1,5 @@
 import React from 'react';
-import { Task } from 'types/types';
+import { Task, TaskNode } from 'types/types';
 import { buildTree } from '../../lib/dailyLog';
 import OutlineTree from './OutlineTree';
 
@@ -9,7 +9,7 @@ type SearchResultsProps = {
   isSearching: boolean;
   onView: (id: number) => void;
   onEdit: (id: number) => void;
-  onDelete: (task: any) => void;
+  onDelete: (task: TaskNode) => void;
   onToggleDone: (id: number, isDone: boolean) => void;
 };
 
@@ -39,7 +39,7 @@ export default function SearchResults({
     return (
       <div className="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 px-4 py-8 text-center">
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          No results for <span className="font-medium">"{query}"</span>.
+          No results for <span className="font-medium">&quot;{query}&quot;</span>.
         </p>
       </div>
     );
@@ -60,7 +60,7 @@ export default function SearchResults({
   return (
     <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-        {results.length} result{results.length !== 1 ? 's' : ''} for <span className="font-medium">"{query}"</span>
+        {results.length} result{results.length !== 1 ? 's' : ''} for <span className="font-medium">&quot;{query}&quot;</span>
       </p>
       {sortedKeys.map((dateKey) => (
         <div key={dateKey} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">

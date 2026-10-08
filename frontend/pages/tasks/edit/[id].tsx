@@ -8,7 +8,7 @@ import { useAuth } from "../../../context/AuthContext";
 import TaskForm from "../../../components/tasks/TaskForm";
 import Spinner from "components/shared/Spinner";
 import EmptyStateCard from "components/shared/EmptyStateCard";
-import { Task } from "types/types";
+import { Task, TaskSubmission } from "types/types";
 import { API_URL } from 'lib/api';
 
 
@@ -22,28 +22,26 @@ export default function TaskEditPage() {
   const { loggedIn } = useAuth();
 
   const [fetchedTask, setFetchedTask] = useState<Task | null>(null);
-  const [isFetchingTask, setIsFetchingTask] = useState(false);
 
   const taskInContext = tasks?.find((t) => t.id === Number(id));
   const task = taskInContext ?? fetchedTask;
 
+  // Fallback for a task that isn't in the shared list (deep link, reload).
+  // A failed fetch is remembered so it shows "not found" instead of retrying.
+  const [failedFetchId, setFailedFetchId] = useState<string | null>(null);
+  const isFetchingTask =
+    Boolean(id) && !isLoading && !taskInContext && !fetchedTask && loggedIn && failedFetchId !== String(id);
+
   useEffect(() => {
-    if (!id || isLoading || taskInContext || fetchedTask) return;
-    if (!loggedIn) return;
-    setIsFetchingTask(true);
+    if (!isFetchingTask) return;
     fetch(`${API_URL}/tasks/${id}/`, {
         credentials: 'include', headers: getAuthHeaders() })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: Task) => setFetchedTask(data))
-      .catch(() => {})
-      .finally(() => setIsFetchingTask(false));
-  }, [id, isLoading, taskInContext, fetchedTask, loggedIn]);
+      .catch(() => setFailedFetchId(String(id)));
+  }, [isFetchingTask, id, getAuthHeaders]);
 
-  const projectOptions = Array.isArray(projects)
-    ? projects
-    : projects && typeof projects === "object" && "results" in projects
-    ? (projects as any).results
-    : [];
+  const projectOptions = projects;
 
   if (isLoading || isFetchingTask) {
     return (
@@ -73,7 +71,7 @@ export default function TaskEditPage() {
 
   const qReturn = typeof router.query.returnTo === 'string' ? router.query.returnTo : '/tasks';
 
-  const handleUpdate = async (updatedTask: any) => {
+  const handleUpdate = async (updatedTask: TaskSubmission) => {
     await updateTaskAndReload({ ...updatedTask, id: Number(id) });
     router.push(qReturn);
   };

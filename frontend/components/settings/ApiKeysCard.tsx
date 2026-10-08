@@ -37,7 +37,7 @@ export default function ApiKeysCard() {
       .then((data: PersonalAPIKey[]) => setKeys(data))
       .catch(() => toast.error('Failed to load API keys.'))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [getAuthHeaders]);
 
   const handleCreate = async () => {
     setIsCreating(true);
@@ -132,7 +132,7 @@ export default function ApiKeysCard() {
             onClick={() => setNewKey(null)}
             className="text-xs text-amber-800 dark:text-amber-300 hover:underline"
           >
-            I've saved it — dismiss
+            I&apos;ve saved it — dismiss
           </button>
         </div>
       )}

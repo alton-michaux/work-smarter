@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import Spinner from 'components/shared/Spinner';
 import Button from "../components/ui/button";
@@ -116,15 +117,15 @@ const Login = () => {
 
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center">
                 Don&apos;t have an account?{' '}
-                <a href="/register" className="text-green-600 hover:underline">
+                <Link href="/register" className="text-green-600 hover:underline">
                     Sign up here
-                </a>
+                </Link>
                 </p>
 
                 <div className="text-center mt-2">
-                <a href="/" className="text-gray-500 dark:text-gray-400 text-sm hover:underline">
+                <Link href="/" className="text-gray-500 dark:text-gray-400 text-sm hover:underline">
                     ← Back to Home
-                </a>
+                </Link>
                 </div>
             </div>
         </div>

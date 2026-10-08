@@ -13,8 +13,7 @@ const ProjectShowPage = () => {
   const { id } = router.query;
   const { projects, isLoading } = useProjects();
 
-  const list = Array.isArray(projects) ? projects : (projects as any)?.results ?? [];
-  const project = list.find((p) => p.id === Number(id));
+  const project = projects.find((p) => p.id === Number(id));
   const insights = useProjectInsights(project);
 
   if (isLoading) {
@@ -136,8 +135,8 @@ const ProjectShowPage = () => {
                 emptyText="No upcoming meetings for this project."
                 grouped={insights.meetingsGrouped}
                 iconFor={() => "🗓️"}
-                metaFor={(t: any) => taskDay(t)}
-                onItemClick={(t: any) => router.push(`/tasks?date=${taskDay(t)}`)}
+                metaFor={(t) => taskDay(t)}
+                onItemClick={(t) => router.push(`/tasks?date=${taskDay(t)}`)}
               />
             </div>
           </div>
@@ -155,17 +154,17 @@ const ProjectShowPage = () => {
               <ProjectTimelineSection
                 emptyText="No work items logged for this project."
                 grouped={insights.workGrouped}
-                iconFor={(t: any) => (t.is_done ? "☑" : "☐")}
-                titleClassFor={(t: any) =>
+                iconFor={(t) => (t.is_done ? "☑" : "☐")}
+                titleClassFor={(t) =>
                   t.is_done ? "text-gray-500 dark:text-gray-500 line-through" : "text-gray-900 dark:text-gray-100"
                 }
-                metaFor={(t: any) => (
+                metaFor={(t) => (
                   <>
                     {taskDay(t)}
                     {t.priority ? ` • ${String(t.priority).toUpperCase()}` : ""}
                   </>
                 )}
-                onItemClick={(t: any) => router.push(`/tasks?date=${taskDay(t)}`)}
+                onItemClick={(t) => router.push(`/tasks?date=${taskDay(t)}`)}
               />
             </div>
           </div>

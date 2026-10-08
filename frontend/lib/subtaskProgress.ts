@@ -4,7 +4,7 @@ export function buildSubtaskProgressByParentId(tasks: Task[]): Record<number, Su
   const progress: Record<number, SubtaskProgress> = {};
 
   for (const t of tasks ?? []) {
-    const parentId = (t as any).parent ?? null; // parent is optional in your Task type
+    const parentId = t.parent ?? null; // parent is optional in your Task type
     if (parentId == null) continue;
 
     const pid = Number(parentId);
@@ -13,7 +13,7 @@ export function buildSubtaskProgressByParentId(tasks: Task[]): Record<number, Su
     progress[pid].total += 1;
 
     // Prefer effective_is_done if your weekly payload includes it; fall back to is_done
-    const isDone = Boolean((t as any).effective_is_done ?? t.is_done);
+    const isDone = Boolean(t.effective_is_done ?? t.is_done);
     if (isDone) progress[pid].done += 1;
   }
 

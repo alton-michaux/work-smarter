@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useRouter } from "next/router";
 import NoteCard from "components/notes/NoteCard";
 import { AnyTask, TrackerProps } from "types/types";
@@ -12,8 +13,6 @@ const PROJECT_COLORS = [
 function projectColor(id: number) {
   return PROJECT_COLORS[id % PROJECT_COLORS.length];
 }
-
-type SubtaskProgress = { done: number; total: number };
 
 export default function TaskTable({
   meetings,
@@ -30,22 +29,20 @@ export default function TaskTable({
    */
   const router = useRouter();
   const { projects } = useProjects();
-  const isDone = (t: any) => Boolean(t.effective_is_done ?? t.is_done);
-  const isAutoDoneMeeting = (t: any) => t.effective_is_done && !t.is_done;
+  const isDone = (t: AnyTask) => Boolean(t.effective_is_done ?? t.is_done);
+  const isAutoDoneMeeting = (t: AnyTask) => t.effective_is_done && !t.is_done;
 
   // ✅ Use collapsed arrays if provided; otherwise use original arrays
   const meetingsBase = (collapsedMeetings ?? meetings) as AnyTask[];
   const workBase = (collapsedWork ?? work) as AnyTask[];
 
   // ✅ Option 1: hide subtasks in weekly view (show badge on parents only)
-  const meetingsToRender = meetingsBase.filter((t: any) => !t.parent);
-  const workToRender = workBase.filter((t: any) => !t.parent);
-
-  const dateLabel = (t: any) => String(t.begin_date ?? "").slice(0, 10);
+  const meetingsToRender = meetingsBase.filter((t) => !t.parent);
+  const workToRender = workBase.filter((t) => !t.parent);
 
 
   const deadlineBadge = (t: AnyTask) => {
-    const dl = (t as any).deadline_date as string | null | undefined;
+    const dl = t.deadline_date;
     if (!dl || isDone(t)) return null;
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const deadline = new Date(dl + 'T00:00:00');
@@ -66,7 +63,7 @@ export default function TaskTable({
   };
 
   const recurrenceBadge = (t: AnyTask) => {
-    const freq = (t as any).recurring_frequency;
+    const freq = t.recurring_frequency;
     if (!freq || t.__collapsed) return null;
     return (
       <span className="text-[11px] px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/20 text-purple-500 dark:text-purple-400 border border-purple-200 dark:border-purple-800 whitespace-nowrap">
@@ -93,7 +90,7 @@ export default function TaskTable({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:h-full lg:min-h-0">
       {/* MEETINGS */}
       <div className="lg:col-span-3 lg:min-h-0">
-      <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`} children={(
+      <SectionPanel title="MEETINGS" right={`${meetingsToRender.length} total`}>
         <div className={`${sectionBodyClass} rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-10`}>
             <table className="w-full text-sm table-fixed">
               <tbody>
@@ -113,8 +110,8 @@ export default function TaskTable({
                         <span className="text-sm leading-tight">🗓️</span>
 
                         {(() => {
-                          const proj = (t as any).project != null
-                            ? projects.find(p => p.id === (t as any).project)
+                          const proj = t.project != null
+                            ? projects.find(p => p.id === t.project)
                             : null;
                           const color = proj ? (proj.color ?? projectColor(proj.id)) : null;
                           return color ? (
@@ -160,12 +157,12 @@ export default function TaskTable({
               </div>
             )}
         </div>
-      )} />
+      </SectionPanel>
       </div>
 
       {/* WORK */}
       <div className="lg:col-span-6 lg:min-h-0">
-      <SectionPanel title="WORK" right={`${workToRender.length} total`} children={(
+      <SectionPanel title="WORK" right={`${workToRender.length} total`}>
         <div className={`${sectionBodyClass} rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-10`}>
           <table className="w-full text-sm table-fixed">
             <tbody>
@@ -215,16 +212,16 @@ export default function TaskTable({
             </tbody>
           </table>
         </div>
-      )} />
+      </SectionPanel>
       </div>
 
       {/* NOTES */}
       <div className="lg:col-span-3 lg:min-h-0">
-      <SectionPanel title="NOTES" right={<a href="/notes" className="text-xs text-blue-500 hover:underline">All notes →</a>} children={(
+      <SectionPanel title="NOTES" right={<Link href="/notes" className="text-xs text-blue-500 hover:underline">All notes →</Link>}>
         <div className={`${sectionBodyClass} rounded-lg border border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-10`}>
           {notes.length ? (
             <div className="space-y-3">
-              {notes.map((n: any) => (
+              {notes.map((n) => (
                 <div key={n.id}>
                   <NoteCard
                     note={n}
@@ -239,7 +236,7 @@ export default function TaskTable({
             <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">No notes.</div>
           )}
         </div>
-      )} />
+      </SectionPanel>
       </div>
     </div>
   );

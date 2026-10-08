@@ -4,6 +4,7 @@ import { useTasks } from '../../context/TasksContext';
 import TaskForm from '../../components/tasks/TaskForm';
 import Spinner from 'components/shared/Spinner';
 import { useProjects } from '../../context/ProjectsContext';
+import type { TaskSubmission } from 'types/types';
 
 const emptyTask = {
   title: '',
@@ -13,7 +14,6 @@ const emptyTask = {
   is_done: false,
   is_subtask: false,
   carry_over: true,
-  user: '',
   project: '',
 };
 
@@ -25,7 +25,7 @@ export default function TaskCreatePage() {
 
   const qReturn = typeof router.query.returnTo === 'string' ? router.query.returnTo : '/tasks';
 
-  const handleCreate = async (task) => {
+  const handleCreate = async (task: TaskSubmission) => {
     await addTask(task);
     router.push(qReturn);
   };
@@ -48,9 +48,7 @@ export default function TaskCreatePage() {
 
   const { projects } = useProjects();
 
-  const projectOptions = Array.isArray(projects)
-    ? projects
-    : (projects && typeof projects === 'object' && 'results' in projects ? (projects as any).results : []);
+  const projectOptions = projects;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center px-4 py-10">

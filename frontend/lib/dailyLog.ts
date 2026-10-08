@@ -1,3 +1,8 @@
+import type { Task, TaskNode } from 'types/types';
+
+type TreeRow = { id: number | string; parent?: number | string | null; parent_id?: number | string | null };
+type Positioned = { id?: number | string; position?: number | null };
+
 export function categoryToType(category?: string | null) {
   const c = (category ?? '').trim().toLowerCase();
   if (c === 'meetings' || c === 'meeting') return 'meeting';
@@ -5,9 +10,10 @@ export function categoryToType(category?: string | null) {
   return 'task'; // default
 }
 
-export function buildTree<T extends { id: any; parent?: any | null; parent_id?: any | null }>(rows: T[]) {
-  const byId = new Map<any, (T & { children: any[] })>();
-  const roots: Array<T & { children: any[] }> = [];
+export function buildTree<T extends TreeRow>(rows: T[]) {
+  type Tree = T & { children: Tree[] };
+  const byId = new Map<T['id'], Tree>();
+  const roots: Tree[] = [];
 
   // init
   for (const r of rows) byId.set(r.id, { ...r, children: [] });
@@ -17,7 +23,7 @@ export function buildTree<T extends { id: any; parent?: any | null; parent_id?: 
     const node = byId.get(r.id)!;
 
     // Prefer API field `parent`, but support legacy `parent_id` too
-    const parentId = (r as any).parent ?? (r as any).parent_id ?? null;
+    const parentId = r.parent ?? r.parent_id ?? null;
 
     if (parentId != null && byId.has(parentId)) {
       byId.get(parentId)!.children.push(node);
@@ -36,7 +42,7 @@ export function buildTree<T extends { id: any; parent?: any | null; parent_id?: 
 }
 
 /** Sort siblings by their manual `position`, falling back to id for ties. */
-export function sortByPosition(nodes: any[]) {
+export function sortByPosition<T extends Positioned>(nodes: T[]) {
   nodes.sort((a, b) => {
     const pa = Number.isFinite(Number(a?.position)) ? Number(a.position) : 0;
     const pb = Number.isFinite(Number(b?.position)) ? Number(b.position) : 0;
@@ -57,11 +63,11 @@ export function priorityRank(p?: string | null): number {
   return PRIORITY_RANK[String(p ?? '').toLowerCase()] ?? 4;
 }
 
-function byPriority(a: any, b: any) {
+function byPriority(a: Pick<Task, 'priority'>, b: Pick<Task, 'priority'>) {
   return priorityRank(a.priority) - priorityRank(b.priority);
 }
 
-export function splitIntoSections(tasks: any[]) {
+export function splitIntoSections(tasks: Task[]): { meetings: TaskNode[]; tasks: TaskNode[]; notes: TaskNode[] } {
   const uniq = Array.from(new Map((tasks ?? []).map(t => [t.id, t])).values());
 
   const meetings = uniq

@@ -2,8 +2,8 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { useAuth } from 'context/AuthContext';
 
-const withAuth = (WrappedComponent: React.FC) => {
-  return function ProtectedRoute(props: any) {
+const withAuth = <P extends object>(WrappedComponent: React.ComponentType<P>) => {
+  return function ProtectedRoute(props: P) {
     const router = useRouter();
     const { loggedIn, isLoading } = useAuth();
 

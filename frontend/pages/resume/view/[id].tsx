@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import ResumeAnalysisPanel from 'components/resume/ResumeAnalysisPanel';
 import ResumeGenerationPanel from 'components/resume/ResumeGenerationPanel';
 import { API_URL } from 'lib/api';
+import { errorMessage } from 'lib/errors';
 
 
 const isPdf = (url: string) => url.toLowerCase().split('?')[0].endsWith('.pdf');
@@ -19,8 +20,8 @@ export default function ResumeViewPage() {
   const { getAuthHeaders } = useAPI();
   const { refreshAccessToken } = useAuth();
   const [resume, setResume] = useState<Resume | null>(null);
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
+  // The PDF preview for one resume; url is null when the download failed.
+  const [preview, setPreview] = useState<{ resumeId: number; url: string | null } | null>(null);
   const [analysis, setAnalysis] = useState<ResumeAnalysisState>({ status: 'idle' });
   const [generation, setGeneration] = useState<ResumeGenerationState>({ status: 'idle' });
 
@@ -28,19 +29,24 @@ export default function ResumeViewPage() {
     if (resumes.length === 0) fetchResumes();
   }, []);
 
-  useEffect(() => {
-    if (id && resumes.length > 0) {
-      const found = resumes.find((r) => r.id === Number(id));
-      setResume(found ?? null);
-    }
-  }, [id, resumes]);
+  // Pick the resume out of the list when it (or the id) changes. Kept in
+  // state rather than derived so it survives the list briefly emptying.
+  const [resumeSource, setResumeSource] = useState<{ id: typeof id; resumes: Resume[] } | null>(null);
+  if (id && resumes.length > 0 && (resumeSource?.id !== id || resumeSource?.resumes !== resumes)) {
+    setResumeSource({ id, resumes });
+    setResume(resumes.find((r) => r.id === Number(id)) ?? null);
+  }
+
+  const wantsPreview = Boolean(resume && isPdf(resume.file));
+  const previewLoading = wantsPreview && preview?.resumeId !== resume?.id;
+  const blobUrl = preview && preview.resumeId === resume?.id ? preview.url : null;
 
   // Fetch PDF as blob via the authenticated download endpoint, refreshing the token on 401
   useEffect(() => {
     if (!resume || !isPdf(resume.file)) return;
 
     let objectUrl: string;
-    setPreviewLoading(true);
+    const resumeId = resume.id;
 
     const fetchBlob = async () => {
       let res = await fetch(`${API_URL}/resumes/${resume.id}/download/`, {
@@ -63,10 +69,9 @@ export default function ResumeViewPage() {
     fetchBlob()
       .then((blob) => {
         objectUrl = URL.createObjectURL(blob);
-        setBlobUrl(objectUrl);
+        setPreview({ resumeId, url: objectUrl });
       })
-      .catch(() => setBlobUrl(null))
-      .finally(() => setPreviewLoading(false));
+      .catch(() => setPreview({ resumeId, url: null }));
 
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
@@ -99,8 +104,8 @@ export default function ResumeViewPage() {
     try {
       const data = await analyzeResume(resume.id, forceRefresh);
       setAnalysis({ status: 'success', data });
-    } catch (e: any) {
-      const msg = e.message ?? 'Analysis failed.';
+    } catch (e) {
+      const msg = errorMessage(e, 'Analysis failed.');
       setAnalysis({ status: 'error', message: msg });
       toast.error(msg);
     }
@@ -112,8 +117,8 @@ export default function ResumeViewPage() {
     try {
       const data = await generateResume(resume.id, forceRefresh);
       setGeneration({ status: 'success', data });
-    } catch (e: any) {
-      const msg = e.message ?? 'Generation failed.';
+    } catch (e) {
+      const msg = errorMessage(e, 'Generation failed.');
       setGeneration({ status: 'error', message: msg });
       toast.error(msg);
     }

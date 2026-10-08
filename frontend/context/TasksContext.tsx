@@ -1,10 +1,22 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Task, Filters, TasksContextType, CreateTaskPayload, DeleteTaskOptions } from 'types/types'
+import { Task, Filters, TasksContextType, CreateTaskPayload, DeleteTaskOptions, TaskSubmission } from 'types/types'
 import { API_URL } from 'lib/api';
+import { errorMessage } from 'lib/errors';
 
 
+
+type RecurringTaskPayload = {
+  title?: string;
+  project: number | string | null;
+  category: string | null;
+  frequency: string;
+  start_date?: string;
+  is_active: boolean;
+  day_of_week?: number;
+  skip_weekends?: boolean;
+};
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
@@ -79,8 +91,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       const data = await res.json();
       if (!isCurrent()) return;
       setTasks(data.results || []);
-    } catch (e: any) {
-      if (isCurrent()) setError(e.message ?? 'unknown error');
+    } catch (e) {
+      if (isCurrent()) setError(errorMessage(e, 'unknown error'));
     } finally {
       if (isCurrent()) setIsLoading(false);
     }
@@ -94,7 +106,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       setError(null);
 
       try {
-        const params: any = { ordering: "-begin_date", page_size: 500, begin_date: begin, end_date: end, tz_offset: -new Date().getTimezoneOffset() };
+        const params: Filters = { ordering: "-begin_date", page_size: 500, begin_date: begin, end_date: end, tz_offset: -new Date().getTimezoneOffset() };
 
         // Only include active_on if it’s a non-empty string
         if (typeof active_on === "string" && active_on.trim().length > 0) {
@@ -126,8 +138,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         }
 
         setTasks(allResults);
-      } catch (e: any) {
-        if (isCurrent()) setError(e.message ?? "unknown error");
+      } catch (e) {
+        if (isCurrent()) setError(errorMessage(e, "unknown error"));
       } finally {
         if (isCurrent()) setIsLoading(false);
       }
@@ -146,8 +158,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       if (!res.ok) throw new Error(`Failed to fetch notes: ${res.status}`);
       const data = await res.json();
       setNotes(data.results || []);
-    } catch (e: any) {
-      setError(e.message ?? 'unknown error');
+    } catch (e) {
+      setError(errorMessage(e, 'unknown error'));
     } finally {
       setIsLoadingNotes(false);
     }
@@ -180,8 +192,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           nextUrl = data.next ? data.next.replace(/^https?:\/\/[^/]+/, API_URL) : null;
         }
         setTasks(allResults);
-      } catch (e: any) {
-        if (isCurrent()) setError(e.message ?? 'unknown error');
+      } catch (e) {
+        if (isCurrent()) setError(errorMessage(e, 'unknown error'));
       } finally {
         if (isCurrent()) setIsLoading(false);
       }
@@ -189,7 +201,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     [loggedIn, getAuthHeaders]
   );
 
-  const fetchRecurringTemplate = async (recurring_task_id: number, initialTask: any, setRecurrence: any) => {
+  const fetchRecurringTemplate: TasksContextType['fetchRecurringTemplate'] = async (recurring_task_id, initialTask, setRecurrence) => {
     if (!loggedIn) return;
     setError(null)
     try {
@@ -212,8 +224,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         day_of_week: rt.day_of_week ?? prev.day_of_week,
         start_date: rt.start_date ?? initialTask?.begin_date ?? prev.start_date,
       }));
-    } catch (err: any) {
-      setError(err.message || 'unknown error');
+    } catch (err) {
+      setError(errorMessage(err, 'unknown error'));
       console.error(err);
     }
   }
@@ -243,14 +255,14 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         if (previous) setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...previous } : t)));
         setError('Failed to update task');
       }
-    } catch (err: any) {
+    } catch (err) {
       if (previous) setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...previous } : t)));
-      setError(err.message || 'unknown error');
+      setError(errorMessage(err, 'unknown error'));
       console.error(err);
     }
   };
 
-  const addTask = async (task: any) => {
+  const addTask = async (task: TaskSubmission) => {
     if (!loggedIn) return;
 
     try {
@@ -258,7 +270,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
       // 1) If the user checked "Repeats", create the RecurringTask first
       if (task?.recurrence?.repeats) {
-        const payload: any = {
+        const payload: RecurringTaskPayload = {
           title: task.title,
           project: task.project === '' ? null : (task.project ?? null),
           category: task.category || null,
@@ -295,7 +307,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // 2) Build the task payload safely (no accidental recurring fields)
-      const taskPayload: any = { ...task };
+      const taskPayload: TaskSubmission = { ...task };
 
       // remove UI-only recurrence wrapper
       delete taskPayload.recurrence;
@@ -333,8 +345,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       } else {
         await fetchTasks();
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to add task');
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to add task'));
       throw err;
     }
   };
@@ -350,11 +362,11 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (!loggedIn) return;
     setError(null);
 
-    const previous = tasks.filter((t: any) => Number(t.parent) === Number(parentId));
+    const previous = tasks.filter((t) => Number(t.parent) === Number(parentId));
     const positionById = new Map(orderedIds.map((id, index) => [Number(id), index]));
 
     setTasks((prev) =>
-      prev.map((t: any) =>
+      prev.map((t) =>
         positionById.has(Number(t.id))
           ? { ...t, position: positionById.get(Number(t.id)) }
           : t
@@ -363,9 +375,9 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
     const restore = () =>
       setTasks((prev) =>
-        prev.map((t: any) => {
-          const before = previous.find((p: any) => Number(p.id) === Number(t.id));
-          return before ? { ...t, position: (before as any).position } : t;
+        prev.map((t) => {
+          const before = previous.find((p) => Number(p.id) === Number(t.id));
+          return before ? { ...t, position: before.position } : t;
         })
       );
 
@@ -388,14 +400,14 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
 
       const updated: Task[] = await res.json();
       setTasks((prev) =>
-        prev.map((t: any) => {
-          const fresh = updated.find((u: any) => Number(u.id) === Number(t.id));
+        prev.map((t) => {
+          const fresh = updated.find((u) => Number(u.id) === Number(t.id));
           return fresh ? { ...t, ...fresh } : t;
         })
       );
-    } catch (err: any) {
+    } catch (err) {
       restore();
-      setError(err.message || 'unknown error');
+      setError(errorMessage(err, 'unknown error'));
       console.error(err);
     }
   };
@@ -429,16 +441,16 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       } else {
         await fetchTasks();
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to add subtask");
+    } catch (err) {
+      setError(errorMessage(err, "Failed to add subtask"));
       throw err;
     }
   };
 
-  const updateTaskAndReload = async (task: Task) => {
+  const updateTaskAndReload = async (task: TaskSubmission & { id: number }) => {
     if (!loggedIn) return;
 
-    const taskAny: any = task;
+    const taskAny = task;
 
     // Existing recurring series this task was linked to (if any), sent through
     // by TaskForm as `recurring_task`.
@@ -448,7 +460,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     if (taskAny?.recurrence?.repeats) {
       // 1) "Repeats" is checked: create the RecurringTask if this task wasn't
       // already part of one, otherwise update the existing series in place.
-      const payload: any = {
+      const payload: RecurringTaskPayload = {
         title: taskAny.title,
         project: taskAny.project === "" ? null : (taskAny.project ?? null),
         category: taskAny.category || null,
@@ -493,7 +505,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // 2) Build the task payload safely (no accidental recurring fields)
-    const taskPayload: any = { ...taskAny };
+    const taskPayload: TaskSubmission & { id: number } = { ...taskAny };
     delete taskPayload.recurrence;
     delete taskPayload.recurring_task_id;
     delete taskPayload.is_recurring;
@@ -520,11 +532,11 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     const updated = await res.json();
 
     setTasks((prev) =>
-      prev.map((t: any) => (Number(t.id) === Number(updated.id) ? { ...t, ...updated } : t))
+      prev.map((t) => (Number(t.id) === Number(updated.id) ? { ...t, ...updated } : t))
     );
   };
 
-  const deleteTask = async (taskOrId: any, options: DeleteTaskOptions = {}) => {
+  const deleteTask: TasksContextType['deleteTask'] = async (taskOrId, options: DeleteTaskOptions = {}) => {
     if (!loggedIn) return;
 
     const id =
@@ -565,22 +577,18 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     setTasks((prev) => {
       const recurringId =
         typeof taskOrId === "object"
-          ? (taskOrId?.recurring_task_id ??
-            (typeof taskOrId?.recurring_task === "number"
-              ? taskOrId.recurring_task
-              : taskOrId?.recurring_task?.id) ??
-            null)
+          ? (taskOrId?.recurring_task_id ?? taskOrId?.recurring_task ?? null)
           : null;
 
       if (isRecurring && deleteSeries && recurringId) {
         return prev.filter(
-          (t: any) => (t.recurring_task_id ?? t.recurring_task) !== recurringId
+          (t) => (t.recurring_task_id ?? t.recurring_task) !== recurringId
         );
       }
 
       if (isRecurring && deleteFuture && recurringId) {
         const fromDate = typeof taskOrId === "object" ? taskOrId?.begin_date ?? null : null;
-        return prev.filter((t: any) => {
+        return prev.filter((t) => {
           const sameRecurring = (t.recurring_task_id ?? t.recurring_task) === recurringId;
           if (!sameRecurring) return true;
           if (!fromDate || !t.begin_date) return false;
@@ -589,7 +597,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Otherwise delete just the one row
-      return prev.filter((t: any) => Number(t.id) !== Number(id));
+      return prev.filter((t) => Number(t.id) !== Number(id));
     });
   };
 
@@ -691,8 +699,8 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         if (!res.ok) throw new Error(`Failed to search: ${res.status}`);
         const data = await res.json();
         setSearchResults(data.results || []);
-      } catch (e: any) {
-        setError(e.message ?? 'unknown error');
+      } catch (e) {
+        setError(errorMessage(e, 'unknown error'));
       } finally {
         setIsSearching(false);
       }

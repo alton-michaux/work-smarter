@@ -11,13 +11,13 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 flex justify-between items-center px-6 py-4 shadow-sm bg-white dark:bg-gray-800 border-b border-transparent dark:border-gray-700">
-      <a href="/">
+      <Link href="/">
         <img
           src={theme === 'dark' ? '/logo-horizontal-dark.svg' : '/logo-horizontal.svg'}
           alt="Work Smarter"
           style={{ height: '40px', width: 'auto' }}
         />
-      </a>
+      </Link>
       <div className="flex items-center space-x-4">
         <button
           onClick={toggleTheme}
@@ -36,8 +36,8 @@ export default function Navbar() {
         </button>
         {loggedIn ? (
           <>
-            <a href="/" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">Home</a>
-            <a href="/settings" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">Settings</a>
+            <Link href="/" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">Home</Link>
+            <Link href="/settings" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">Settings</Link>
             <Button variant="secondary" size="sm" onClick={handleLogout}>
               Logout
             </Button>
