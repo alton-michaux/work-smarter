@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { splitIntoSections, categoryToType } from '../lib/dailyLog';
 import type { Task } from 'types/types';
+import { useClientValue } from './useClientValue';
 
 function todayYMD() {
   const d = new Date();
@@ -42,13 +43,15 @@ export function useDailyLog(
 
   // client-safe init + sync with query param. Wait until the caller says the
   // query is known (router.isReady); otherwise a back-navigation to
-  // /tasks?date=X would pick today first and fetch the wrong day. Synced
-  // during render rather than in an effect so the stale date never paints.
-  const syncKey = ready ? (queryDate ?? '') : null;
+  // /tasks?date=X would pick today first and fetch the wrong day. Also wait
+  // for hydration: with no query, isReady is already true while hydrating,
+  // and rendering today's date then wouldn't match the server HTML.
+  const hydrated = useClientValue(() => true);
+  const syncKey = ready && hydrated ? (queryDate ?? '') : null;
   const [syncedKey, setSyncedKey] = useState<string | null>(null);
   if (syncKey !== syncedKey) {
     setSyncedKey(syncKey);
-    if (ready) setSelectedDate(queryDate || todayYMD());
+    if (syncKey !== null) setSelectedDate(queryDate || todayYMD());
   }
 
   const days = useMemo(() => lastNDays(selectedDate, 7), [selectedDate]);
