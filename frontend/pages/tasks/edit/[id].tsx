@@ -21,7 +21,10 @@ export default function TaskEditPage() {
   const { getAuthHeaders } = useAPI();
   const { loggedIn } = useAuth();
 
-  const [fetchedTask, setFetchedTask] = useState<Task | null>(null);
+  // Keyed by id: the page component is reused across /tasks/.../[id], so a
+  // task fetched for one id must not stand in for the next.
+  const [fetched, setFetched] = useState<{ id: string; task: Task } | null>(null);
+  const fetchedTask = fetched && fetched.id === String(id) ? fetched.task : null;
 
   const taskInContext = tasks?.find((t) => t.id === Number(id));
   const task = taskInContext ?? fetchedTask;
@@ -37,7 +40,7 @@ export default function TaskEditPage() {
     fetch(`${API_URL}/tasks/${id}/`, {
         credentials: 'include', headers: getAuthHeaders() })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data: Task) => setFetchedTask(data))
+      .then((data: Task) => setFetched({ id: String(id), task: data }))
       .catch(() => setFailedFetchId(String(id)));
   }, [isFetchingTask, id, getAuthHeaders]);
 
