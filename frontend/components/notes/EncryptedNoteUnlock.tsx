@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState } from 'react';
 import { useAPI } from 'context/APIContext';
 import { API_URL } from 'lib/api';
 
@@ -17,9 +17,8 @@ export default function EncryptedNoteUnlock({ taskId, onUnlock }: EncryptedNoteU
   const [error, setError] = useState('');
   const [isUnlocking, setIsUnlocking] = useState(false);
 
-  const handleUnlock = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!passphrase) return;
+  const handleUnlock = async () => {
+    if (!passphrase || isUnlocking) return;
     setIsUnlocking(true);
     setError('');
     try {
@@ -42,9 +41,10 @@ export default function EncryptedNoteUnlock({ taskId, onUnlock }: EncryptedNoteU
     }
   };
 
+  // Not a <form>: TaskForm renders this inside its own <form>, and a nested
+  // form's submit bubbles up and saves (and navigates away from) the outer one.
   return (
-    <form
-      onSubmit={handleUnlock}
+    <div
       className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 py-10 px-6 text-center"
     >
       <span className="text-2xl" aria-hidden="true">🔒</span>
@@ -56,12 +56,19 @@ export default function EncryptedNoteUnlock({ taskId, onUnlock }: EncryptedNoteU
           type="password"
           value={passphrase}
           onChange={(e) => setPassphrase(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleUnlock();
+            }
+          }}
           placeholder="Passphrase"
           autoFocus
           className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
-          type="submit"
+          type="button"
+          onClick={handleUnlock}
           disabled={isUnlocking || !passphrase}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
@@ -69,6 +76,6 @@ export default function EncryptedNoteUnlock({ taskId, onUnlock }: EncryptedNoteU
         </button>
       </div>
       {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-    </form>
+    </div>
   );
 }
