@@ -1,12 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { RecurrenceState, TaskFormProps } from "types/types";
+import { RecurrenceState, Task, TaskFormProps, TaskSubmission } from "types/types";
 import { useTasks } from "../../context/TasksContext";
 import { useAPI } from "context/APIContext";
 import MarkdownEditor from "components/shared/MarkdownEditor";
 import EncryptedNoteUnlock from "components/notes/EncryptedNoteUnlock";
 import Button from "components/ui/button";
 import Link from "next/link";
+import { errorMessage } from "lib/errors";
+
+/** The recurring series a task belongs to, if any. */
+function recurringTemplateIdOf(
+  task: Partial<Pick<Task, "recurring_task" | "recurring_task_id">> | undefined
+): number | null {
+  const id = task?.recurring_task_id ?? task?.recurring_task;
+  return id ? Number(id) : null;
+}
 
 export default function TaskForm({
   initialTask,
@@ -17,13 +26,18 @@ export default function TaskForm({
   const { user } = useAuth();
   const { isLoading } = useAPI();
 
-  const [task, setTask] = useState<any>(() => ({
+  const [task, setTask] = useState<TaskSubmission>(() => ({
     ...initialTask,
     user: user?.id || initialTask?.user,
   }));
 
+  const isEditing = Boolean(initialTask?.id);
+  const recurringTemplateId = recurringTemplateIdOf(initialTask);
+
   const [recurrence, setRecurrence] = useState<RecurrenceState>(() => ({
-    repeats: false,
+    // The series' frequency etc. are fetched below; show "Repeats" checked
+    // straight away so the section doesn't flicker in.
+    repeats: isEditing && Boolean(recurringTemplateId),
     frequency: "weekly",
     day_of_week: 0,
     start_date: initialTask?.begin_date || "",
@@ -33,7 +47,6 @@ export default function TaskForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>("");
 
-  const isEditing = Boolean(initialTask?.id);
   const { fetchRecurringTemplate } = useTasks();
 
   // Encrypted notes: `task.description` is always "" from the API for a
@@ -44,19 +57,25 @@ export default function TaskForm({
   const [isUnlocked, setIsUnlocked] = useState(!wasEncrypted);
   const [passphrase, setPassphrase] = useState("");
 
-  useEffect(() => {
-    setIsUnlocked(!initialTask?.is_encrypted);
-    setPassphrase("");
-  }, [initialTask?.id]);
-
-  const recurringTemplateId = useMemo(() => {
-    if (initialTask?.recurring_task_id) return initialTask.recurring_task_id;
-    if (typeof initialTask?.recurring_task === "number") return initialTask.recurring_task;
-    if (typeof initialTask?.recurring_task === "object" && initialTask?.recurring_task?.id) {
-      return initialTask.recurring_task.id;
+  // Re-seed the form when a different task loads into this instance (the
+  // edit page reuses it across ids) or once the user loads. Done during
+  // render rather than in an effect so the stale form never paints:
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [seededTaskId, setSeededTaskId] = useState(initialTask?.id);
+  const [seededUserId, setSeededUserId] = useState(user?.id);
+  if (initialTask?.id !== seededTaskId || user?.id !== seededUserId) {
+    if (initialTask?.id !== seededTaskId) {
+      setIsUnlocked(!initialTask?.is_encrypted);
+      setPassphrase("");
     }
-    return null;
-  }, [initialTask]);
+    setSeededTaskId(initialTask?.id);
+    setSeededUserId(user?.id);
+    setTask((prev) => ({
+      ...prev,
+      ...initialTask,
+      user: user?.id || initialTask?.user,
+    }));
+  }
 
   const inputClass =
     "w-full rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 " +
@@ -73,10 +92,11 @@ export default function TaskForm({
     return `${String(finalHour).padStart(2, '0')}:${String(finalMin).padStart(2, '0')}`;
   };
 
-  const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = e.target instanceof HTMLInputElement && e.target.checked;
     const isTimeField = name === 'begin_time' || name === 'end_time';
-    setTask((t: any) => ({
+    setTask((t) => ({
       ...t,
       [name]: type === "checkbox" ? checked : (isTimeField ? roundToQuarterHour(value) : value),
     }));
@@ -104,13 +124,13 @@ export default function TaskForm({
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError("");
     if (!validate()) return;
 
     const isMeeting = task.category === "meeting";
-    const payload: any = {
+    const payload: TaskSubmission = {
       id: task.id,
       title: task.title,
       category: task.category,
@@ -134,49 +154,15 @@ export default function TaskForm({
 
     try {
       await onSubmit(payload);
-    } catch (err: any) {
-      setFormError(err?.message || "Something went wrong. Please try again.");
+    } catch (err) {
+      setFormError(errorMessage(err, "Something went wrong. Please try again."));
     }
   };
 
   useEffect(() => {
-    setTask((prev: any) => ({
-      ...prev,
-      ...initialTask,
-      user: user?.id || initialTask?.user,
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialTask?.id, user?.id]);
-
-  useEffect(() => {
-    if (!isEditing) return;
-
-    const rtObj =
-      typeof initialTask?.recurring_task === "object" ? initialTask.recurring_task : null;
-
-    const hasRecurring = Boolean(recurringTemplateId);
-
-    if (rtObj?.frequency) {
-      setRecurrence((prev) => ({
-        ...prev,
-        repeats: hasRecurring,
-        frequency: rtObj.frequency ?? prev.frequency,
-        day_of_week: rtObj.day_of_week ?? prev.day_of_week,
-        start_date: rtObj.start_date ?? initialTask?.begin_date ?? prev.start_date,
-        skip_weekends: rtObj.skip_weekends ?? false,
-      }));
-      return;
-    }
-
-    if (hasRecurring) {
-      setRecurrence((prev) => ({
-        ...prev,
-        repeats: true,
-        start_date: prev.start_date || initialTask?.begin_date || "",
-      }));
-
-      fetchRecurringTemplate(recurringTemplateId, initialTask, setRecurrence);
-    }
+    if (!isEditing || !recurringTemplateId) return;
+    fetchRecurringTemplate(recurringTemplateId, initialTask, setRecurrence);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchRecurringTemplate isn't memoized; listing it would refetch every render
   }, [isEditing, recurringTemplateId, initialTask]);
 
   return (
@@ -274,7 +260,7 @@ export default function TaskForm({
               />
               {!task.begin_time && (
                 <p className="mt-1 text-xs text-amber-600">
-                  No start time set — meeting won't appear in time order.
+                  No start time set — meeting won&apos;t appear in time order.
                 </p>
               )}
             </div>
@@ -299,7 +285,7 @@ export default function TaskForm({
             name="project"
             value={task.project ?? ""}
             onChange={(e) =>
-              setTask((prev: any) => ({
+              setTask((prev) => ({
                 ...prev,
                 project: e.target.value === "" ? "" : Number(e.target.value),
               }))
@@ -307,7 +293,7 @@ export default function TaskForm({
             className={selectClass}
           >
             <option value="">— None —</option>
-            {(projects ?? []).map((p: any) => (
+            {(projects ?? []).map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
@@ -369,7 +355,7 @@ export default function TaskForm({
           <EncryptedNoteUnlock
             taskId={initialTask.id}
             onUnlock={(plaintext, unlockPassphrase) => {
-              setTask((prev: any) => ({ ...prev, description: plaintext }));
+              setTask((prev) => ({ ...prev, description: plaintext }));
               setPassphrase(unlockPassphrase);
               setIsUnlocked(true);
             }}
@@ -383,7 +369,7 @@ export default function TaskForm({
                     type="checkbox"
                     checked={!!task.is_encrypted}
                     onChange={(e) =>
-                      setTask((prev: any) => ({ ...prev, is_encrypted: e.target.checked }))
+                      setTask((prev) => ({ ...prev, is_encrypted: e.target.checked }))
                     }
                     className="h-4 w-4"
                   />
@@ -413,7 +399,7 @@ export default function TaskForm({
 
             <MarkdownEditor
               value={task.description ?? ""}
-              onChange={(next) => setTask((prev: any) => ({ ...prev, description: next }))}
+              onChange={(next) => setTask((prev) => ({ ...prev, description: next }))}
               placeholder={`### Notes\n- [ ] Follow up\n- [x] Done`}
             />
           </>
@@ -452,7 +438,7 @@ export default function TaskForm({
               <select
                 value={recurrence.frequency}
                 onChange={(e) =>
-                  setRecurrence((r) => ({ ...r, frequency: e.target.value as any }))
+                  setRecurrence((r) => ({ ...r, frequency: e.target.value as RecurrenceState["frequency"] }))
                 }
                 className={selectClass}
               >

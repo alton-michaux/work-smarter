@@ -7,7 +7,7 @@ export default function ProjectsPage() {
   const { projects, deleteProject, isLoading } = useProjects();
   const router = useRouter();
 
-  const results = Array.isArray(projects) ? projects : (projects as any)?.results ?? [];
+  const results = projects;
 
   const handleProjectClick = (id: number) => {
     router.push(`/projects/view/${id}`);
@@ -78,7 +78,7 @@ export default function ProjectsPage() {
             </div>
           ) : (
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {results.map((project: any) => (
+              {results.map((project) => (
                 <li key={project.id} className="px-6 py-4">
                   <div className="flex items-center justify-between gap-4">
                     {/* Clickable main area */}

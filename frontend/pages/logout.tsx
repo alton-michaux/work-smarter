@@ -1,9 +1,7 @@
 import { useEffect } from "react";
-import { useRouter } from "next/router";
 import { useAuth } from "../context/AuthContext"; // adjust path
 
 export default function LogoutPage() {
-  const router = useRouter();
   const { logout } = useAuth();
 
   useEffect(() => {

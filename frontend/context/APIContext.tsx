@@ -3,6 +3,7 @@ import React, { useState, createContext, useContext, ReactNode, useCallback } fr
 import { APIContextType } from 'types/types';
 import { getCsrfHeaders } from 'lib/csrf';
 import { API_URL } from 'lib/api';
+import { errorMessage } from 'lib/errors';
 
 const APIContext = createContext<APIContextType | undefined>(undefined);
 
@@ -44,8 +45,8 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
       });
       const data = await res.json().catch(() => ({}));
       return data;
-    } catch (err: any) {
-      const message = err?.message || 'Unknown error';
+    } catch (err) {
+      const message = errorMessage(err, 'Unknown error');
       setError(message);
       setUploadStatus(message);
     } finally {
@@ -73,8 +74,8 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
       console.log("IMPORT RESPONSE DATA:", data);
 
       return data
-    } catch (err: any) {
-      const message = err?.message?.detail || 'Unknown error';
+    } catch (err) {
+      const message = errorMessage(err, 'Unknown error');
       setError(message);
       setUploadStatus(message);
     } finally {
@@ -106,8 +107,8 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
 
       setUploadStatus('Upload successful!');
       return res;
-    } catch (err: any) {
-      const message = err?.message || 'Unknown error';
+    } catch (err) {
+      const message = errorMessage(err, 'Unknown error');
       setError(message);
       setUploadStatus(message);
     } finally {

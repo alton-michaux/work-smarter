@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { splitIntoSections, categoryToType } from '../lib/dailyLog';
+import type { Task } from 'types/types';
 
 function todayYMD() {
   const d = new Date();
@@ -31,7 +32,7 @@ function lastNDays(selectedDate: string, n = 7) {
 }
 
 export function useDailyLog(
-    tasks: any[],
+    tasks: Task[],
     queryDate?: string,
     options?: { activeOn?: boolean; ready?: boolean }
   ) {
@@ -41,15 +42,14 @@ export function useDailyLog(
 
   // client-safe init + sync with query param. Wait until the caller says the
   // query is known (router.isReady); otherwise a back-navigation to
-  // /tasks?date=X would pick today first and fetch the wrong day.
-  useEffect(() => {
-    if (!ready) return;
-    if (queryDate) {
-      setSelectedDate(queryDate);
-      return;
-    }
-    setSelectedDate(todayYMD());
-  }, [queryDate, ready]);
+  // /tasks?date=X would pick today first and fetch the wrong day. Synced
+  // during render rather than in an effect so the stale date never paints.
+  const syncKey = ready ? (queryDate ?? '') : null;
+  const [syncedKey, setSyncedKey] = useState<string | null>(null);
+  if (syncKey !== syncedKey) {
+    setSyncedKey(syncKey);
+    if (ready) setSelectedDate(queryDate || todayYMD());
+  }
 
   const days = useMemo(() => lastNDays(selectedDate, 7), [selectedDate]);
   

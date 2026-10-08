@@ -10,6 +10,7 @@ import EncryptedNoteUnlock from 'components/notes/EncryptedNoteUnlock';
 import { toast } from 'sonner';
 import { GoogleCalendarStatus, Task } from 'types/types';
 import { API_URL } from 'lib/api';
+import { errorMessage } from 'lib/errors';
 
 
 const TaskShowPage = () => {
@@ -24,7 +25,6 @@ const TaskShowPage = () => {
   const [isSyncingDeadline, setIsSyncingDeadline] = useState(false);
   const [isBlacklisting, setIsBlacklisting] = useState(false);
   const [fetchedTask, setFetchedTask] = useState<Task | null>(null);
-  const [isFetchingTask, setIsFetchingTask] = useState(false);
   const [unlockedDescription, setUnlockedDescription] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,26 +34,32 @@ const TaskShowPage = () => {
       .then((r) => r.json())
       .then((data: GoogleCalendarStatus) => setCalendarStatus(data))
       .catch(() => {});
-  }, [loggedIn]);
+  }, [loggedIn, getAuthHeaders]);
 
   const taskInContext = tasks?.find(t => t.id === Number(id));
   const task = taskInContext ?? fetchedTask;
 
-  useEffect(() => {
+  // Re-lock when navigating to another task.
+  const [unlockedForId, setUnlockedForId] = useState(id);
+  if (id !== unlockedForId) {
+    setUnlockedForId(id);
     setUnlockedDescription(null);
-  }, [id]);
+  }
+
+  // Fallback for a task that isn't in the shared list (deep link, reload).
+  // A failed fetch is remembered so it shows "not found" instead of retrying.
+  const [failedFetchId, setFailedFetchId] = useState<string | null>(null);
+  const isFetchingTask =
+    Boolean(id) && !isLoading && !taskInContext && !fetchedTask && loggedIn && failedFetchId !== String(id);
 
   useEffect(() => {
-    if (!id || isLoading || taskInContext || fetchedTask) return;
-    if (!loggedIn) return;
-    setIsFetchingTask(true);
+    if (!isFetchingTask) return;
     fetch(`${API_URL}/tasks/${id}/`, {
         credentials: 'include', headers: getAuthHeaders() })
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data: Task) => setFetchedTask(data))
-      .catch(() => {})
-      .finally(() => setIsFetchingTask(false));
-  }, [id, isLoading, taskInContext, fetchedTask, loggedIn]);
+      .catch(() => setFailedFetchId(String(id)));
+  }, [isFetchingTask, id, getAuthHeaders]);
 
   if (isLoading || isFetchingTask) {
     return (
@@ -92,8 +98,8 @@ const TaskShowPage = () => {
     try {
       await pushToCalendar(task.id);
       toast.success(task.google_event_id ? 'Meeting re-synced to Google Calendar.' : 'Meeting pushed to Google Calendar.');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to push to Google Calendar.');
+    } catch (err) {
+      toast.error(errorMessage(err, 'Failed to push to Google Calendar.'));
     } finally {
       setIsPushing(false);
     }
@@ -105,8 +111,8 @@ const TaskShowPage = () => {
     try {
       await pushDeadlineToCalendar(task.id);
       toast.success(task.deadline_event_id ? 'Deadline re-synced to Google Calendar.' : 'Deadline synced to Google Calendar.');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to sync deadline.');
+    } catch (err) {
+      toast.error(errorMessage(err, 'Failed to sync deadline.'));
     } finally {
       setIsSyncingDeadline(false);
     }
@@ -121,8 +127,8 @@ const TaskShowPage = () => {
       await blacklistEvent(task.google_event_id, task.title, shouldDelete);
       toast.success('Event added to blacklist.');
       if (shouldDelete) router.push('/tasks');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to blacklist event.');
+    } catch (err) {
+      toast.error(errorMessage(err, 'Failed to blacklist event.'));
     } finally {
       setIsBlacklisting(false);
     }
@@ -134,7 +140,7 @@ const TaskShowPage = () => {
     try {
       await deleteTask(task);
       await router.push(qReturn);
-    } catch (err) {
+    } catch {
       toast.error('Failed to delete. Please try again.');
     }
   };

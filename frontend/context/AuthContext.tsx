@@ -4,9 +4,19 @@ import { useRouter } from 'next/router';
 import { User, AuthContextType } from 'types/types';
 import { getCsrfHeaders } from 'lib/csrf';
 import { API_URL } from 'lib/api';
+import { errorMessage } from 'lib/errors';
 
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+// register/login throw an Error whose message is the JSON error body from
+// dj-rest-auth, e.g. {"non_field_errors": ["..."]}.
+type AuthErrorBody = { non_field_errors?: string[]; password1?: string[]; error?: string };
+
+function parseAuthError(err: unknown): AuthErrorBody {
+  const message = err instanceof Error ? err.message : '';
+  return message.includes('{') ? JSON.parse(message) : { error: message };
+}
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -37,8 +47,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       router.push('/login');
-    } catch (err: any) {
-      const msg = err.message?.includes('{') ? JSON.parse(err.message) : { error: err.message };
+    } catch (err) {
+      const msg = parseAuthError(err);
       setError(msg?.non_field_errors?.[0] || msg?.password1?.[0] || msg?.error || 'Registration failed');
     } finally {
       setIsLoading(false);
@@ -73,8 +83,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const maybeUser = Array.isArray(data?.results) ? data?.results[0] ?? null : data;
       setUser(maybeUser);
       setLoggedIn(true);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch user');
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to fetch user'));
       setUser(null);
       setLoggedIn(false);
     } finally {
@@ -105,8 +115,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       setLoggedIn(true);
       router.push('/dashboard');
-    } catch (err: any) {
-      const msg = err.message?.includes('{') ? JSON.parse(err.message) : { error: err.message };
+    } catch (err) {
+      const msg = parseAuthError(err);
       setError(msg?.non_field_errors?.[0] || msg?.error || 'Login failed');
       setLoggedIn(false);
       setUser(null);
@@ -154,7 +164,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .finally(() => {
         getUser();
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

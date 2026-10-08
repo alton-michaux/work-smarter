@@ -2,15 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { useAPI } from "../context/APIContext";
 import { ResultPanel } from "../components/ui/importSummary"
+import type { ImportCsvSpec, ImportResult } from "types/types";
+import { errorMessage } from "lib/errors";
 
 export default function ImportPage() {
   const router = useRouter();
   const { getImportCsvSpec, importTasksCsv } = useAPI();
 
-  const [spec, setSpec] = useState<any>(null);
+  const [spec, setSpec] = useState<ImportCsvSpec | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [dryRun, setDryRun] = useState(true);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,13 +42,8 @@ export default function ImportPage() {
       setIsSubmitting(true);
       const data = await importTasksCsv(file, dryRun);
       setResult(data);
-    } catch (e: any) {
-      const msg =
-        e?.response?.data?.detail ||
-        (e?.response?.data ? JSON.stringify(e.response.data) : null) ||
-        e?.message ||
-        "Import failed.";
-      setError(msg);
+    } catch (e) {
+      setError(errorMessage(e, "Import failed."));
     } finally {
       setIsSubmitting(false);
     }

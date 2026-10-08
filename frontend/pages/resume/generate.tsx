@@ -5,6 +5,7 @@ import { useAuth } from 'context/AuthContext';
 import { ResumeGenerationState } from 'types/types';
 import { toast } from 'sonner';
 import ResumeGenerationPanel from 'components/resume/ResumeGenerationPanel';
+import { errorMessage } from 'lib/errors';
 
 export default function GenerateResumePage() {
   const router = useRouter();
@@ -19,8 +20,8 @@ export default function GenerateResumePage() {
     try {
       const data = await generateNewResume(forceRefresh, { phone, location });
       setGeneration({ status: 'success', data });
-    } catch (e: any) {
-      const msg = e.message ?? 'Generation failed.';
+    } catch (e) {
+      const msg = errorMessage(e, 'Generation failed.');
       setGeneration({ status: 'error', message: msg });
       toast.error(msg);
     }

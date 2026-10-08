@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Button from "../ui/button";
 import { useRouter } from "next/router";
+import { errorMessage } from "lib/errors";
 
 const PRESET_COLORS = [
   '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4',
@@ -28,9 +29,9 @@ export default function ProjectForm({ initialProject, onSubmit, submitLabel = "S
 
     try {
       onSubmit(project);
-    } catch (err: any) {
+    } catch (err) {
       // This is where we’ll later map backend errors -> field errors
-      setFormError(err?.message || 'Something went wrong. Please try again.');
+      setFormError(errorMessage(err, 'Something went wrong. Please try again.'));
     }
   };
 

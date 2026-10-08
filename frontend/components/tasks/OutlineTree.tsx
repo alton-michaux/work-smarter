@@ -3,6 +3,7 @@ import { categoryToType } from '../../lib/dailyLog';
 import { OutlineTreeProps, OutlineRowProps } from 'types/types';
 import { useTasks } from 'context/TasksContext';
 import { useProjects } from 'context/ProjectsContext';
+import { useClientValue } from 'hooks/useClientValue';
 
 const PRIORITY_BORDER: Record<string, string> = {
   high:   '#ef4444',
@@ -69,7 +70,7 @@ function OutlineRow({
 
   const childCount = Array.isArray(node.children) ? node.children.length : 0;
   const doneChildCount = childCount
-    ? node.children.filter((c: any) => Boolean(c.is_done)).length
+    ? node.children.filter((c) => Boolean(c.is_done)).length
     : 0;
 
   const checkboxRef = useRef<HTMLInputElement | null>(null);
@@ -113,7 +114,7 @@ function OutlineRow({
     }
   };
 
-  const isDone = Boolean((node as any).effective_is_done ?? node.is_done);
+  const isDone = Boolean(node.effective_is_done ?? node.is_done);
 
   return (
     <li
@@ -406,32 +407,48 @@ function OutlineRow({
  * threaded down so nested levels share one source of truth. When `storageKey`
  * is given the state survives reloads and date changes.
  */
+function readStoredIds(storageKey?: string): string | null {
+  if (!storageKey) return null;
+  try {
+    return window.localStorage.getItem(storageKey);
+  } catch {
+    return null;
+  }
+}
+
+function parseIds(raw: string | null): Set<string> {
+  if (!raw) return new Set();
+  try {
+    return new Set(JSON.parse(raw) as string[]);
+  } catch {
+    // Ignore malformed state — collapse is a convenience.
+    return new Set();
+  }
+}
+
 function useCollapsedIds(storageKey?: string) {
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
-  const hydrated = useRef(false);
+
+  // localStorage is only readable after hydration; both are null until then.
+  const hydrated = useClientValue(() => true);
+  const stored = useClientValue(() => readStoredIds(storageKey));
+
+  // Load the saved set whenever what's stored differs from what we last read
+  // (first client render, or a different storageKey).
+  const [loadedRaw, setLoadedRaw] = useState<string | null>(null);
+  if (stored !== loadedRaw) {
+    setLoadedRaw(stored);
+    setCollapsedIds(parseIds(stored));
+  }
 
   useEffect(() => {
-    if (!storageKey || typeof window === 'undefined') {
-      hydrated.current = true;
-      return;
-    }
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      if (raw) setCollapsedIds(new Set(JSON.parse(raw) as string[]));
-    } catch {
-      // Ignore unreadable/malformed state — collapse is a convenience.
-    }
-    hydrated.current = true;
-  }, [storageKey]);
-
-  useEffect(() => {
-    if (!storageKey || !hydrated.current || typeof window === 'undefined') return;
+    if (!storageKey || !hydrated) return;
     try {
       window.localStorage.setItem(storageKey, JSON.stringify([...collapsedIds]));
     } catch {
       // Ignore quota/private-mode failures.
     }
-  }, [collapsedIds, storageKey]);
+  }, [collapsedIds, storageKey, hydrated]);
 
   const toggleCollapsed = useCallback((id: string) => {
     setCollapsedIds((prev) => {
@@ -475,7 +492,7 @@ export default function OutlineTree({
       : null;
   const canReorder =
     sharedParent != null &&
-    nodes.every((n: any) => Number(n.parent) === sharedParent);
+    nodes.every((n) => Number(n.parent) === sharedParent);
 
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<
@@ -486,7 +503,7 @@ export default function OutlineTree({
     (movingId: number, targetId: number, edge: 'before' | 'after') => {
       if (sharedParent == null || movingId === targetId) return;
 
-      const ids = nodes.map((n: any) => Number(n.id));
+      const ids = nodes.map((n) => Number(n.id));
       if (!ids.includes(movingId) || !ids.includes(targetId)) return;
 
       // Compute the insert point against the list the moved row has left, so
@@ -508,7 +525,7 @@ export default function OutlineTree({
     (movingId: number, direction: -1 | 1) => {
       if (sharedParent == null) return;
 
-      const ids = nodes.map((n: any) => Number(n.id));
+      const ids = nodes.map((n) => Number(n.id));
       const from = ids.indexOf(movingId);
       const to = from + direction;
       if (from < 0 || to < 0 || to >= ids.length) return;

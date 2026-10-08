@@ -9,7 +9,7 @@ export default function NotFoundPage() {
         <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">404</p>
         <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">Page not found</h1>
         <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-          The page you're looking for doesn't exist or has been moved.
+          The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <button

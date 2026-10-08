@@ -1,6 +1,6 @@
 import { Task, WeeklyOptions } from "types/types";
 
-function toISODate(d: any): string | null {
+function toISODate(d: string | null | undefined): string | null {
   if (!d) return null;
   // backend sometimes returns "YYYY-MM-DD" already; sometimes full ISO.
   return String(d).slice(0, 10);
@@ -27,16 +27,18 @@ function isConsecutiveDaily(dates: string[]): boolean {
  * - If options.frequency === "daily", we only collapse series we *know* are daily OR can safely infer daily
  *   by seeing consecutive dates in the returned occurrences for the week.
  */
-export function collapseRecurringTasks<T extends Task>(
-  tasks: T[],
-  options: WeeklyOptions = { frequency: "daily" }
-): (T & {
+type Collapsed<T> = T & {
   __collapsed?: boolean;
   __occurrenceCount?: number;
   __rangeStart?: string | null;
   __rangeEnd?: string | null;
   __collapseLabel?: string; // e.g. "Daily ↻ (5x)"
-})[] {
+};
+
+export function collapseRecurringTasks<T extends Task>(
+  tasks: T[],
+  options: WeeklyOptions = { frequency: "daily" }
+): Collapsed<T>[] {
   const desiredFreq = options.frequency;
 
   // Non-recurring tasks keep their own identity
@@ -67,15 +69,15 @@ export function collapseRecurringTasks<T extends Task>(
     }
   }
 
-  const out: any[] = [];
+  const out: Collapsed<T>[] = [];
 
   for (const g of Array.from(groups.values())) {
     const { seed, items, beginDates } = g;
 
     // recurring_task may be an object with a 'frequency' field or just an ID number; handle both.
-    const rt = (seed as any).recurring_task;
+    const rt: unknown = seed.recurring_task;
     const recurringFreq = (rt != null && typeof rt === "object" && "frequency" in rt)
-      ? String((rt as any).frequency).toLowerCase()
+      ? String(rt.frequency).toLowerCase()
       : null;
 
     // Decide if THIS GROUP should collapse

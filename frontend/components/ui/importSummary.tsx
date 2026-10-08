@@ -1,4 +1,71 @@
-export function ResultPanel({ result }: { result: any }) {
+import type { ImportResult } from "types/types";
+
+function formatItem(x: unknown): string {
+  if (typeof x === "string") return x;
+  if (x && typeof x === "object") {
+    if ("detail" in x && typeof x.detail === "string" && x.detail) return x.detail;
+    if ("message" in x && typeof x.message === "string" && x.message) return x.message;
+  }
+  return JSON.stringify(x);
+}
+
+function PreviewList({
+  title,
+  items,
+  tone,
+}: {
+  title: string;
+  items: unknown[];
+  tone: "red" | "amber";
+}) {
+  if (!items.length) return null;
+
+  const preview = items.slice(0, 5);
+  const overflow = Math.max(0, items.length - preview.length);
+
+  const toneStyles =
+    tone === "red"
+      ? {
+          wrap: "border-red-200 bg-red-50",
+          title: "text-red-900",
+          item: "text-red-900",
+          meta: "text-red-700",
+        }
+      : {
+          wrap: "border-amber-200 bg-amber-50",
+          title: "text-amber-900",
+          item: "text-amber-900",
+          meta: "text-amber-700",
+        };
+
+  return (
+    <div className={`rounded-lg border ${toneStyles.wrap} px-4 py-3`}>
+      <div className={`text-sm font-semibold ${toneStyles.title}`}>
+        {title}
+      </div>
+
+      <ul className="mt-2 space-y-2">
+        {preview.map((x, idx) => (
+          <li
+            key={idx}
+            className={`text-sm ${toneStyles.item} rounded bg-white/60 px-3 py-2`}
+            title={formatItem(x)}
+          >
+            <div className="truncate">{formatItem(x)}</div>
+          </li>
+        ))}
+      </ul>
+
+      {overflow > 0 && (
+        <div className={`mt-2 text-xs ${toneStyles.meta}`}>
+          +{overflow} more. See details below.
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function ResultPanel({ result }: { result: ImportResult }) {
   const imported =
     result?.imported ??
     result?.created ??
@@ -7,77 +74,14 @@ export function ResultPanel({ result }: { result: any }) {
     result?.success_count ??
     0;
 
-  const warningsArr: any[] = Array.isArray(result?.warnings) ? result.warnings : [];
-  const errorsArr: any[] = Array.isArray(result?.errors) ? result.errors : [];
+  const warningsArr: unknown[] = Array.isArray(result?.warnings) ? result.warnings : [];
+  const errorsArr: unknown[] = Array.isArray(result?.errors) ? result.errors : [];
 
   const warningsCount = result?.warning_count ?? warningsArr.length ?? 0;
   const errorsCount = result?.error_count ?? errorsArr.length ?? 0;
 
   const isDryRun =
     result?.dry_run ?? result?.dryRun ?? result?.validated_only ?? false;
-
-  const formatItem = (x: any) => {
-    if (typeof x === "string") return x;
-    if (x?.detail && typeof x.detail === "string") return x.detail;
-    if (x?.message && typeof x.message === "string") return x.message;
-    return JSON.stringify(x);
-  };
-
-  const PreviewList = ({
-    title,
-    items,
-    tone,
-  }: {
-    title: string;
-    items: any[];
-    tone: "red" | "amber";
-  }) => {
-    if (!items.length) return null;
-
-    const preview = items.slice(0, 5);
-    const overflow = Math.max(0, items.length - preview.length);
-
-    const toneStyles =
-      tone === "red"
-        ? {
-            wrap: "border-red-200 bg-red-50",
-            title: "text-red-900",
-            item: "text-red-900",
-            meta: "text-red-700",
-          }
-        : {
-            wrap: "border-amber-200 bg-amber-50",
-            title: "text-amber-900",
-            item: "text-amber-900",
-            meta: "text-amber-700",
-          };
-
-    return (
-      <div className={`rounded-lg border ${toneStyles.wrap} px-4 py-3`}>
-        <div className={`text-sm font-semibold ${toneStyles.title}`}>
-          {title}
-        </div>
-
-        <ul className="mt-2 space-y-2">
-          {preview.map((x, idx) => (
-            <li
-              key={idx}
-              className={`text-sm ${toneStyles.item} rounded bg-white/60 px-3 py-2`}
-              title={formatItem(x)}
-            >
-              <div className="truncate">{formatItem(x)}</div>
-            </li>
-          ))}
-        </ul>
-
-        {overflow > 0 && (
-          <div className={`mt-2 text-xs ${toneStyles.meta}`}>
-            +{overflow} more. See details below.
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="mt-6 rounded-lg border border-gray-200 bg-white">

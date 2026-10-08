@@ -1,21 +1,22 @@
 import { useMemo } from 'react';
 import { groupByBeginDate, isMeetingTask } from '../lib/projectInsights';
+import type { Project, Task } from 'types/types';
 
-export function useProjectInsights(project: any, remainingLimit = 6) {
+export function useProjectInsights(project: Project | null | undefined, remainingLimit = 6) {
   return useMemo(() => {
-    const tasks = project?.dashboard_tasks ?? project?.tasks ?? [];
+    const tasks: Task[] = project?.dashboard_tasks ?? project?.tasks ?? [];
     const today = new Date().toISOString().slice(0, 10);
 
     const meetings = tasks
       .filter(isMeetingTask)
-      .filter((t: any) => (t.begin_date ?? '') >= today);
-    const work = tasks.filter((t: any) => !isMeetingTask(t));
+      .filter((t) => (t.begin_date ?? '') >= today);
+    const work = tasks.filter((t) => !isMeetingTask(t));
 
     const meetingsGrouped = groupByBeginDate(meetings, 'desc');
     const workGrouped = groupByBeginDate(work, 'asc');
 
     const totalCount = tasks.length;
-    const doneCount = tasks.filter((t: any) => t.is_done).length;
+    const doneCount = tasks.filter((t) => t.is_done).length;
 
     const allDays = Array.from(
       new Set([...(meetingsGrouped.sortedDays ?? []), ...(workGrouped.sortedDays ?? [])])
@@ -26,8 +27,8 @@ export function useProjectInsights(project: any, remainingLimit = 6) {
     const lastActivity = activeEnd;
 
     const remainingWork = work
-      .filter((t: any) => !t.is_done)
-      .sort((a: any, b: any) =>
+      .filter((t) => !t.is_done)
+      .sort((a, b) =>
         String(a.begin_date ?? '').localeCompare(String(b.begin_date ?? ''))
       );
 
@@ -38,7 +39,7 @@ export function useProjectInsights(project: any, remainingLimit = 6) {
     const meetingsCount = meetings.length;
 
     const workTotal = work.length;
-    const workDone = work.filter((t: any) => t.is_done).length;
+    const workDone = work.filter((t) => t.is_done).length;
     const workOpen = workTotal - workDone;
 
     return {

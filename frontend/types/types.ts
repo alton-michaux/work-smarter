@@ -16,8 +16,10 @@ type Action = {
 
 type TaskIdLike =
   | number
-  | Task
-  | { id?: number; task?: { id?: number }; pk?: number };
+  | (Partial<Pick<Task, 'id' | 'recurring_task' | 'recurring_task_id' | 'begin_date'>> & {
+      task?: { id?: number };
+      pk?: number;
+    });
 
 //------TASK---------//
 
@@ -33,6 +35,11 @@ export type Task = {
   carry_over?: boolean;
   is_subtask?: boolean;
   is_encrypted?: boolean;
+
+  /** Server-computed: past meetings count as done even if never checked off. */
+  effective_is_done?: boolean;
+  is_recurring?: boolean;
+  created_at?: string;
 
   /** Manual sort order among siblings; only meaningful for subtasks. */
   position?: number;
@@ -56,6 +63,17 @@ export type Task = {
   user: number;
 };
 
+/** What TaskForm submits. `recurrence` is UI-only: TasksContext turns it into
+ *  a RecurringTask before saving the task itself. */
+export type TaskSubmission = Omit<Partial<Task>, 'project'> & {
+  project?: number | string | null;
+  recurrence?: RecurrenceState;
+  passphrase?: string;
+};
+
+/** A task with its subtasks nested, as built by `buildTree`. */
+export type TaskNode = AnyTask & { children: TaskNode[] };
+
 export type CreateTaskPayload = {
   title: string;
   begin_date?: string | null;
@@ -78,19 +96,19 @@ export type CreateTaskPayload = {
 
 export type TaskLayoutProps = {
   sections: {
-    meetings: any[];
-    tasks: any[];
-    notes: any[];
+    meetings: TaskNode[];
+    tasks: TaskNode[];
+    notes: TaskNode[];
   };
   onView: (id: number) => void;
   onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
+  onDelete: (task: TaskNode) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
 };
 
 export type TaskFormProps = {
-  initialTask: any;
-  onSubmit: (task: any) => void;
+  initialTask: TaskSubmission;
+  onSubmit: (task: TaskSubmission) => void | Promise<void>;
   submitLabel: string;
   projects?: ProjectOption[];
 };
@@ -98,15 +116,19 @@ export type TaskFormProps = {
 export type TasksContextType = {
   tasks: Task[];
   setTasks: (tasks: Task[]) => void;
-  addTask: (task: Omit<Task, 'id'>) => Promise<void>;
+  addTask: (task: TaskSubmission) => Promise<void>;
   addSubtask: (payload: CreateTaskPayload) => Promise<void>;
   reorderSubtasks: (parentId: number, orderedIds: number[]) => Promise<void>;
-  updateTaskAndReload: (task: Task) => Promise<void>;
+  updateTaskAndReload: (task: TaskSubmission & { id: number }) => Promise<void>;
   deleteTask: (taskOrId: TaskIdLike, options?: DeleteTaskOptions) => Promise<void>;
   fetchTasks: () => Promise<void>;
   fetchTasksByDateRange: (begin: string, end: string, active_on: string) => Promise<void>;
   fetchTasksForTimeline: (begin: string, end: string) => Promise<void>;
-  fetchRecurringTemplate: (recurring_task_id: number, initialTask: any, setRecurrence: any) => Promise<void>;
+  fetchRecurringTemplate: (
+    recurring_task_id: number,
+    initialTask: Pick<Partial<Task>, 'begin_date'> | undefined,
+    setRecurrence: React.Dispatch<React.SetStateAction<RecurrenceState>>
+  ) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
   pushToCalendar: (taskId: number) => Promise<Task>;
   pushDeadlineToCalendar: (taskId: number) => Promise<Task>;
@@ -170,6 +192,8 @@ export type Project = {
   description?: string;
   role?: string;
   tasks?: Task[];
+  /** Only on the project detail endpoint: the tasks its dashboard shows. */
+  dashboard_tasks?: Task[];
   user?: number | User;
 };
 
@@ -223,7 +247,7 @@ export type NoteProps = {
 
 //------UTILITY---------//
 
-export type Node = any;
+export type Node = TaskNode;
 
 export type SystemsContextType = {
   fileChange: (file: File | null) => void;
@@ -292,7 +316,7 @@ export type OutlineRowProps = {
   depth: number;
   onView: (id: number) => void;
   onEdit: (id: number) => void;
-  onDelete: (task: any) => void;
+  onDelete: (task: TaskNode) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
 
   /** Subtasks are hidden while true. Only meaningful for rows with children. */
@@ -313,7 +337,7 @@ export type OutlineTreeProps = {
 
   onView: (id: number) => void;
   onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
+  onDelete: (task: TaskNode) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
 
   /** Ids of collapsed parents; passed down by the root tree to nested levels. */
@@ -353,7 +377,7 @@ export type TrackerProps = {
   tasks: Task[];     // kept for backwards compatibility even if unused here
   meetings: Task[];
   work: Task[];
-  notes
+  notes: Task[];
 
   // OPTIONAL: only used by Weekly Tracker (daily log can ignore)
   collapsedMeetings?: Task[];
@@ -455,13 +479,34 @@ export type AuthContextType = {
 
 export type APIContextType = {
   getAuthHeaders: () => Record<string, string>;
-  getImportCsvSpec: () => Promise<void>;
-  importTasksCsv: (file: File, dryRun: boolean) => Promise<void>
+  getImportCsvSpec: () => Promise<ImportCsvSpec | undefined>;
+  importTasksCsv: (file: File, dryRun: boolean) => Promise<ImportResult | undefined>
   getAuthHeadersForForm: () => Record<string, string>;
   fileUpload: (selectedFile: File | null) => Promise<Response | void>;
   uploadStatus: string | null;
   isLoading: boolean;
   error: string | null;
+};
+
+export type ImportCsvSpec = {
+  headers?: string[];
+};
+
+/** CSV import response. Older and newer import endpoints name the counts
+ *  differently, so the summary accepts any of these. */
+export type ImportResult = {
+  imported?: number;
+  created?: number;
+  created_count?: number;
+  ok_count?: number;
+  success_count?: number;
+  warnings?: unknown[];
+  errors?: unknown[];
+  warning_count?: number;
+  error_count?: number;
+  dry_run?: boolean;
+  dryRun?: boolean;
+  validated_only?: boolean;
 };
 
 export type RegisterPayload = {

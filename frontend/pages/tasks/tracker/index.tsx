@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useClientValue } from 'hooks/useClientValue';
 import { useRouter } from 'next/router';
 import { useTasks } from '../../../context/TasksContext';
 import { getCurrentMonday, getEndOfWeek } from '../../../lib/dateUtils';
@@ -10,14 +11,12 @@ import { buildSubtaskProgressByParentId } from "lib/subtaskProgress";
 import { categoryToType, priorityRank } from "../../../lib/dailyLog";
 
 export default function TaskTrackerPage() {
-  const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
+  const [pickedWeek, setSelectedWeek] = useState<string | null>(null);
+  // Current Monday is read client-side only, to avoid a hydration mismatch
+  const currentMonday = useClientValue(getCurrentMonday);
+  const selectedWeek = pickedWeek ?? currentMonday;
   const { tasks, fetchTasksByDateRange, isLoading } = useTasks(); // Add isLoading
   const router = useRouter();
-
-  // Set current Monday only on the client
-  useEffect(() => {
-    setSelectedWeek(getCurrentMonday());
-  }, []);
 
   // Fetch tasks once selectedWeek is ready - using useRef to avoid using fetchTasksByDateRange as dep
   const doFetch = useRef<((b: string, e: string, a: string) => Promise<void>) | null>(null);
@@ -35,14 +34,14 @@ export default function TaskTrackerPage() {
 
   const meetings = useMemo(() => {
     return (tasks ?? [])
-      .filter((t: any) => categoryToType(t.category) === 'meeting')
-      .sort((a: any, b: any) => String(a.begin_date ?? '').localeCompare(String(b.begin_date ?? '')));
+      .filter((t) => categoryToType(t.category) === 'meeting')
+      .sort((a, b) => String(a.begin_date ?? '').localeCompare(String(b.begin_date ?? '')));
   }, [tasks]);
 
   const work = useMemo(() => {
     return (tasks ?? [])
-      .filter((t: any) => categoryToType(t.category) === 'task')
-      .sort((a: any, b: any) => {
+      .filter((t) => categoryToType(t.category) === 'task')
+      .sort((a, b) => {
         const pd = priorityRank(a.priority) - priorityRank(b.priority);
         if (pd !== 0) return pd;
         return String(b.begin_date ?? '').localeCompare(String(a.begin_date ?? ''));
@@ -61,8 +60,8 @@ export default function TaskTrackerPage() {
 
   const notes = useMemo(
     () => tasks
-      .filter((t: any) => categoryToType(t.category) === 'note')
-      .sort((a: any, b: any) => priorityRank(a.priority) - priorityRank(b.priority)),
+      .filter((t) => categoryToType(t.category) === 'note')
+      .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority)),
     [tasks]
   );
 
@@ -73,7 +72,7 @@ export default function TaskTrackerPage() {
 
   const weekSummary = useMemo(() => {
     const all = [...collapsedWork, ...collapsedMeetings];
-    const done = all.filter((t: any) => t.effective_is_done ?? t.is_done).length;
+    const done = all.filter((t) => t.effective_is_done ?? t.is_done).length;
     return { done, remaining: all.length - done };
   }, [collapsedWork, collapsedMeetings]);
 
@@ -141,8 +140,8 @@ export default function TaskTrackerPage() {
             ) : (
               <TaskTable
                 tasks={tasks}
-                meetings={collapsedMeetings as any}
-                work={collapsedWork as any}
+                meetings={collapsedMeetings}
+                work={collapsedWork}
                 notes={notes}
                 subtaskProgressByParentId={progressByParentId}
               />

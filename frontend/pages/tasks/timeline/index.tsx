@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useClientValue } from 'hooks/useClientValue';
 import { useRouter } from 'next/router';
 import { useTasks } from 'context/TasksContext';
 import { useProjects } from 'context/ProjectsContext';
@@ -21,12 +22,10 @@ export default function TimelinePage() {
   const { projects } = useProjects();
 
   const [rangeMonths, setRangeMonths] = useState<RangeMonths>(3);
-  // rangeEnd defaults to today; initialized client-side to avoid hydration mismatch
-  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
-
-  useEffect(() => {
-    setRangeEnd(todayStr());
-  }, []);
+  // rangeEnd defaults to today, read client-side to avoid a hydration mismatch
+  const [pickedRangeEnd, setRangeEnd] = useState<string | null>(null);
+  const today = useClientValue(todayStr);
+  const rangeEnd = pickedRangeEnd ?? today;
 
   const rangeStart = useMemo(
     () => (rangeEnd ? subtractMonths(rangeEnd, rangeMonths) : null),

@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { CalendarBlacklistEntry, GoogleCalendarStatus } from 'types/types';
 import ApiKeysCard from 'components/settings/ApiKeysCard';
 import { API_URL } from 'lib/api';
+import { errorMessage } from 'lib/errors';
 
 
 type CalendarOption = { id: string; summary: string };
@@ -39,10 +40,17 @@ export default function SettingsPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [isSavingAccount, setIsSavingAccount] = useState(false);
-  useEffect(() => {
-    if (user?.username) setUsername(user.username);
-    if (user?.email) setEmail(user.email);
-  }, [user?.username, user?.email]);
+  // Prefill from the loaded user, and again if it changes.
+  const [prefilledUsername, setPrefilledUsername] = useState<string | undefined>();
+  const [prefilledEmail, setPrefilledEmail] = useState<string | undefined>();
+  if (user?.username && user.username !== prefilledUsername) {
+    setPrefilledUsername(user.username);
+    setUsername(user.username);
+  }
+  if (user?.email && user.email !== prefilledEmail) {
+    setPrefilledEmail(user.email);
+    setEmail(user.email);
+  }
 
   // Account — password
   const [oldPassword, setOldPassword] = useState('');
@@ -57,8 +65,10 @@ export default function SettingsPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [blacklist, setBlacklist] = useState<CalendarBlacklistEntry[]>([]);
-  const [isLoadingBlacklist, setIsLoadingBlacklist] = useState(false);
+  // null until the first fetch settles.
+  const [loadedBlacklist, setBlacklist] = useState<CalendarBlacklistEntry[] | null>(null);
+  const blacklist = loadedBlacklist ?? [];
+  const isLoadingBlacklist = Boolean(calendarStatus?.connected) && loadedBlacklist === null;
 
   // Handle callback redirect from Google OAuth
   useEffect(() => {
@@ -84,7 +94,7 @@ export default function SettingsPage() {
         if (data.selected_calendar_id) setSelectedCalendarId(data.selected_calendar_id);
       })
       .catch(() => {});
-  }, [loggedIn]);
+  }, [loggedIn, getAuthHeaders]);
 
   // Fetch calendar list and blacklist when connected
   useEffect(() => {
@@ -96,14 +106,12 @@ export default function SettingsPage() {
       .then((data: CalendarOption[]) => setCalendars(data))
       .catch(() => {});
 
-    setIsLoadingBlacklist(true);
     fetch(`${API_URL}/calendar/blacklist/list/`, {
         credentials: 'include', headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((data: CalendarBlacklistEntry[]) => setBlacklist(data))
-      .catch(() => {})
-      .finally(() => setIsLoadingBlacklist(false));
-  }, [calendarStatus?.connected]);
+      .catch(() => setBlacklist([]));
+  }, [calendarStatus?.connected, getAuthHeaders]);
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -153,8 +161,8 @@ export default function SettingsPage() {
       } else {
         toast.success(`Imported ${imported} meeting${imported !== 1 ? 's' : ''} from Google Calendar.`);
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to pull from Google Calendar.');
+    } catch (err) {
+      toast.error(errorMessage(err, 'Failed to pull from Google Calendar.'));
     } finally {
       setIsPulling(false);
     }
@@ -168,7 +176,7 @@ export default function SettingsPage() {
         headers: getAuthHeaders(),
       });
       if (res.ok) {
-        setBlacklist((prev) => prev.filter((e) => e.id !== id));
+        setBlacklist((prev) => (prev ?? []).filter((e) => e.id !== id));
         toast.success('Removed from blacklist.');
       } else {
         toast.error('Failed to remove from blacklist.');
@@ -450,7 +458,7 @@ export default function SettingsPage() {
               <div>
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Import Blacklist</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Events listed here will never be imported. Use "Never import again" on a meeting task to add entries.
+                  Events listed here will never be imported. Use &quot;Never import again&quot; on a meeting task to add entries.
                 </p>
               </div>
               {isLoadingBlacklist ? (

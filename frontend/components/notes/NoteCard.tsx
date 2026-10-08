@@ -13,7 +13,6 @@ export default function NoteCard({
 }: NoteProps) {
   const [expanded, setExpanded] = useState(false);
   const id = Number(note.id);
-  const title = String(note.title ?? '').trim() || 'Untitled note';
   const date = (note.begin_date ?? '').slice(0, 10);
   const priority = note.priority ? String(note.priority).toUpperCase() : '';
   const hasDescription = Boolean(note.description?.trim());

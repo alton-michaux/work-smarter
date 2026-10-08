@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
 import { Resume, ResumeAnalysis, GeneratedResume, ResumesContextType } from 'types/types';
 import { API_URL } from 'lib/api';
+import { errorMessage } from 'lib/errors';
 
 
 const ResumesContext = createContext<ResumesContextType | undefined>(undefined);
@@ -32,8 +33,8 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
       if (!res.ok) throw new Error(`Failed to fetch resumes: ${res.status}`);
       const data = await res.json();
       setResumes(data);
-    } catch (e: any) {
-      setError(e.message ?? 'Unknown error');
+    } catch (e) {
+      setError(errorMessage(e, 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
@@ -48,8 +49,8 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
       formData.append('title', title || file.name);
 
       // Omit Content-Type so the browser sets multipart boundary automatically
-      const headers = getAuthHeaders();
-      delete (headers as any)['Content-Type'];
+      const headers: Record<string, string> = getAuthHeaders();
+      delete headers['Content-Type'];
 
       const res = await fetch(`${API_URL}/resumes/`, {
         credentials: 'include',
@@ -65,8 +66,8 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
 
       const created: Resume = await res.json();
       setResumes((prev) => [created, ...prev]);
-    } catch (e: any) {
-      setError(e.message ?? 'Unknown error');
+    } catch (e) {
+      setError(errorMessage(e, 'Unknown error'));
       throw e;
     } finally {
       setIsLoading(false);
@@ -83,8 +84,8 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
       });
       if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
       setResumes((prev) => prev.filter((r) => r.id !== id));
-    } catch (e: any) {
-      setError(e.message ?? 'Unknown error');
+    } catch (e) {
+      setError(errorMessage(e, 'Unknown error'));
       throw e;
     }
   }, [getAuthHeaders]);
@@ -128,8 +129,8 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (e: any) {
-      setError(e.message ?? 'Unknown error');
+    } catch (e) {
+      setError(errorMessage(e, 'Unknown error'));
       throw e;
     }
   }, [getAuthHeaders]);
@@ -166,8 +167,8 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (e: any) {
-      setError(e.message ?? 'Unknown error');
+    } catch (e) {
+      setError(errorMessage(e, 'Unknown error'));
       throw e;
     }
   }, [getAuthHeaders]);
@@ -194,8 +195,8 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (e: any) {
-      setError(e.message ?? 'Unknown error');
+    } catch (e) {
+      setError(errorMessage(e, 'Unknown error'));
       throw e;
     }
   }, [getAuthHeaders]);

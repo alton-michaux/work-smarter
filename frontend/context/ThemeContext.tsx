@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useClientValue } from 'hooks/useClientValue';
 
 type Theme = 'light' | 'dark';
 
@@ -19,29 +20,28 @@ function applyTheme(t: Theme) {
   document.documentElement.classList.toggle('dark', t === 'dark');
 }
 
+/** The saved theme, else the OS preference. Browser-only. */
+function readInitialTheme(): Theme {
+  const stored = localStorage.getItem('theme');
+  if (stored === 'dark' || stored === 'light') return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
+  // Toggled this session; until then follow the saved/OS theme, which can only
+  // be read after hydration ('light' during SSR, as before).
+  const [toggledTheme, setToggledTheme] = useState<Theme | null>(null);
+  const initialTheme = useClientValue(readInitialTheme);
+  const theme: Theme = toggledTheme ?? initialTheme ?? 'light';
 
   useEffect(() => {
-    const stored = localStorage.getItem('theme') as Theme | null;
-    if (stored === 'dark' || stored === 'light') {
-      applyTheme(stored);
-      setTheme(stored);
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initial: Theme = prefersDark ? 'dark' : 'light';
-      applyTheme(initial);
-      setTheme(initial);
-    }
-  }, []);
+    applyTheme(theme);
+  }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => {
-      const next: Theme = prev === 'light' ? 'dark' : 'light';
-      applyTheme(next);
-      localStorage.setItem('theme', next);
-      return next;
-    });
+    const next: Theme = theme === 'light' ? 'dark' : 'light';
+    localStorage.setItem('theme', next);
+    setToggledTheme(next);
   };
 
   return (
