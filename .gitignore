@@ -23,6 +23,9 @@ frontend/node_modules/
 frontend/.next/
 frontend/.env.development.local
 frontend/.env.test.local
+# Agent-rules files scaffolded by `next dev` (Next 16)
+frontend/AGENTS.md
+frontend/CLAUDE.md
 
 # Logs
 *.log

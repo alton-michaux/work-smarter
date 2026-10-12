@@ -24,7 +24,10 @@ const TaskShowPage = () => {
   const [isPushing, setIsPushing] = useState(false);
   const [isSyncingDeadline, setIsSyncingDeadline] = useState(false);
   const [isBlacklisting, setIsBlacklisting] = useState(false);
-  const [fetchedTask, setFetchedTask] = useState<Task | null>(null);
+  // Keyed by id: the page component is reused across /tasks/.../[id], so a
+  // task fetched for one id must not stand in for the next.
+  const [fetched, setFetched] = useState<{ id: string; task: Task } | null>(null);
+  const fetchedTask = fetched && fetched.id === String(id) ? fetched.task : null;
   const [unlockedDescription, setUnlockedDescription] = useState<string | null>(null);
 
   useEffect(() => {
@@ -57,7 +60,7 @@ const TaskShowPage = () => {
     fetch(`${API_URL}/tasks/${id}/`, {
         credentials: 'include', headers: getAuthHeaders() })
       .then((r) => r.ok ? r.json() : Promise.reject())
-      .then((data: Task) => setFetchedTask(data))
+      .then((data: Task) => setFetched({ id: String(id), task: data }))
       .catch(() => setFailedFetchId(String(id)));
   }, [isFetchingTask, id, getAuthHeaders]);
 

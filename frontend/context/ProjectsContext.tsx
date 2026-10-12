@@ -17,7 +17,7 @@ export const useProjects = () => {
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const { getAuthHeaders } = useAPI();
   
-  const { loggedIn } = useAuth();
+  const { loggedIn, isLoading: isAuthLoading } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null); // Add error state
@@ -45,10 +45,12 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Initial load on login. Only sets state once the request settles; until
-  // then the provider reports isLoading via `initialLoadPending`.
+  // then the provider reports isLoading via `initialLoadPending`. That
+  // includes the auth check itself: before it resolves loggedIn is false, and
+  // pages would otherwise render their "no projects" empty state.
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   if (!loggedIn && initialLoadDone) setInitialLoadDone(false); // load again on next login
-  const initialLoadPending = loggedIn && !initialLoadDone;
+  const initialLoadPending = isAuthLoading || (loggedIn && !initialLoadDone);
 
   useEffect(() => {
     if (!loggedIn) return;

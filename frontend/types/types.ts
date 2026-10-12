@@ -566,6 +566,8 @@ export type ResumeGenerationState =
 export type ResumesContextType = {
   resumes: Resume[];
   isLoading: boolean;
+  /** True once fetchResumes has settled since login. */
+  hasFetched: boolean;
   error: string | null;
   fetchResumes: () => Promise<void>;
   uploadResume: (file: File, title: string) => Promise<void>;

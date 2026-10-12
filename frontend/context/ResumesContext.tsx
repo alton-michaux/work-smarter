@@ -21,6 +21,10 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Whether fetchResumes has settled since login, so pages can tell "not
+  // loaded yet" apart from "no such resume".
+  const [hasFetched, setHasFetched] = useState(false);
+  if (!loggedIn && hasFetched) setHasFetched(false);
 
   const fetchResumes = useCallback(async () => {
     if (!loggedIn) return;
@@ -37,6 +41,7 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
       setError(errorMessage(e, 'Unknown error'));
     } finally {
       setIsLoading(false);
+      setHasFetched(true);
     }
   }, [loggedIn, getAuthHeaders]);
 
@@ -202,7 +207,7 @@ export const ResumesProvider = ({ children }: { children: ReactNode }) => {
   }, [getAuthHeaders]);
 
   return (
-    <ResumesContext.Provider value={{ resumes, isLoading, error, fetchResumes, uploadResume, deleteResume, downloadResume, analyzeResume, generateResume, downloadGeneratedResume, generateNewResume, downloadNewGeneratedResume }}>
+    <ResumesContext.Provider value={{ resumes, isLoading, hasFetched, error, fetchResumes, uploadResume, deleteResume, downloadResume, analyzeResume, generateResume, downloadGeneratedResume, generateNewResume, downloadNewGeneratedResume }}>
       {children}
     </ResumesContext.Provider>
   );

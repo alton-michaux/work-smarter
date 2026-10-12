@@ -16,18 +16,21 @@ const isPdf = (url: string) => url.toLowerCase().split('?')[0].endsWith('.pdf');
 export default function ResumeViewPage() {
   const router = useRouter();
   const { id } = router.query;
-  const { resumes, fetchResumes, deleteResume, downloadResume, analyzeResume, generateResume, downloadGeneratedResume, isLoading, error } = useResumes();
+  const { resumes, fetchResumes, deleteResume, downloadResume, analyzeResume, generateResume, downloadGeneratedResume, isLoading, hasFetched, error } = useResumes();
   const { getAuthHeaders } = useAPI();
-  const { refreshAccessToken } = useAuth();
+  const { refreshAccessToken, loggedIn, isLoading: isAuthLoading } = useAuth();
   const [resume, setResume] = useState<Resume | null>(null);
   // The PDF preview for one resume; url is null when the download failed.
   const [preview, setPreview] = useState<{ resumeId: number; url: string | null } | null>(null);
   const [analysis, setAnalysis] = useState<ResumeAnalysisState>({ status: 'idle' });
   const [generation, setGeneration] = useState<ResumeGenerationState>({ status: 'idle' });
 
+  // On a deep link auth is still resolving at mount, so fetch once it has
+  // (fetchResumes is a no-op while logged out). Skipped when arriving from the
+  // list, which already loaded it.
   useEffect(() => {
-    if (resumes.length === 0) fetchResumes();
-  }, []);
+    if (loggedIn && !hasFetched) fetchResumes();
+  }, [loggedIn, hasFetched, fetchResumes]);
 
   // Pick the resume out of the list when it (or the id) changes. Kept in
   // state rather than derived so it survives the list briefly emptying.
@@ -142,7 +145,7 @@ export default function ResumeViewPage() {
       minute: '2-digit',
     });
 
-  if (isLoading) {
+  if (isLoading || isAuthLoading || (loggedIn && !hasFetched)) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
         <p className="text-sm text-gray-400 dark:text-gray-500">Loading...</p>
