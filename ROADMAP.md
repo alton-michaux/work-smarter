@@ -144,7 +144,7 @@
 - [x] Account show/edit page
 - [x] Beef up account security
 - [ ] Tutorial section
-- [ ] About page
+- [x] About page
 
 ### Production hardening follow-ups
 
