@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import Spinner from 'components/shared/Spinner';
 import Button from "../components/ui/button";
@@ -10,6 +11,10 @@ const BACKEND_URL = API_URL.replace(/\/api$/, '');
 const Login = () => {
     const { login, isLoading, error } = useAuth();
     const [form, setForm] = useState({ email: '', password: '' });
+    const router = useRouter();
+    // Set after a signup (?pending=1) or a social login (?error=pending)
+    // for an account still awaiting approval.
+    const isPending = router.query.pending === '1' || router.query.error === 'pending';
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -25,6 +30,12 @@ const Login = () => {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
             <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow p-8">
                 <h2 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-gray-100">Login</h2>
+
+                {isPending && (
+                <div className="mb-4 bg-green-50 dark:bg-green-900 dark:bg-opacity-20 border border-green-300 dark:border-green-800 text-green-800 dark:text-green-300 px-4 py-2 rounded text-sm">
+                    Request received. You&apos;ll be able to log in once your access is approved.
+                </div>
+                )}
 
                 {isLoading ? (
                 <div className="flex justify-center my-8">
@@ -118,7 +129,7 @@ const Login = () => {
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center">
                 Don&apos;t have an account?{' '}
                 <Link href="/register" className="text-green-600 hover:underline">
-                    Sign up here
+                    Request access
                 </Link>
                 </p>
 

@@ -30,7 +30,11 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow p-8">
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-gray-100">Create an Account</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-gray-100">Request Access</h1>
+        <p className="mb-6 -mt-3 text-center text-sm text-gray-600 dark:text-gray-400">
+          Work Smarter is invite-only for now. Create an account and you&apos;ll
+          be able to log in once it&apos;s approved.
+        </p>
 
         {isLoading ? (
           <div className="flex justify-center py-8">
@@ -81,7 +85,7 @@ const Register = () => {
                   size="md"
                   type="submit"
                 >
-                  Register
+                  Request Access
                 </Button>
                 <Button
                   variant="secondary"
