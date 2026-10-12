@@ -1,9 +1,11 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.middleware.csrf import get_token
 from dj_rest_auth.registration.views import RegisterView
 from dj_rest_auth.views import PasswordResetView
 from rest_framework import status
 from rest_framework.authentication import CSRFCheck
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -76,13 +78,31 @@ class CookieTokenObtainPairView(TokenObtainPairView):
     throttle_scope = "login"
 
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
+        try:
+            response = super().post(request, *args, **kwargs)
+        except AuthenticationFailed:
+            if self._is_pending(request.data):
+                return Response(
+                    {"error": "Your account is pending approval."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            raise
         if response.status_code == 200:
             access = response.data.pop("access", None)
             refresh = response.data.pop("refresh", None)
             set_jwt_cookies(response, access, refresh)
             response.data = {"detail": "Login successful."}
         return response
+
+    @staticmethod
+    def _is_pending(data):
+        # Only say "pending" to someone who knows the password, so this
+        # doesn't reveal which emails have requested access.
+        email, password = data.get("email"), data.get("password")
+        if not email or not password:
+            return False
+        user = get_user_model().objects.filter(email__iexact=email, is_active=False).first()
+        return bool(user and user.check_password(password))
 
 
 class CookieTokenRefreshView(TokenRefreshView):
@@ -145,18 +165,12 @@ class ThrottledRegisterView(RegisterView):
     throttle_scope = "registration"
 
     def create(self, request, *args, **kwargs):
-        # dj-rest-auth's stock RegisterView puts access/refresh in the
-        # response body (its own cookie-setting, if any, is a separate,
-        # additive mechanism) — strip them the same way login does, so a
-        # fresh signup doesn't leak a JS-readable token at the one moment
-        # this migration is specifically trying to close off.
+        # New accounts start inactive pending approval (see
+        # ApprovalAccountAdapter), so whatever tokens dj-rest-auth minted are
+        # useless — drop them rather than setting cookies.
         response = super().create(request, *args, **kwargs)
-        if isinstance(response.data, dict):
-            access = response.data.pop("access", None)
-            refresh = response.data.pop("refresh", None)
-            if access or refresh:
-                set_jwt_cookies(response, access, refresh)
-                response.data = {"detail": "Registration successful."}
+        if response.status_code == status.HTTP_201_CREATED:
+            response.data = {"detail": "Thanks! Your access request is pending approval."}
         return response
 
 
