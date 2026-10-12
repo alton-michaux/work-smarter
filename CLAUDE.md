@@ -87,6 +87,8 @@ Django 4.2 + DRF 3.15. Entry point: `backend/settings.py` (project config), `api
 
 **Authentication flow**: django-allauth handles registration/social auth → dj-rest-auth exposes REST endpoints → SimpleJWT issues access/refresh tokens. Custom login endpoint at `POST /api/auth/login/` uses email (not username). Token refresh at `POST /api/auth/refresh/` with `{"refresh": "<token>"}` body.
 
+**Invite-only access**: self-service signups (password and social) are created with `is_active=False` by the adapters in `backend/adapters.py`; login returns 403 "pending approval" until approved. Approve in Django admin → Users → filter Active = No → "Approve selected users" action. Users from `createsuperuser`/seed commands are active by default.
+
 **Task model key fields**: self-referencing FK for subtasks, optional FK to `Project`, priority (urgent/high/medium/low), category (task/meeting/note), `begin_date`/`end_date`, `is_done`. Unique constraint on `(user, title, begin_date, project, parent)`.
 
 ### Frontend (`/frontend`)
