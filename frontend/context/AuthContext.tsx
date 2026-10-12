@@ -46,7 +46,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error(JSON.stringify(data));
       }
 
-      router.push('/login');
+      // New accounts wait for admin approval before they can log in.
+      router.push('/login?pending=1');
     } catch (err) {
       const msg = parseAuthError(err);
       setError(msg?.non_field_errors?.[0] || msg?.password1?.[0] || msg?.error || 'Registration failed');

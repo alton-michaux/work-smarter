@@ -149,7 +149,7 @@ const About = () => {
                 href="/register"
                 className="rounded-md bg-green-600 px-6 py-3 text-sm font-medium text-white shadow hover:bg-green-700 transition"
               >
-                Sign Up
+                Request Access
               </Link>
               <Link
                 href="/login"
