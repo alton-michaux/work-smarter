@@ -145,6 +145,7 @@
 - [x] Beef up account security
 - [ ] Tutorial section
 - [x] About page
+- [x] Invite-only access (new signups wait for admin approval)
 
 ### Production hardening follow-ups
 
