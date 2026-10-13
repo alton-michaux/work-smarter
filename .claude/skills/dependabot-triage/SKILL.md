@@ -152,10 +152,6 @@ For each PR:
 
 ## Known pre-existing issues (not caused by dependency bumps)
 
-- `GET /api/recurring-tasks/`, `/api/work-experiences/`, `/api/educations/` and
-  `/api/skills/` return 500 (`FieldError: Cannot resolve keyword 'created'`). CursorPagination
-  falls back to `-created` on viewsets without an `ordering`. This shows up in every
-  smoke baseline until it is fixed. Only a *new* failure counts against a PR.
 - `manage.py check` warns `account.W001` (allauth settings).
 - `axios` is listed in `frontend/package.json` but nothing imports it; the app uses
   `fetch`. Its bumps are safe, and removing it would stop its alerts (a code change, so
