@@ -46,8 +46,10 @@ Each script cleans up its own containers and worktree on exit.
      `cryptography`). Needs a paired bump, which is a code change, so the PR is blocked.
      The same goes for `requests` 2.33+ and the old `certifi==2019.11.28` pin (fixed 2026-09-30).
      `requirements.txt` is an old full `pip freeze`, so expect more stale pins like these.
-   - `PostgreSQL 14 or later is required (found 13.x)`: Django 5.x. CI (`.github/workflows/ci.yaml`)
-     and `docker-compose.yml` pin `postgres:13`. Blocked.
+   - `PostgreSQL <n> or later is required`: a Django bump that outgrew the Postgres in CI
+     (`.github/workflows/ci.yaml`) and `docker-compose.yml`, both `postgres:18` since
+     2026-10. Moving them is a code change, so the PR is blocked. The QA scripts default to
+     the same version (`PG_VERSION` overrides it); keep them in step when CI moves.
    - Vercel deploy failure: investigate with `npx vercel inspect <deployment> --logs`.
      Preview URLs sit behind Vercel SSO and cannot be smoke-tested with curl.
 4. Label with the triage labels (already created in the repo): `security` (fixes an open

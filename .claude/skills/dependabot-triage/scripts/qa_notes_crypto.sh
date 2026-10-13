@@ -11,7 +11,7 @@ for i in "$OLD" "$NEW"; do docker image inspect "$i" >/dev/null 2>&1 || { echo "
 cleanup() { docker rm -f ws-qa-db >/dev/null 2>&1; docker network rm $NET >/dev/null 2>&1; }
 trap cleanup EXIT; cleanup
 docker network create $NET >/dev/null
-docker run -d --name ws-qa-db --network $NET -e POSTGRES_DB=qa -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres "postgres:${PG_VERSION:-13}" >/dev/null
+docker run -d --name ws-qa-db --network $NET -e POSTGRES_DB=qa -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres "postgres:${PG_VERSION:-18}" >/dev/null
 for _ in $(seq 1 30); do docker exec ws-qa-db pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done; sleep 2
 ENV=(-e DATABASE_URL=postgres://postgres:postgres@ws-qa-db:5432/qa -e SECRET_KEY=qa-secret-key-not-for-production-0123456789 -e DEBUG=1 -e DJANGO_SETTINGS_MODULE=backend.settings)
 run() { docker run --rm --network $NET "${ENV[@]}" --entrypoint bash "$1" -c "$2" 2>&1 | grep -vE 'W001|System check|^$|UserWarning|allauth_account_settings|^WARNINGS:'; }
