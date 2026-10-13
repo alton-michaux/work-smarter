@@ -166,8 +166,9 @@ For each PR:
 - `gh run view --log` mis-attributes steps and can drop the pytest step entirely. Read the
   raw job log with `gh api repos/{owner}/{repo}/actions/jobs/<id>/logs` (`ci_summary.sh` does).
 - Logs of runs older than about 90 days are gone (HTTP 410).
-- apt `gh` 2.46 lacks newer flags such as `gh api --allow-escape-sequences` (`ci_summary.sh`
-  only passes it when the installed `gh` supports it). `gh pr edit` fails with a GraphQL
+- apt `gh` 2.46 lacks newer flags: `gh api --allow-escape-sequences` (`ci_summary.sh` only
+  passes it when supported) and `gh pr checks --json` (use
+  `gh pr view <n> --json statusCheckRollup` instead). `gh pr edit` fails with a GraphQL
   "Projects (classic) is being deprecated" error; set labels through REST instead:
   `gh api -X POST repos/{owner}/{repo}/issues/<n>/labels -f 'labels[]=<label>'` and
   `gh api -X DELETE repos/{owner}/{repo}/issues/<n>/labels/<label>`.

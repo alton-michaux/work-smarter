@@ -4,7 +4,8 @@
 # Usage: ci_summary.sh <pr-number|branch>
 source "$(dirname "$(readlink -f "$0")")/_common.sh"
 if [[ "$1" =~ ^[0-9]+$ ]]; then
-  JOB=$(gh pr checks "$1" --json name,link --jq '.[] | select(.name=="backend-tests") | .link' | sed -E 's#.*/job/([0-9]+).*#\1#')
+  # `gh pr checks --json` needs a newer gh than apt's 2.46; statusCheckRollup works on both.
+  JOB=$(gh pr view "$1" --json statusCheckRollup --jq '.statusCheckRollup[] | select(.name=="backend-tests") | .detailsUrl' | sed -E 's#.*/job/([0-9]+).*#\1#')
 else
   # `gh run list --branch` returns stale runs on this repo; filter the unfiltered list instead.
   RUN=$(gh run list --limit 40 --json databaseId,event,headBranch,status --jq "[.[] | select(.event==\"push\" and .headBranch==\"$1\" and .status==\"completed\")][0].databaseId")
