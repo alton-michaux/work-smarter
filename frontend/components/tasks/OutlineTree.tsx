@@ -296,12 +296,6 @@ function OutlineRow({
               <span className="whitespace-nowrap uppercase tracking-wide">
                 {(node.priority ?? '—').toString()}
               </span>
-              {type !== 'meeting' && (
-                <span className="whitespace-nowrap">
-                  <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
-                  {node.begin_date ?? '—'}
-                </span>
-              )}
               {type === 'meeting' && node.begin_time && (
                 <span className="whitespace-nowrap">
                   <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
@@ -325,6 +319,12 @@ function OutlineRow({
                   </span>
                 );
               })()}
+              {type !== 'meeting' && (
+                <span className="whitespace-nowrap">
+                  <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
+                  {node.begin_date ?? '—'}
+                </span>
+              )}
             </div>
 
           </div>
