@@ -109,3 +109,34 @@ def test_v1_projects_pagination_terminates(key_client, v1_projects_url, get_user
 
     assert len(seen) == ROWS
     assert fetched == ROWS
+
+
+@pytest.mark.parametrize(
+    "url, payload",
+    [
+        ("/api/work-experiences/", {"title": "Engineer", "company": "Acme"}),
+        ("/api/educations/", {"school": "State U"}),
+        ("/api/skills/", {"name": "Django"}),
+    ],
+)
+def test_resume_profile_lists_paginate(auth_client, url, payload):
+    """These models have no `created` field, which DRF's default ordering needs."""
+    for _ in range(3):
+        assert auth_client.post(url, payload, format="json").status_code == 201
+
+    response = auth_client.get(url)
+
+    assert response.status_code == 200
+    ids = [row["id"] for row in response.json()["results"]]
+    assert ids == sorted(ids, reverse=True) and len(ids) == 3
+
+
+def test_recurring_tasks_list_paginates(auth_client, get_user, create_recurring_task):
+    for i in range(3):
+        create_recurring_task(title=f"Daily {i}", frequency="daily", user=get_user)
+
+    response = auth_client.get("/api/recurring-tasks/")
+
+    assert response.status_code == 200
+    ids = [row["id"] for row in response.json()["results"]]
+    assert ids == sorted(ids, reverse=True) and len(ids) == 3

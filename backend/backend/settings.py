@@ -103,7 +103,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.CursorPagination",
+    "DEFAULT_PAGINATION_CLASS": "api.pagination.IdCursorPagination",
     "PAGE_SIZE": 50,
     'DEFAULT_THROTTLE_RATES': {
         'login': '10/min',
