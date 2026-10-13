@@ -42,9 +42,18 @@ export default function TimelinePage() {
     fetchTasksForTimeline(rangeStart, rangeEnd);
   }, [rangeStart, rangeEnd, fetchTasksForTimeline]);
 
-  const groups = useMemo(
+  const allGroups = useMemo(
     () => (rangeStart && rangeEnd ? groupTasksByProject(tasks, projects) : []),
     [tasks, projects, rangeStart, rangeEnd]
+  );
+
+  // '' = all projects; otherwise the String(projectId ?? 'none') of one group
+  const [projectFilter, setProjectFilter] = useState('');
+  const groups = useMemo(
+    () => projectFilter
+      ? allGroups.filter((g) => String(g.projectId ?? 'none') === projectFilter)
+      : allGroups,
+    [allGroups, projectFilter]
   );
 
   const todayPct = useMemo(() => {
@@ -123,8 +132,24 @@ export default function TimelinePage() {
                 Next →
               </button>
 
+              {/* Project filter */}
+              <select
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+                aria-label="Filter by project"
+                className="ml-auto rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-600 dark:text-gray-300"
+              >
+                <option value="">All projects</option>
+                {[...projects]
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((p) => (
+                    <option key={p.id} value={String(p.id)}>{p.name}</option>
+                  ))}
+                <option value="none">No project</option>
+              </select>
+
               {/* Range size selector */}
-              <div className="ml-auto flex gap-1">
+              <div className="flex gap-1">
                 {([1, 3, 6] as RangeMonths[]).map((m) => (
                   <button
                     key={m}
