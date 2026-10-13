@@ -243,6 +243,7 @@ export type NoteProps = {
   showMeta?: boolean;      // date/priority line
   variant?: 'default' | 'dashed'; // dashed looks “ongoing”
   collapsible?: boolean;   // truncate description with expand toggle
+  plainText?: boolean;     // show description as plain text instead of rendered markdown
 };
 
 //------UTILITY---------//

@@ -227,6 +227,7 @@ export default function TaskTable({
                     note={n}
                     variant="dashed"
                     showMeta={false}
+                    plainText
                     onView={(id) => router.push(`/tasks/view/${id}`)}
                   />
                 </div>
