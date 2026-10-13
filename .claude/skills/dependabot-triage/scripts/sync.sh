@@ -18,7 +18,7 @@ if [ "$(behind)" != 0 ]; then
   elif [ "$CONFLICT" = CONFLICTING ]; then ACTION="@dependabot recreate"
   else ACTION=update-branch; fi
   echo "was ${OLD:0:7}; action: $ACTION"
-  if [ "$ACTION" = update-branch ]; then gh pr update-branch "$PR" >/dev/null; else gh pr comment "$PR" --body "$ACTION" >/dev/null; fi
+  if [ "$ACTION" = update-branch ]; then gh api -X PUT "repos/$SLUG/pulls/$PR/update-branch" >/dev/null; else gh pr comment "$PR" --body "$ACTION" >/dev/null; fi
   for _ in $(seq 1 ${SYNC_POLLS:-40}); do
     sleep 15
     [ "$(field state)" = OPEN ] || { echo "PR #$PR became $(field state) (Dependabot closes PRs that are no longer needed)"; last_comment; exit 2; }

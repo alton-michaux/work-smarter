@@ -3,7 +3,7 @@
 # throwaway Postgres, seed the demo account and exercise the API. Prints one line per
 # request so the output can be diffed against a baseline run on the base branch.
 # Usage: qa_backend.sh <pr-number|branch> [package ...]   (extra args: versions to print)
-#        PG_VERSION=16 qa_backend.sh ...                  (default Postgres is 13, as in CI)
+#        PG_VERSION=16 qa_backend.sh ...                  (default Postgres is 18, as in CI)
 #        QA_EXTRA_GETS="/calendar/oauth/init/" qa_backend.sh ...  (extra authenticated GETs)
 source "$(dirname "$(readlink -f "$0")")/_common.sh"
 TARGET=$1; shift; PKGS=${*:-Django djangorestframework}
@@ -19,8 +19,8 @@ echo "== docker build"
 build || { echo "build failed once, retrying"; build; } || { echo "BUILD FAILED"; grep -aE 'ERROR|conflict|depends on|No matching' "$QA_TMP/build-be-$LABEL.log" | cut -c1-250 | head -20; exit 1; }
 docker network create $NET >/dev/null
 # Pull explicitly: on WSL the Docker credential helper sometimes times out, so retry once.
-docker image inspect "postgres:${PG_VERSION:-13}" >/dev/null 2>&1 || docker pull -q "postgres:${PG_VERSION:-13}" >/dev/null 2>&1 || docker pull -q "postgres:${PG_VERSION:-13}" >/dev/null
-docker run -d --name ws-qa-db --network $NET -e POSTGRES_DB=qa -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres "postgres:${PG_VERSION:-13}" >/dev/null || { echo "DB CONTAINER FAILED TO START"; exit 1; }
+docker image inspect "postgres:${PG_VERSION:-18}" >/dev/null 2>&1 || docker pull -q "postgres:${PG_VERSION:-18}" >/dev/null 2>&1 || docker pull -q "postgres:${PG_VERSION:-18}" >/dev/null
+docker run -d --name ws-qa-db --network $NET -e POSTGRES_DB=qa -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres "postgres:${PG_VERSION:-18}" >/dev/null || { echo "DB CONTAINER FAILED TO START"; exit 1; }
 READY=0; for _ in $(seq 1 30); do docker exec ws-qa-db pg_isready -U postgres >/dev/null 2>&1 && { READY=1; break; }; sleep 1; done
 [ $READY = 1 ] || { echo "DB NOT READY"; exit 1; }; sleep 2
 echo "== postgres $(docker exec ws-qa-db psql -U postgres -tAc 'show server_version' | cut -d' ' -f1)"
@@ -28,6 +28,9 @@ docker run -d --name ws-qa-be --network $NET -p "$PORT:8000" \
   -e DATABASE_URL=postgres://postgres:postgres@ws-qa-db:5432/qa -e SECRET_KEY=qa-secret-key-not-for-production-0123456789 \
   -e DEBUG=1 -e ALLOWED_HOSTS=localhost,127.0.0.1 -e DJANGO_SETTINGS_MODULE=backend.settings "$IMG" >/dev/null
 for _ in $(seq 1 90); do curl -s -o /dev/null "$B/auth/csrf/" && break; sleep 2; done
+# The entrypoint exits if it can't reach or use the database (e.g. Django needing a newer
+# Postgres). Stop here with its log instead of printing a page of 000s.
+[ "$(docker inspect -f '{{.State.Running}}' ws-qa-be 2>/dev/null)" = true ] || { echo "BACKEND CONTAINER EXITED"; docker logs ws-qa-be 2>&1 | tail -15; exit 1; }
 echo "== versions"; docker exec ws-qa-be pip list 2>/dev/null | grep -iE "^($(echo "$PKGS" | tr ' ' '|')) "
 echo "== manage.py check"; docker exec ws-qa-be python manage.py check 2>&1 | tail -3
 echo "== pip check"; docker exec ws-qa-be pip check 2>&1 | head -8

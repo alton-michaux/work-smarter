@@ -22,12 +22,11 @@ Each script cleans up its own containers and worktree on exit.
 
 ## Prerequisites
 
-- `gh` authenticated with `repo` scope (`gh auth status`). On this Ubuntu 20.04 WSL box apt
-  has no `gh` package; it was installed from the release tarball into `~/.local/bin`.
-- Docker running for QA (`docker version`). Docker Desktop's WSL integration drops after
-  reboots; if `docker` is missing, start it with
-  `(cd /mnt/c && nohup "/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe" >/dev/null 2>&1 &)`
-  and poll `docker version` for a minute or two.
+- `gh` authenticated with `repo` and `workflow` scopes (`gh auth status`). On this Ubuntu
+  26.04 WSL box it is the apt package (`/usr/bin/gh`, 2.46). Don't install a second copy
+  into `~/.local/bin`. See the gh 2.46 notes under Tooling gotchas.
+- Docker running for QA (`docker version`). Docker Engine runs natively in WSL (no Docker
+  Desktop). WSL memory is capped at 10GB, shared with the QA containers.
 
 ## Phase 1: triage
 
@@ -47,8 +46,10 @@ Each script cleans up its own containers and worktree on exit.
      `cryptography`). Needs a paired bump, which is a code change, so the PR is blocked.
      The same goes for `requests` 2.33+ and the old `certifi==2019.11.28` pin (fixed 2026-09-30).
      `requirements.txt` is an old full `pip freeze`, so expect more stale pins like these.
-   - `PostgreSQL 14 or later is required (found 13.x)`: Django 5.x. CI (`.github/workflows/ci.yaml`)
-     and `docker-compose.yml` pin `postgres:13`. Blocked.
+   - `PostgreSQL <n> or later is required`: a Django bump that outgrew the Postgres in CI
+     (`.github/workflows/ci.yaml`) and `docker-compose.yml`, both `postgres:18` since
+     2026-10. Moving them is a code change, so the PR is blocked. The QA scripts default to
+     the same version (`PG_VERSION` overrides it); keep them in step when CI moves.
    - Vercel deploy failure: investigate with `npx vercel inspect <deployment> --logs`.
      Preview URLs sit behind Vercel SSO and cannot be smoke-tested with curl.
 4. Label with the triage labels (already created in the repo): `security` (fixes an open
@@ -91,7 +92,7 @@ For each PR:
    close a PR whose alert got fixed by another merge. That is expected; note it and move on.
 2. **Baseline.** Get the `dev` numbers once per session and again after `dev` changes
    through something other than your own merges:
-   - `scripts/ci_summary.sh dev` gives the test count (320 passed, 298 warnings as of 2026-09-30)
+   - `scripts/ci_summary.sh dev` gives the test count (326 passed, 300 warnings as of 2026-10-13)
    - `scripts/qa_backend.sh dev > dev.out` gives the API smoke baseline
 3. **QA.** Pick the checks by what the PR touches:
    - **Every PR:** the diff contains only the intended bump, and `scripts/ci_summary.sh <pr>`
@@ -165,10 +166,19 @@ For each PR:
 - `gh run list --branch <b>` returns stale runs on this repo. Filter the unfiltered
   list instead (`ci_summary.sh` does).
 - `gh run view --log` mis-attributes steps and can drop the pytest step entirely. Read the
-  raw job log with `gh api repos/{owner}/{repo}/actions/jobs/<id>/logs --allow-escape-sequences`.
+  raw job log with `gh api repos/{owner}/{repo}/actions/jobs/<id>/logs` (`ci_summary.sh` does).
 - Logs of runs older than about 90 days are gone (HTTP 410).
-- Docker Desktop can drop out mid-session (`docker` disappears, or SIGBUS from the CLI).
-  Restart it as in Prerequisites and re-run the interrupted script; they are idempotent.
+- apt `gh` 2.46 lacks newer flags: `gh api --allow-escape-sequences` (`ci_summary.sh` only
+  passes it when supported) and `gh pr checks --json` (use
+  `gh pr view <n> --json statusCheckRollup` instead), and it has no `gh pr update-branch`
+  (`sync.sh` calls `gh api -X PUT repos/{owner}/{repo}/pulls/<n>/update-branch`). `gh pr edit` fails with a GraphQL
+  "Projects (classic) is being deprecated" error; set labels through REST instead:
+  `gh api -X POST repos/{owner}/{repo}/issues/<n>/labels -f 'labels[]=<label>'` and
+  `gh api -X DELETE repos/{owner}/{repo}/issues/<n>/labels/<label>`.
+- Run `qa_backend.sh` (and the other scripts that start `ws-qa-*` containers) one at a
+  time. They share container names, a Docker network and a port, so a second run's
+  startup cleanup kills the first run's containers. Queue the `dev` baseline and the PR run
+  back to back instead of in parallel.
 - The backend smoke log sometimes shows one `BrokenPipeError` from the readiness poll.
   `qa_backend.sh` filters it out; it is not a regression.
 - A PR opened against a branch other than `dev` fixes nothing on `dev`. Retarget it only
