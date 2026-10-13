@@ -228,6 +228,9 @@ OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
 
 # --- Groq (AI resume analysis) ---
 GROQ_API_KEY = env("GROQ_API_KEY", default="")
+# Groq retires models periodically (see console.groq.com/docs/deprecations);
+# override per environment without a code change.
+GROQ_MODEL = env("GROQ_MODEL", default="openai/gpt-oss-120b")
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
