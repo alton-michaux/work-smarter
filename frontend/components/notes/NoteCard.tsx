@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NoteProps } from 'types/types';
 import MarkdownBody from 'components/shared/MarkdownBody';
+import { stripMarkdown } from 'lib/stripMarkdown';
 
 export default function NoteCard({
   note,
@@ -10,6 +11,7 @@ export default function NoteCard({
   showMeta = true,
   variant = 'default',
   collapsible = false,
+  plainText = false,
 }: NoteProps) {
   const [expanded, setExpanded] = useState(false);
   const id = Number(note.id);
@@ -52,11 +54,25 @@ export default function NoteCard({
               </div>
             ) : hasDescription && (
               <div className={`mt-1 text-sm leading-snug ${note.is_done ? 'opacity-60' : ''}`}>
-                <MarkdownBody
-                  value={note.description}
-                  emptyText=""
-                  truncateLines={(collapsible && !expanded) || variant === 'dashed' ? 3 : undefined}
-                />
+                {plainText ? (
+                  <p
+                    className="whitespace-pre-line text-gray-600 dark:text-gray-300"
+                    style={(collapsible && !expanded) || variant === 'dashed' ? {
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    } : undefined}
+                  >
+                    {stripMarkdown(note.description ?? '')}
+                  </p>
+                ) : (
+                  <MarkdownBody
+                    value={note.description}
+                    emptyText=""
+                    truncateLines={(collapsible && !expanded) || variant === 'dashed' ? 3 : undefined}
+                  />
+                )}
               </div>
             )}
             {showMeta && (date || priority) ? (

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ProjectGroup, MonthTick } from 'lib/timelineUtils';
 import TimelineBar from './TimelineBar';
 
@@ -9,7 +10,23 @@ type Props = {
   monthTicks: MonthTick[];
 };
 
+const groupKey = (g: ProjectGroup) => String(g.projectId ?? 'none');
+
 export default function TimelineView({ groups, rangeStart, rangeEnd, todayPct, monthTicks }: Props) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  const toggle = (key: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+  const allCollapsed = groups.length > 0 && groups.every((g) => collapsed.has(groupKey(g)));
+  const toggleAll = () =>
+    setCollapsed(allCollapsed ? new Set() : new Set(groups.map(groupKey)));
+
   if (groups.length === 0) {
     return (
       <div className="py-16 text-center text-gray-400 dark:text-gray-500 text-sm">
@@ -20,6 +37,18 @@ export default function TimelineView({ groups, rangeStart, rangeEnd, todayPct, m
 
   return (
     <div className="overflow-x-auto">
+      {groups.length > 1 && (
+        <div className="flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={toggleAll}
+            className="text-xs text-blue-500 hover:underline"
+          >
+            {allCollapsed ? 'Expand all' : 'Collapse all'}
+          </button>
+        </div>
+      )}
+
       {/* X-axis: month labels + today marker */}
       <div className="flex">
         <div className="w-44 flex-shrink-0" />
@@ -42,10 +71,24 @@ export default function TimelineView({ groups, rangeStart, rangeEnd, todayPct, m
       </div>
 
       {/* Project groups */}
-      {groups.map((group) => (
-        <div key={group.projectId ?? 'none'} className="mb-6">
-          {/* Project header */}
-          <div className="flex items-center gap-2 py-1.5 px-2 mt-3 bg-gray-50 dark:bg-gray-700/50 rounded">
+      {groups.map((group) => {
+        const key = groupKey(group);
+        const isCollapsed = collapsed.has(key);
+        return (
+        <div key={key} className={isCollapsed ? 'mb-1' : 'mb-6'}>
+          {/* Project header (click to collapse/expand) */}
+          <button
+            type="button"
+            onClick={() => toggle(key)}
+            aria-expanded={!isCollapsed}
+            className="w-full flex items-center gap-2 py-1.5 px-2 mt-3 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-left transition"
+          >
+            <span
+              className={`text-[10px] text-gray-400 dark:text-gray-500 transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
+              aria-hidden="true"
+            >
+              ▼
+            </span>
             {group.projectColor && (
               <div
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -58,9 +101,10 @@ export default function TimelineView({ groups, rangeStart, rangeEnd, todayPct, m
             <span className="text-xs text-gray-400 dark:text-gray-500">
               {group.tasks.length} {group.tasks.length === 1 ? 'task' : 'tasks'}
             </span>
-          </div>
+          </button>
 
           {/* Task rows */}
+          {!isCollapsed && (
           <div className="mt-1">
             {group.tasks.map((task) => (
               <div key={task.id} className="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded">
@@ -95,8 +139,10 @@ export default function TimelineView({ groups, rangeStart, rangeEnd, todayPct, m
               </div>
             ))}
           </div>
+          )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

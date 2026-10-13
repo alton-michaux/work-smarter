@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useClientValue } from 'hooks/useClientValue';
 import { useRouter } from 'next/router';
 import { useTasks } from 'context/TasksContext';
+import { useAuth } from 'context/AuthContext';
 import { useProjects } from 'context/ProjectsContext';
 import Spinner from 'components/shared/Spinner';
 import TimelineView from 'components/timeline/TimelineView';
@@ -20,6 +21,7 @@ export default function TimelinePage() {
   const router = useRouter();
   const { tasks, fetchTasksForTimeline, isLoading } = useTasks();
   const { projects } = useProjects();
+  const { loggedIn } = useAuth();
 
   const [rangeMonths, setRangeMonths] = useState<RangeMonths>(3);
   // rangeEnd defaults to today, read client-side to avoid a hydration mismatch
@@ -32,19 +34,30 @@ export default function TimelinePage() {
     [rangeEnd, rangeMonths]
   );
 
-  // Fetch when range changes; ref guards against stale-closure re-fetches
+  // Fetch when range changes; ref guards against stale-closure re-fetches.
+  // Wait for auth: on a direct page load the range is known before login
+  // resolves, and a fetch attempted then is a no-op the guard would never retry.
   const lastRangeRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!rangeStart || !rangeEnd) return;
+    if (!rangeStart || !rangeEnd || !loggedIn) return;
     const key = `${rangeStart}__${rangeEnd}`;
     if (lastRangeRef.current === key) return;
     lastRangeRef.current = key;
     fetchTasksForTimeline(rangeStart, rangeEnd);
-  }, [rangeStart, rangeEnd, fetchTasksForTimeline]);
+  }, [rangeStart, rangeEnd, loggedIn, fetchTasksForTimeline]);
 
-  const groups = useMemo(
+  const allGroups = useMemo(
     () => (rangeStart && rangeEnd ? groupTasksByProject(tasks, projects) : []),
     [tasks, projects, rangeStart, rangeEnd]
+  );
+
+  // '' = all projects; otherwise the String(projectId ?? 'none') of one group
+  const [projectFilter, setProjectFilter] = useState('');
+  const groups = useMemo(
+    () => projectFilter
+      ? allGroups.filter((g) => String(g.projectId ?? 'none') === projectFilter)
+      : allGroups,
+    [allGroups, projectFilter]
   );
 
   const todayPct = useMemo(() => {
@@ -123,8 +136,24 @@ export default function TimelinePage() {
                 Next →
               </button>
 
+              {/* Project filter */}
+              <select
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+                aria-label="Filter by project"
+                className="ml-auto rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-600 dark:text-gray-300"
+              >
+                <option value="">All projects</option>
+                {[...projects]
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((p) => (
+                    <option key={p.id} value={String(p.id)}>{p.name}</option>
+                  ))}
+                <option value="none">No project</option>
+              </select>
+
               {/* Range size selector */}
-              <div className="ml-auto flex gap-1">
+              <div className="flex gap-1">
                 {([1, 3, 6] as RangeMonths[]).map((m) => (
                   <button
                     key={m}
