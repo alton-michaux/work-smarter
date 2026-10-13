@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useClientValue } from 'hooks/useClientValue';
 import { useRouter } from 'next/router';
 import { useTasks } from 'context/TasksContext';
+import { useAuth } from 'context/AuthContext';
 import { useProjects } from 'context/ProjectsContext';
 import Spinner from 'components/shared/Spinner';
 import TimelineView from 'components/timeline/TimelineView';
@@ -20,6 +21,7 @@ export default function TimelinePage() {
   const router = useRouter();
   const { tasks, fetchTasksForTimeline, isLoading } = useTasks();
   const { projects } = useProjects();
+  const { loggedIn } = useAuth();
 
   const [rangeMonths, setRangeMonths] = useState<RangeMonths>(3);
   // rangeEnd defaults to today, read client-side to avoid a hydration mismatch
@@ -32,15 +34,17 @@ export default function TimelinePage() {
     [rangeEnd, rangeMonths]
   );
 
-  // Fetch when range changes; ref guards against stale-closure re-fetches
+  // Fetch when range changes; ref guards against stale-closure re-fetches.
+  // Wait for auth: on a direct page load the range is known before login
+  // resolves, and a fetch attempted then is a no-op the guard would never retry.
   const lastRangeRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!rangeStart || !rangeEnd) return;
+    if (!rangeStart || !rangeEnd || !loggedIn) return;
     const key = `${rangeStart}__${rangeEnd}`;
     if (lastRangeRef.current === key) return;
     lastRangeRef.current = key;
     fetchTasksForTimeline(rangeStart, rangeEnd);
-  }, [rangeStart, rangeEnd, fetchTasksForTimeline]);
+  }, [rangeStart, rangeEnd, loggedIn, fetchTasksForTimeline]);
 
   const allGroups = useMemo(
     () => (rangeStart && rangeEnd ? groupTasksByProject(tasks, projects) : []),

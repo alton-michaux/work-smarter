@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useClientValue } from 'hooks/useClientValue';
 import { useRouter } from 'next/router';
 import { useTasks } from '../../../context/TasksContext';
+import { useAuth } from 'context/AuthContext';
 import { getCurrentMonday, getEndOfWeek } from '../../../lib/dateUtils';
 import WeekSelector from '../../../components/ui/WeekSelector';
 import TaskTable from '../../../components/tasks/TaskTable';
@@ -17,20 +18,24 @@ export default function TaskTrackerPage() {
   const selectedWeek = pickedWeek ?? currentMonday;
   const { tasks, fetchTasksByDateRange, isLoading } = useTasks(); // Add isLoading
   const router = useRouter();
+  const { loggedIn } = useAuth();
 
   // Fetch tasks once selectedWeek is ready - using useRef to avoid using fetchTasksByDateRange as dep
   const doFetch = useRef<((b: string, e: string, a: string) => Promise<void>) | null>(null);
   useEffect(() => { doFetch.current = fetchTasksByDateRange; }, [fetchTasksByDateRange]);
 
+  // Wait for auth: on a direct page load the week is known before login
+  // resolves, and a fetch attempted then is a no-op that the range guard
+  // would otherwise never retry.
   const lastRangeRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!selectedWeek) return;
+    if (!selectedWeek || !loggedIn) return;
     const end = getEndOfWeek(selectedWeek);
     const key = `${selectedWeek}__${end}`;
     if (lastRangeRef.current === key) return;
     lastRangeRef.current = key;
     fetchTasksByDateRange(selectedWeek, end, null);
-  }, [selectedWeek, fetchTasksByDateRange]);
+  }, [selectedWeek, loggedIn, fetchTasksByDateRange]);
 
   const meetings = useMemo(() => {
     return (tasks ?? [])
