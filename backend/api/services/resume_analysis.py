@@ -132,8 +132,10 @@ def analyze_resume(resume_text: str, task_context: str) -> dict:
     user_content = f"=== RESUME TEXT ===\n{resume_text}\n\n=== WORK HISTORY ===\n{task_context}"
 
     response = openai.ChatCompletion.create(
-        model="llama-3.3-70b-versatile",
-        max_tokens=1500,
+        model=settings.GROQ_MODEL,
+        max_tokens=4000,
+        # gpt-oss reasoning tokens count against max_tokens
+        reasoning_effort="low",
         temperature=0.3,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},

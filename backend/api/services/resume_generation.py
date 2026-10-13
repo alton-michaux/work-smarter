@@ -87,8 +87,10 @@ def _call_groq(system_prompt: str, user_content: str) -> str:
     openai.api_base = "https://api.groq.com/openai/v1"
 
     response = openai.ChatCompletion.create(
-        model="llama-3.3-70b-versatile",
-        max_tokens=3000,
+        model=settings.GROQ_MODEL,
+        max_tokens=6000,
+        # gpt-oss reasoning tokens count against max_tokens
+        reasoning_effort="low",
         temperature=0.4,
         messages=[
             {"role": "system", "content": system_prompt},
