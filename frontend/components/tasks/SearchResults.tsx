@@ -1,5 +1,5 @@
 import React from 'react';
-import { Task, TaskNode } from 'types/types';
+import { Task, TaskNode, TaskStatus } from 'types/types';
 import { buildTree } from '../../lib/dailyLog';
 import OutlineTree from './OutlineTree';
 
@@ -11,6 +11,7 @@ type SearchResultsProps = {
   onEdit: (id: number) => void;
   onDelete: (task: TaskNode) => void;
   onToggleDone: (id: number, isDone: boolean) => void;
+  onSetStatus?: (id: number, status: TaskStatus) => void;
 };
 
 function formatDate(dateStr: string): string {
@@ -26,6 +27,7 @@ export default function SearchResults({
   onEdit,
   onDelete,
   onToggleDone,
+  onSetStatus,
 }: SearchResultsProps) {
   if (isSearching) {
     return (
@@ -76,6 +78,7 @@ export default function SearchResults({
               onEdit={onEdit}
               onDelete={onDelete}
               onToggleDone={onToggleDone}
+              onSetStatus={onSetStatus}
             />
           </div>
         </div>

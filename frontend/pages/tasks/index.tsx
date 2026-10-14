@@ -3,7 +3,7 @@ import { useTasks } from 'context/TasksContext';
 import { useAuth } from 'context/AuthContext';
 import { useProjects } from 'context/ProjectsContext';
 import { useRouter } from 'next/router';
-import type { TaskNode } from 'types/types';
+import type { TaskNode, TaskStatus } from 'types/types';
 import { DateToggleUI } from 'components/ui/dateToggleUI';
 import { TaskLayout } from 'components/tasks/TaskLayout';
 import { useDailyLog } from '../../hooks/useDailyLog';
@@ -21,6 +21,7 @@ const TasksPage = () => {
     error,
     fetchTasksByDateRange,
     toggleTaskDone,
+    setTaskStatus,
     searchResults,
     isSearching,
     fetchTasksBySearch,
@@ -67,6 +68,17 @@ const TasksPage = () => {
       }
     },
     [tasks, toggleTaskDone]
+  );
+
+  const handleSetStatus = useCallback(
+    async (id: number, status: TaskStatus) => {
+      try {
+        await setTaskStatus(id, status);
+      } catch {
+        toast.error('Failed to update task. Please try again.');
+      }
+    },
+    [setTaskStatus]
   );
 
   const handleDelete = async (task: TaskNode) => {
@@ -232,6 +244,7 @@ const TasksPage = () => {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleDone={handleToggleDone}
+                onSetStatus={handleSetStatus}
               />
             ) : !isDayLoaded ? (
               <Spinner />
@@ -250,6 +263,7 @@ const TasksPage = () => {
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onToggleDone={handleToggleDone}
+                  onSetStatus={handleSetStatus}
                 />
               </div>
             )}

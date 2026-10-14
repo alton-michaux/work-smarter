@@ -263,7 +263,8 @@ curl -X POST -H "Authorization: Api-Key YOUR_KEY" \\
         <p className="text-xs text-gray-500 dark:text-gray-400">
           Available: <code>/v1/tasks/</code> and <code>/v1/projects/</code>. Tasks accept{' '}
           <code>category</code>, <code>priority</code>, <code>project</code>,{' '}
-          <code>is_done</code>, <code>search</code>, and a <code>begin_date</code>/
+          <code>status</code> (<code>open</code>, <code>in_progress</code>,{' '}
+          <code>done</code>), <code>is_done</code>, <code>search</code>, and a <code>begin_date</code>/
           <code>end_date</code> window. Projects accept <code>status</code> and{' '}
           <code>search</code>.
         </p>
