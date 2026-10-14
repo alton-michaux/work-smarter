@@ -358,9 +358,10 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
   /**
    * Persist a manual order for one parent's subtasks.
    *
-   * `orderedIds` must list every subtask of the parent. Positions are applied
-   * locally first so the row lands where it was dropped, then confirmed by the
-   * server; a failure puts the previous order back.
+   * `orderedIds` may be just the visible subtasks; the server rearranges them
+   * among their own slots and leaves hidden siblings in place. Positions are
+   * applied locally first so the row lands where it was dropped, then
+   * confirmed by the server; a failure puts the previous order back.
    */
   const reorderSubtasks = async (parentId: number, orderedIds: number[]) => {
     if (!loggedIn) return;
