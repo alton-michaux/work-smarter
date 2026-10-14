@@ -1,6 +1,7 @@
 import hashlib
 import secrets
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -306,6 +307,9 @@ class Task(models.Model):
     ]
     OPEN_STATUSES = (STATUS_OPEN, STATUS_IN_PROGRESS)
 
+    # Levels allowed below a top-level task: parent -> subtask -> sub-subtask.
+    MAX_SUBTASK_DEPTH = 2
+
     begin_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     deadline_date = models.DateField(null=True, blank=True)
@@ -373,6 +377,56 @@ class Task(models.Model):
             self.status = self.STATUS_DONE
         elif self.status == self.STATUS_DONE:
             self.status = self.STATUS_OPEN
+
+    def parent_error(self, parent):
+        """Why `parent` can't be this task's parent, or None if it can.
+
+        Shared by clean() and the serializers so the admin and the API enforce
+        the same shape. Checks this task's own subtree too, so re-parenting a
+        task that already has subtasks can't push them past the limit.
+        """
+        if parent is None:
+            return None
+        if self.pk is not None and parent.pk == self.pk:
+            return "A task cannot be its own parent."
+
+        depth = 1  # this task's level once it sits under `parent`
+        node = parent
+        while node.parent_id is not None:
+            if self.pk is not None and node.parent_id == self.pk:
+                return "A task cannot be nested under its own subtask."
+            depth += 1
+            if depth > self.MAX_SUBTASK_DEPTH:
+                return f"Subtasks can only be nested {self.MAX_SUBTASK_DEPTH} levels deep."
+            node = node.parent
+
+        if depth + self._subtree_height() > self.MAX_SUBTASK_DEPTH:
+            return (
+                f"Moving this task here would nest its subtasks more than "
+                f"{self.MAX_SUBTASK_DEPTH} levels deep."
+            )
+        return None
+
+    def _subtree_height(self):
+        """Number of subtask levels below this task (0 if it has none)."""
+        if self.pk is None:
+            return 0
+        height, level_ids = 0, [self.pk]
+        # Capped so a corrupt cycle in existing rows can't loop forever.
+        while height <= self.MAX_SUBTASK_DEPTH:
+            level_ids = list(
+                Task.objects.filter(parent_id__in=level_ids).values_list("pk", flat=True)
+            )
+            if not level_ids:
+                break
+            height += 1
+        return height
+
+    def clean(self):
+        super().clean()
+        error = self.parent_error(self.parent)
+        if error:
+            raise ValidationError({"parent": error})
 
     def save(self, *args, **kwargs):
         self.is_subtask = self.parent_id is not None

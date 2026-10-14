@@ -94,15 +94,9 @@ class TaskSerializer(serializers.ModelSerializer):
         return value or DEFAULT_CATEGORY
 
     def validate_parent(self, parent):
-        if parent is None:
-            return None
-
-        if self.instance and parent.id == self.instance.id:
-            raise serializers.ValidationError("A task cannot be its own parent.")
-
-        if parent.parent_id is not None:
-            raise serializers.ValidationError("Subtasks cannot have subtasks (max depth is 1).")
-
+        error = (self.instance or Task()).parent_error(parent)
+        if error:
+            raise serializers.ValidationError(error)
         return parent
 
     def to_internal_value(self, data):
@@ -483,14 +477,11 @@ class PublicTaskSerializer(serializers.ModelSerializer):
         return title
 
     def validate_parent(self, parent):
-        # Mirrors TaskSerializer: the app assumes a single level of subtasks, and
-        # the API must not be a way to create shapes the UI cannot render.
-        if parent is None:
-            return None
-        if self.instance and parent.id == self.instance.id:
-            raise serializers.ValidationError("A task cannot be its own parent.")
-        if parent.parent_id is not None:
-            raise serializers.ValidationError("Subtasks cannot have subtasks (max depth is 1).")
+        # Mirrors TaskSerializer (same Task.parent_error check): the API must
+        # not be a way to create shapes the UI cannot render.
+        error = (self.instance or Task()).parent_error(parent)
+        if error:
+            raise serializers.ValidationError(error)
         return parent
 
     def validate(self, attrs):
