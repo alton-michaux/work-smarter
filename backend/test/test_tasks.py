@@ -334,39 +334,82 @@ def test_create_subtask_rejects_mismatched_begin_date(auth_client, get_user, cre
     assert "begin_date" in res.data
 
 
+def _task_chain(user, depth, **extra):
+    """A top-level task with `depth` levels of single-child subtasks below it."""
+    chain = [Task.objects.create(user=user, title="Level 0", begin_date=date(2026, 2, 3), **extra)]
+    for level in range(1, depth + 1):
+        chain.append(Task.objects.create(
+            user=user, title=f"Level {level}", begin_date=date(2026, 2, 3), parent=chain[-1], **extra,
+        ))
+    return chain
+
+
 @pytest.mark.django_db
-def test_rejects_subtask_of_subtask_depth_limit(auth_client, get_user, create_project, tasks_list_url):
+def test_allows_subtask_of_subtask(auth_client, get_user, tasks_list_url):
     auth_client.force_authenticate(user=get_user)
-    project = create_project(name="Vamos", user=get_user)
+    _, child = _task_chain(get_user, 1)
 
-    parent = Task.objects.create(
-        user=get_user,
-        title="Parent",
-        begin_date=date(2026, 2, 3),
-        project=project,
-        category="task",
+    res = auth_client.post(
+        tasks_list_url,
+        {"title": "Grandchild", "begin_date": "2026-02-03", "category": "task", "parent": child.id},
+        format="json",
     )
-    child = Task.objects.create(
-        user=get_user,
-        title="Child",
-        begin_date=date(2026, 2, 3),
-        project=project,
-        category="task",
-        parent=parent,
+    assert res.status_code == 201, res.data
+    assert res.data["parent"] == child.id
+    assert res.data["is_subtask"] is True
+
+
+@pytest.mark.django_db
+def test_rejects_subtask_past_depth_limit(auth_client, get_user, tasks_list_url):
+    auth_client.force_authenticate(user=get_user)
+    *_, grandchild = _task_chain(get_user, 2)
+
+    res = auth_client.post(
+        tasks_list_url,
+        {"title": "Too deep", "begin_date": "2026-02-03", "category": "task", "parent": grandchild.id},
+        format="json",
     )
-
-    payload = {
-        "title": "Grandchild",
-        "begin_date": "2026-02-03",
-        "project": project.id,
-        "category": "task",
-        "parent": child.id,  # child is already a subtask
-        "recurring_task": None,
-    }
-
-    res = auth_client.post(tasks_list_url, payload, format="json")
     assert res.status_code == 400
-    assert "parent" in res.data or "non_field_errors" in res.data
+    assert "parent" in res.data
+
+
+@pytest.mark.django_db
+def test_rejects_moving_subtree_past_depth_limit(auth_client, get_user):
+    auth_client.force_authenticate(user=get_user)
+    _, child = _task_chain(get_user, 1)
+    # A parent with its own subtask: hanging it under `child` would put that
+    # subtask three levels down.
+    other_parent, _ = _task_chain(get_user, 1)
+
+    res = auth_client.patch(task_detail_url(other_parent.id), {"parent": child.id}, format="json")
+    assert res.status_code == 400
+    assert "parent" in res.data
+    other_parent.refresh_from_db()
+    assert other_parent.parent_id is None
+
+
+@pytest.mark.django_db
+def test_rejects_nesting_task_under_its_own_subtask(auth_client, get_user):
+    auth_client.force_authenticate(user=get_user)
+    top, child = _task_chain(get_user, 1)
+
+    res = auth_client.patch(task_detail_url(top.id), {"parent": child.id}, format="json")
+    assert res.status_code == 400
+    assert "parent" in res.data
+
+
+@pytest.mark.django_db
+def test_model_clean_enforces_depth_limit(get_user):
+    from django.core.exceptions import ValidationError
+
+    *_, grandchild = _task_chain(get_user, 2)
+    too_deep = Task(user=get_user, title="Too deep", begin_date=date(2026, 2, 3), parent=grandchild)
+    with pytest.raises(ValidationError) as exc:
+        too_deep.full_clean()
+    assert "parent" in exc.value.message_dict
+
+    ok = Task(user=get_user, title="Fine", begin_date=date(2026, 2, 3), parent=grandchild.parent)
+    ok.full_clean()  # a grandchild is within the limit
 
 
 @pytest.mark.django_db

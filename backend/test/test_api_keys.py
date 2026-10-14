@@ -672,15 +672,19 @@ def test_subtask_begin_date_must_match_its_parent(
     assert "begin_date" in response.data
 
 
-def test_subtasks_cannot_nest(write_client, v1_tasks_url, get_user, create_task):
-    """The app renders one level of subtasks; the API must not create deeper trees."""
+def test_subtasks_nest_up_to_depth_limit(write_client, v1_tasks_url, get_user, create_task):
+    """Subtasks nest two levels deep; the API must not create deeper trees."""
     parent = create_task(title="parent", user=get_user)
     child = create_task(title="child", user=get_user, parent=parent)
 
     response = write_client.post(
         v1_tasks_url, {"title": "grandchild", "parent": child.id}, format="json"
     )
+    assert response.status_code == 201, response.data
 
+    response = write_client.post(
+        v1_tasks_url, {"title": "great-grandchild", "parent": response.data["id"]}, format="json"
+    )
     assert response.status_code == 400
     assert "parent" in response.data
 
