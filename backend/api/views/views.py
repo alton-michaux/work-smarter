@@ -326,9 +326,11 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         Body: {"parent": <task id>, "order": [<task id>, ...]}
 
-        The ids must be exactly the caller's subtasks of that parent — a
-        partial or padded list is rejected rather than silently applied, since
-        a stale client would otherwise scramble rows it never saw.
+        The ids may be a subset of the parent's subtasks: the daily log hides
+        done or off-day siblings, so it can only send the ones it shows. The
+        listed ids are rearranged among the slots they already hold, and every
+        unlisted sibling keeps its place. Ids that aren't subtasks of this
+        parent are rejected.
         """
         parent_id = request.data.get("parent")
         order = request.data.get("order")
@@ -364,16 +366,28 @@ class TaskViewSet(viewsets.ModelViewSet):
                 {"error": "Parent task not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        children = list(Task.objects.filter(user=request.user, parent=parent))
-        if {c.id for c in children} != set(order):
+        # Same order the frontend shows: position, then id for ties.
+        children = list(
+            Task.objects.filter(user=request.user, parent=parent).order_by(
+                "position", "id"
+            )
+        )
+        by_id = {c.id: c for c in children}
+        if not set(order) <= by_id.keys():
             return Response(
-                {"error": "order must list every subtask of this parent exactly once."},
+                {"error": "order may only list subtasks of this parent."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        by_id = {c.id: c for c in children}
-        for position, task_id in enumerate(order):
-            by_id[task_id].position = position
+        # Refill the listed rows' slots in the requested order, then renumber
+        # everything so positions stay dense and tie-free.
+        listed = set(order)
+        moving = iter(order)
+        arranged = [
+            by_id[next(moving)] if c.id in listed else c for c in children
+        ]
+        for position, child in enumerate(arranged):
+            child.position = position
 
         Task.objects.bulk_update(children, ["position"])
 

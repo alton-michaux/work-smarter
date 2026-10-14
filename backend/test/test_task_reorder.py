@@ -49,17 +49,22 @@ def test_reorder_writes_positions_in_the_given_order(
 
 
 @pytest.mark.django_db
-def test_reorder_rejects_a_partial_sibling_list(auth_client, reorder_url, family):
-    """A stale client must not be able to scramble rows it never saw."""
-    parent, (a, b, _c) = family
+def test_reorder_accepts_a_subset_and_leaves_hidden_siblings_in_place(
+    auth_client, reorder_url, family
+):
+    """The daily log hides done/off-day subtasks, so it sends only the visible
+    ones. Those swap among their own slots; the unlisted sibling stays put."""
+    parent, (a, b, c) = family
 
     resp = auth_client.post(
-        reorder_url, {"parent": parent.id, "order": [b.id, a.id]}, format="json"
+        reorder_url, {"parent": parent.id, "order": [c.id, a.id]}, format="json"
     )
 
-    assert resp.status_code == 400
-    a.refresh_from_db()
-    assert a.position == 0
+    assert resp.status_code == 200, resp.data
+    assert [row["id"] for row in resp.data] == [c.id, b.id, a.id]
+    for task, expected in ((c, 0), (b, 1), (a, 2)):
+        task.refresh_from_db()
+        assert task.position == expected
 
 
 @pytest.mark.django_db
