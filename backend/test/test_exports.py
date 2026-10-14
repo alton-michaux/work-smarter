@@ -57,6 +57,7 @@ def test_export_csv_returns_csv_headers(auth_client, export_tasks_csv_url):
         "begin_date",
         "end_date",
         "is_done",
+        "status",
         "project",
         "category",
         "priority",

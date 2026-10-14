@@ -145,12 +145,6 @@ class TaskViewSet(viewsets.ModelViewSet):
                             tz_offset = 0
                         auto_complete_past_meetings(user, tz_offset=tz_offset)
 
-                        try:
-                            tz_offset = int(self.request.query_params.get("tz_offset", 0) or 0)
-                        except (TypeError, ValueError):
-                            tz_offset = 0
-                        auto_complete_past_meetings(user, tz_offset=tz_offset)
-
                         latest_occurrence = (
                             Task.objects.filter(
                                 recurring_task=OuterRef("recurring_task"),
@@ -164,14 +158,14 @@ class TaskViewSet(viewsets.ModelViewSet):
                             (
                                 # Non-recurring, unfinished tasks:
                                 # - undated tasks always carry over
-                                Q(recurring_task__isnull=True, is_done=False, begin_date__isnull=True)
+                                Q(recurring_task__isnull=True, status__in=Task.OPEN_STATUSES, begin_date__isnull=True)
                             )
                             |
                             (
                                 # Non-recurring, unfinished tasks:
                                 # - dated tasks carry over until done, unless
                                 #   carry_over is off: then only on their own day
-                                Q(recurring_task__isnull=True, is_done=False, begin_date__lte=day)
+                                Q(recurring_task__isnull=True, status__in=Task.OPEN_STATUSES, begin_date__lte=day)
                                 & (Q(end_date__isnull=True) | Q(end_date__gte=day))
                                 & (Q(carry_over=True) | Q(begin_date=day))
                             )
@@ -179,13 +173,13 @@ class TaskViewSet(viewsets.ModelViewSet):
                             (
                                 # Non-recurring tasks:
                                 # - finished tasks appear ONLY on completion day
-                                Q(recurring_task__isnull=True, is_done=True, end_date=day)
+                                Q(recurring_task__isnull=True, status=Task.STATUS_DONE, end_date=day)
                             )
                             |
                             (
                                 # Recurring occurrences (any category):
                                 # - unfinished occurrence shows on its scheduled day
-                                Q(recurring_task__isnull=False, is_done=False, begin_date=day)
+                                Q(recurring_task__isnull=False, status__in=Task.OPEN_STATUSES, begin_date=day)
                             )
                             |
                             (
@@ -194,14 +188,14 @@ class TaskViewSet(viewsets.ModelViewSet):
                                 #   is the series' latest occurrence. A newer one (done
                                 #   or not) supersedes it, so a daily series shows one
                                 #   row instead of one per missed day.
-                                Q(recurring_task__isnull=False, is_done=False, category='task', begin_date__lt=day)
+                                Q(recurring_task__isnull=False, status__in=Task.OPEN_STATUSES, category='task', begin_date__lt=day)
                                 & Q(pk=Subquery(latest_occurrence))
                             )
                             |
                             (
                                 # Recurring occurrences:
                                 # - finished occurrence appears only on completion day
-                                Q(recurring_task__isnull=False, is_done=True, end_date=day)
+                                Q(recurring_task__isnull=False, status=Task.STATUS_DONE, end_date=day)
                             )
                         )
 
@@ -231,7 +225,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                             Q(begin_date__lte=end_of_week) &
                             (
                                 # active/ongoing; carry_over=False stays in its own week
-                                (Q(is_done=False) & (Q(end_date__isnull=True) | Q(end_date__gte=start_of_week))
+                                (Q(status__in=Task.OPEN_STATUSES) & (Q(end_date__isnull=True) | Q(end_date__gte=start_of_week))
                                  & (Q(carry_over=True) | Q(begin_date__gte=start_of_week)))
                                 |
                                 # completed within this week
@@ -274,8 +268,8 @@ class TaskViewSet(viewsets.ModelViewSet):
                 obj.save(update_fields=["end_date"])
 
             # cascade: mark all children done on the same date
-            Task.objects.filter(user=obj.user, parent=obj, is_done=False).update(
-                is_done=True,
+            Task.objects.open().filter(user=obj.user, parent=obj).update(
+                status=Task.STATUS_DONE,
                 end_date=obj.end_date,
             )
 

@@ -373,7 +373,7 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
                     "begin_time": begin_time,
                     "end_time": end_time,
                     "google_event_id": event_id,
-                    "is_done": False,
+                    "status": Task.STATUS_OPEN,
                     "project": project,
                 },
             )
@@ -399,7 +399,7 @@ def pull_events(user, date_from: date_type, date_to: date_type) -> dict:
                 begin_time=begin_time,
                 end_time=end_time,
                 google_event_id=event_id,
-                is_done=False,
+                status=Task.STATUS_OPEN,
                 project=project,
                 recurring_task=None,
             )

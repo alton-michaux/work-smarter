@@ -439,7 +439,7 @@ def test_v1_unknown_param_error_lists_what_is_accepted(key_client, v1_tasks_url)
     response = key_client.get(v1_tasks_url, {"nope": "1"})
 
     supported = response.data["supported_parameters"]
-    assert set(supported) >= {"category", "priority", "project", "is_done", "search",
+    assert set(supported) >= {"category", "priority", "project", "status", "is_done", "search",
                               "begin_date", "end_date", "cursor", "page_size"}
 
 

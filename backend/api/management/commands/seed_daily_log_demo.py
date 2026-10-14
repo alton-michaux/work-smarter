@@ -122,11 +122,11 @@ class Command(BaseCommand):
         p1 = mk("Ship collapsible daily log", priority="high", project=first)
         mk("Add chevron toggle to OutlineRow", parent=p1, priority="high", is_done=True)
         mk("Persist collapse state to localStorage", parent=p1, priority="medium", is_done=True)
-        mk("Thread state through nested trees", parent=p1, priority="medium")
+        mk("Thread state through nested trees", parent=p1, priority="medium", status="in_progress")
         mk("Verify compact density alignment", parent=p1, priority="low")
 
-        # Nothing done yet: 0/3.
-        p2 = mk("Q3 performance review packet", priority="urgent")
+        # Nothing done yet: 0/3, but the parent itself is marked in progress.
+        p2 = mk("Q3 performance review packet", priority="urgent", status="in_progress")
         mk("Collect peer feedback", parent=p2, priority="high")
         mk("Write self-assessment", parent=p2, priority="medium")
         mk("Book review slot", parent=p2, priority="low")

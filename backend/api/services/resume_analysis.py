@@ -75,7 +75,8 @@ def _build_task_context(user) -> str:
 
     tasks = (
         Task.objects
-        .filter(user=user, is_done=True, category='task')
+        .done()
+        .filter(user=user, category='task')
         .select_related('project')
         .order_by('-begin_date')
     )

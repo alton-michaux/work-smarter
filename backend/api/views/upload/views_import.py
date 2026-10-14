@@ -127,7 +127,13 @@ class ImportTasksCSVView(APIView):
                     errors.append({"line": idx, "field": "date", "error": str(e)})
                     continue
 
-                is_done = _parse_bool(r.get("is_done"), default=False)
+                # `status` is optional; older exports only carry `is_done`.
+                task_status = (r.get("status") or "").strip().lower()
+                if not task_status:
+                    task_status = Task.STATUS_DONE if _parse_bool(r.get("is_done"), default=False) else Task.STATUS_OPEN
+                elif task_status not in Task.OPEN_STATUSES + (Task.STATUS_DONE,):
+                    errors.append({"line": idx, "field": "status", "error": f"Invalid status '{task_status}'."})
+                    continue
                 carry_over = _parse_bool(r.get("carry_over"), default=True)
 
                 project_name = (r.get("project") or "").strip() or None
@@ -155,7 +161,7 @@ class ImportTasksCSVView(APIView):
                     "title": title,
                     "begin_date": begin_date,
                     "end_date": end_date,
-                    "is_done": is_done,
+                    "status": task_status,
                     "carry_over": carry_over,
                     "priority": priority,
                     "project_name": project_name,
@@ -255,7 +261,7 @@ class ImportTasksCSVView(APIView):
                     description=item["description"],
                     begin_date=item["begin_date"],
                     end_date=item["end_date"],
-                    is_done=item["is_done"],
+                    status=item["status"],
                     project=project,
                     category=item["category"],
                     priority=item["priority"],

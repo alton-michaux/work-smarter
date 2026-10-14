@@ -13,31 +13,28 @@ def auto_complete_past_meetings(user, tz_offset=0):
     current_time = now.time().replace(tzinfo=None)
 
     # Meetings from before today - day after they occurred
-    Task.objects.filter(
+    Task.objects.open().filter(
         user=user,
         category="meeting",
-        is_done=False,
         begin_date__isnull=False,
         begin_date__lt=today,
-    ).update(is_done=True, end_date=F("begin_date"))
+    ).update(status=Task.STATUS_DONE, end_date=F("begin_date"))
 
     # Today's meetings where end_time has passed
-    Task.objects.filter(
+    Task.objects.open().filter(
         user=user,
         category="meeting",
-        is_done=False,
         begin_date=today,
         end_time__isnull=False,
         end_time__lt=current_time,
-    ).update(is_done=True, end_date=today)
+    ).update(status=Task.STATUS_DONE, end_date=today)
 
     # Today's meetings with no end_time but begin_time has passed
-    Task.objects.filter(
+    Task.objects.open().filter(
         user=user,
         category="meeting",
-        is_done=False,
         begin_date=today,
         end_time__isnull=True,
         begin_time__isnull=False,
         begin_time__lt=current_time,
-    ).update(is_done=True, end_date=today)
+    ).update(status=Task.STATUS_DONE, end_date=today)
