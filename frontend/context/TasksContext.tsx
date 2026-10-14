@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useAPI } from './APIContext';
-import { Task, Filters, TasksContextType, CreateTaskPayload, DeleteTaskOptions, TaskSubmission } from 'types/types'
+import { Task, Filters, TasksContextType, CreateTaskPayload, DeleteTaskOptions, TaskSubmission, TaskStatus } from 'types/types'
 import { API_URL } from 'lib/api';
 import { errorMessage } from 'lib/errors';
 
@@ -230,12 +230,12 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const toggleTaskDone = async (taskId: number, nextDone: boolean) => {
+  const setTaskStatus = async (taskId: number, status: TaskStatus) => {
     if (!loggedIn) return;
     setError(null);
 
     const previous = tasks.find(t => t.id === taskId);
-    setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, is_done: nextDone } : t)));
+    setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status, is_done: status === 'done' } : t)));
 
     try {
       const res = await fetch(`${API_URL}/tasks/${taskId}/`, {
@@ -245,7 +245,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
         },
-        body: JSON.stringify({ is_done: nextDone }),
+        body: JSON.stringify({ status }),
       });
 
       if (res.ok) {
@@ -261,6 +261,10 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
       console.error(err);
     }
   };
+
+  // Unchecking always reopens, even if the task was in progress before.
+  const toggleTaskDone = (taskId: number, nextDone: boolean) =>
+    setTaskStatus(taskId, nextDone ? 'done' : 'open');
 
   const addTask = async (task: TaskSubmission) => {
     if (!loggedIn) return;
@@ -745,6 +749,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         fetchTasksForTimeline,
         fetchRecurringTemplate,
         toggleTaskDone,
+        setTaskStatus,
         pushToCalendar,
         pushDeadlineToCalendar,
         blacklistEvent,

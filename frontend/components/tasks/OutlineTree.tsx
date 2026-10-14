@@ -50,6 +50,7 @@ function OutlineRow({
   onEdit,
   onDelete,
   onToggleDone,
+  onSetStatus,
   onAddSubtask,
   isCollapsed = false,
   onToggleCollapse,
@@ -115,6 +116,11 @@ function OutlineRow({
   };
 
   const isDone = Boolean(node.effective_is_done ?? node.is_done);
+  const isInProgress = type === 'task' && !isDone && node.status === 'in_progress';
+  // Display only: a parent reads as in progress once any subtask is moving.
+  const isRollupInProgress =
+    type === 'task' && !isDone && !isInProgress && !isSubtask && childCount > 0 &&
+    node.children.some((c) => c.status === 'in_progress' || c.is_done);
 
   return (
     <li
@@ -231,6 +237,33 @@ function OutlineRow({
             )}
           </div>
 
+          {(isInProgress || isRollupInProgress) && (
+            <div className={isCompact ? "shrink-0 flex items-center" : "shrink-0"}>
+              {isInProgress ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSetStatus?.(Number(node.id), 'open');
+                  }}
+                  disabled={!onSetStatus}
+                  className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-default"
+                  title={onSetStatus ? "In progress · click to stop" : "In progress"}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500 inline-block" />
+                  In progress
+                </button>
+              ) : (
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border border-dashed border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400"
+                  title="A subtask is in progress or done"
+                >
+                  In progress
+                </span>
+              )}
+            </div>
+          )}
+
           <div className={[
             "min-w-0 flex-1",
             isCompact ? "flex items-center gap-3" : "",
@@ -339,6 +372,16 @@ function OutlineRow({
             : "shrink-0 flex items-center gap-3",
           "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity",
         ].join(" ")}>
+          {type === 'task' && !isDone && !isInProgress && onSetStatus && (
+            <button
+              onClick={() => onSetStatus(Number(node.id), 'in_progress')}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+              type="button"
+            >
+              Start
+            </button>
+          )}
+
           {!isSubtask && type === 'task' && (
             <button
               onClick={() => setShowSubtask((v) => !v)}
@@ -469,6 +512,7 @@ export default function OutlineTree({
   onEdit,
   onDelete,
   onToggleDone,
+  onSetStatus,
   onAddSubtask,
   collapsedIds: collapsedIdsProp,
   onToggleCollapse,
@@ -624,6 +668,7 @@ export default function OutlineTree({
             onEdit={onEdit}
             onDelete={onDelete}
             onToggleDone={onToggleDone}
+            onSetStatus={onSetStatus}
             onAddSubtask={handleAddSubtask}
             isCollapsed={isCollapsed}
             onToggleCollapse={toggleCollapsed}
@@ -639,6 +684,7 @@ export default function OutlineTree({
               onEdit={onEdit}
               onDelete={onDelete}
               onToggleDone={onToggleDone}
+              onSetStatus={onSetStatus}
               onAddSubtask={handleAddSubtask}
               collapsedIds={collapsedIds}
               onToggleCollapse={toggleCollapsed}

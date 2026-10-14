@@ -41,7 +41,7 @@ export default function TimelineBar({ task, rangeStart, rangeEnd, projectColor }
             {task.begin_date} → {endLabel}
           </p>
           <p className="text-gray-400 mt-0.5 capitalize">
-            {task.priority} · {isDone ? 'done' : 'in progress'}
+            {task.priority} · {isDone ? 'done' : task.status === 'in_progress' ? 'in progress' : 'open'}
           </p>
         </div>
       </div>

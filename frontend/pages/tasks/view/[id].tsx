@@ -90,6 +90,7 @@ const TaskShowPage = () => {
 
   const qReturn = typeof router.query.returnTo === 'string' ? router.query.returnTo : '/tasks';
   const backLabel = qReturn === '/notes' ? '← All Notes' : '← All Tasks';
+  const statusLabel = task.is_done ? "Done" : task.status === "in_progress" ? "In progress" : "Open";
 
   const handleEdit = () => {
     router.push(`/tasks/edit/${id}?returnTo=${qReturn}`);
@@ -210,7 +211,7 @@ const TaskShowPage = () => {
 
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <span className="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-600 px-2 py-0.5">
-                {task.is_done ? "Done" : "Open"}
+                {statusLabel}
               </span>
               <span>•</span>
               <span className="capitalize">{task.category}</span>
@@ -225,7 +226,6 @@ const TaskShowPage = () => {
             </div>
           </div>
 
-          {/* Optional: quick status toggle later */}
         </div>
       </div>
 
@@ -260,8 +260,17 @@ const TaskShowPage = () => {
           <dl className="space-y-3 text-sm">
             <div className="flex items-center justify-between gap-3">
               <dt className="text-gray-500 dark:text-gray-400">Status</dt>
-              <dd className="text-gray-900 dark:text-gray-100">{task.is_done ? "Done" : "Open"}</dd>
+              <dd className="text-gray-900 dark:text-gray-100">{statusLabel}</dd>
             </div>
+
+            {task.started_at ? (
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-gray-500 dark:text-gray-400">Started</dt>
+                <dd className="text-gray-900 dark:text-gray-100">
+                  {new Date(task.started_at).toLocaleDateString()}
+                </dd>
+              </div>
+            ) : null}
 
             <div className="flex items-center justify-between gap-3">
               <dt className="text-gray-500 dark:text-gray-400">Carry Over</dt>

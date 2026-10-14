@@ -25,11 +25,18 @@ type TaskIdLike =
 
 export type AnyTask = Task & CollapsedMeta;
 
+/** `in_progress` only applies to category=task. */
+export type TaskStatus = 'open' | 'in_progress' | 'done';
+
 export type Task = {
   id: number;
   title: string;
   description?: string;
+  /** Derived from `status` server-side; still accepted on write. */
   is_done: boolean;
+  status?: TaskStatus;
+  /** Set when the task first goes in progress; cleared if it's reopened. */
+  started_at?: string | null;
   priority: string;
   category: string;
   carry_over?: boolean;
@@ -104,6 +111,7 @@ export type TaskLayoutProps = {
   onEdit: (id: number) => void;
   onDelete: (task: TaskNode) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
+  onSetStatus?: (id: number, status: TaskStatus) => void;
 };
 
 export type TaskFormProps = {
@@ -130,6 +138,7 @@ export type TasksContextType = {
     setRecurrence: React.Dispatch<React.SetStateAction<RecurrenceState>>
   ) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
+  setTaskStatus: (taskId: number, status: TaskStatus) => Promise<void>;
   pushToCalendar: (taskId: number) => Promise<Task>;
   pushDeadlineToCalendar: (taskId: number) => Promise<Task>;
   blacklistEvent: (googleEventId: string, title: string, deleteTask?: boolean) => Promise<void>;
@@ -164,6 +173,7 @@ export type TaskLike = {
   begin_date?: string | null;
   priority?: string | null;
   is_done?: boolean;
+  status?: TaskStatus;
 };
 
 export type SubtaskProgress = {
@@ -319,6 +329,7 @@ export type OutlineRowProps = {
   onEdit: (id: number) => void;
   onDelete: (task: TaskNode) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
+  onSetStatus?: (id: number, status: TaskStatus) => void;
 
   /** Subtasks are hidden while true. Only meaningful for rows with children. */
   isCollapsed?: boolean;
@@ -340,6 +351,7 @@ export type OutlineTreeProps = {
   onEdit: (id: number) => void;
   onDelete: (task: TaskNode) => void;
   onToggleDone?: (id: number, isDone: boolean) => void;
+  onSetStatus?: (id: number, status: TaskStatus) => void;
 
   /** Ids of collapsed parents; passed down by the root tree to nested levels. */
   collapsedIds?: Set<string>;

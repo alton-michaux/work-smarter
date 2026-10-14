@@ -26,6 +26,7 @@ export function TaskLayout({
   onEdit,
   onDelete,
   onToggleDone,
+  onSetStatus,
 }: TaskLayoutProps) {
   const meetingsCount = sections.meetings?.length ?? 0;
   const tasksCount = sections.tasks?.length ?? 0;
@@ -64,6 +65,7 @@ export function TaskLayout({
               onEdit={onEdit}
               onDelete={onDelete}
               onToggleDone={onToggleDone}
+              onSetStatus={onSetStatus}
               density="compact"
             />
           ) : (
