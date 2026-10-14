@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { categoryToType } from '../../lib/dailyLog';
-import { OutlineTreeProps, OutlineRowProps } from 'types/types';
+import { OutlineTreeProps, OutlineRowProps, TaskNode } from 'types/types';
 import { useTasks } from 'context/TasksContext';
 import { useProjects } from 'context/ProjectsContext';
 import { useClientValue } from 'hooks/useClientValue';
@@ -16,6 +16,16 @@ const PROJECT_COLORS = [
   '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4',
   '#f97316', '#84cc16', '#14b8a6', '#6366f1',
 ];
+
+// Mirrors Task.MAX_SUBTASK_DEPTH on the backend: parent -> subtask -> sub-subtask.
+const MAX_SUBTASK_DEPTH = 2;
+
+// A parent reads as in progress once anything below it, at any level, has moved.
+function hasStartedDescendant(node: TaskNode): boolean {
+  return (node.children ?? []).some(
+    (c) => c.status === 'in_progress' || Boolean(c.is_done) || hasStartedDescendant(c)
+  );
+}
 
 function projectColor(id: number) {
   return PROJECT_COLORS[id % PROJECT_COLORS.length];
@@ -80,15 +90,15 @@ function OutlineRow({
     if (!checkboxRef.current) return;
 
     const shouldIndeterminate =
-      !isSubtask &&
       childCount > 0 &&
       doneChildCount > 0 &&
       doneChildCount < childCount;
 
     checkboxRef.current.indeterminate = shouldIndeterminate;
-  }, [isSubtask, childCount, doneChildCount]);
+  }, [childCount, doneChildCount]);
 
   const effectiveDepth = Math.max(depth, isSubtask ? 1 : 0);
+  const canAddSubtask = type === 'task' && effectiveDepth < MAX_SUBTASK_DEPTH;
 
   const { projects } = useProjects();
   const priorityBorder = PRIORITY_BORDER[String(node.priority ?? '').toLowerCase()] ?? 'transparent';
@@ -119,8 +129,7 @@ function OutlineRow({
   const isInProgress = type === 'task' && !isDone && node.status === 'in_progress';
   // Display only: a parent reads as in progress once any subtask is moving.
   const isRollupInProgress =
-    type === 'task' && !isDone && !isInProgress && !isSubtask && childCount > 0 &&
-    node.children.some((c) => c.status === 'in_progress' || c.is_done);
+    type === 'task' && !isDone && !isInProgress && hasStartedDescendant(node);
 
   return (
     <li
@@ -237,53 +246,29 @@ function OutlineRow({
             )}
           </div>
 
-          {(isInProgress || isRollupInProgress) && (
-            <div className={isCompact ? "shrink-0 flex items-center" : "shrink-0"}>
-              {isInProgress ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSetStatus?.(Number(node.id), 'open');
-                  }}
-                  disabled={!onSetStatus}
-                  className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-default"
-                  title={onSetStatus ? "In progress · click to stop" : "In progress"}
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500 inline-block" />
-                  In progress
-                </button>
-              ) : (
-                <span
-                  className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border border-dashed border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400"
-                  title="A subtask is in progress or done"
-                >
-                  In progress
-                </span>
-              )}
-            </div>
-          )}
-
           <div className={[
             "min-w-0 flex-1",
             isCompact ? "flex items-center gap-3" : "",
           ].join(" ")}>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                onView(Number(node.id));
-              }}
-              className={[
-                isCompact ? "min-w-0 flex-1 text-left" : "block w-full text-left",
-                "font-medium",
-                isDone ? "text-gray-500 dark:text-gray-500 line-through" : "text-gray-900 dark:text-gray-100",
-                "hover:text-blue-700",
-                "focus:outline-none focus:ring-2 focus:ring-blue-200 rounded-sm",
-              ].join(" ")}
-              title={node.title}
-            >
-              <span className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+            <div className={[
+              isCompact ? "min-w-0 flex-1" : "",
+              "flex items-center gap-1.5 min-w-0",
+            ].join(" ")}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onView(Number(node.id));
+                }}
+                className={[
+                  "min-w-0 flex items-center gap-1.5 text-left",
+                  "font-medium",
+                  isDone ? "text-gray-500 dark:text-gray-500 line-through" : "text-gray-900 dark:text-gray-100",
+                  "hover:text-blue-700",
+                  "focus:outline-none focus:ring-2 focus:ring-blue-200 rounded-sm",
+                ].join(" ")}
+                title={node.title}
+              >
                 {pColor && (
                   <span
                     className="shrink-0 inline-block w-2.5 h-2.5 rounded-full"
@@ -292,33 +277,46 @@ function OutlineRow({
                   />
                 )}
                 <span className="truncate">{node.title}</span>
+              </button>
 
-                {!isSubtask && childCount > 0 && (
-                  <span
-                    className="shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                    title="Subtask progress"
-                  >
-                    {doneChildCount}/{childCount}
-                  </span>
-                )}
+              {childCount > 0 && (
+                <span
+                  className="shrink-0 text-[11px] px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                  title="Subtask progress"
+                >
+                  {doneChildCount}/{childCount}
+                </span>
+              )}
 
-                {node.is_recurring && (
-                  <span className="shrink-0 text-[11px] text-gray-400 dark:text-gray-500" title="Recurring">
-                    🔁
-                  </span>
-                )}
+              {isInProgress ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSetStatus?.(Number(node.id), 'open');
+                  }}
+                  disabled={!onSetStatus}
+                  className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-default"
+                  title={onSetStatus ? "In progress · click to stop" : "In progress"}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500 inline-block" />
+                  In progress
+                </button>
+              ) : isRollupInProgress && (
+                <span
+                  className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border border-dashed border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400"
+                  title="A subtask is in progress or done"
+                >
+                  In progress
+                </span>
+              )}
 
-                {node.category === 'meeting' && node.google_event_id && (
-                  <span
-                    className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-900 dark:bg-opacity-20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
-                    title="Synced to Google Calendar"
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
-                    Synced
-                  </span>
-                )}
-              </span>
-            </button>
+              {node.is_recurring && (
+                <span className="shrink-0 text-[11px] text-gray-400 dark:text-gray-500" title="Recurring">
+                  🔁
+                </span>
+              )}
+            </div>
 
             <div className={[
               isCompact
@@ -329,6 +327,16 @@ function OutlineRow({
               <span className="whitespace-nowrap uppercase tracking-wide">
                 {(node.priority ?? '—').toString()}
               </span>
+              {node.category === 'meeting' && node.google_event_id && (
+                <span
+                  className="whitespace-nowrap inline-flex items-center gap-1 text-green-700 dark:text-green-400"
+                  title="Synced to Google Calendar"
+                >
+                  <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
+                  Synced
+                </span>
+              )}
               {type === 'meeting' && node.begin_time && (
                 <span className="whitespace-nowrap">
                   <span className="mx-1 text-gray-300 dark:text-gray-600">•</span>
@@ -363,15 +371,19 @@ function OutlineRow({
           </div>
         </div>
 
-        {/* RIGHT: actions (hidden until hover/focus).
-            In compact mode the metadata occupies the right edge, so the actions
-            overlay it rather than competing for width. */}
+        {/* RIGHT: actions (hidden until hover/focus). They overlay the row
+            instead of taking layout width, so titles get the full line; the
+            gradient lead-in fades covered text out instead of chopping it
+            mid-letter. */}
         <div className={[
-          isCompact
-            ? "absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-3 rounded-md bg-gray-50 dark:bg-gray-700 pl-3 pr-1 py-0.5"
-            : "shrink-0 flex items-center gap-3",
-          "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity",
+          "absolute right-0 h-6 flex items-center gap-3 bg-gray-50 dark:bg-gray-700 pl-1 pr-1",
+          isCompact ? "top-1/2 -translate-y-1/2" : "top-0",
+          "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-opacity",
         ].join(" ")}>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute right-full top-0 h-full w-8 bg-gradient-to-l from-gray-50 dark:from-gray-700 to-transparent"
+          />
           {type === 'task' && !isDone && !isInProgress && onSetStatus && (
             <button
               onClick={() => onSetStatus(Number(node.id), 'in_progress')}
@@ -382,7 +394,7 @@ function OutlineRow({
             </button>
           )}
 
-          {!isSubtask && type === 'task' && (
+          {canAddSubtask && (
             <button
               onClick={() => setShowSubtask((v) => !v)}
               className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
@@ -394,24 +406,32 @@ function OutlineRow({
 
           <button
             onClick={() => onEdit(Number(node.id))}
-            className="text-sm text-amber-700 dark:text-amber-500 hover:text-amber-900 dark:hover:text-amber-400"
+            className="text-amber-700 dark:text-amber-500 hover:text-amber-900 dark:hover:text-amber-400 focus:outline-none focus:ring-2 focus:ring-blue-200 rounded"
             type="button"
+            aria-label={`Edit ${node.title}`}
+            title="Edit"
           >
-            Edit
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
           </button>
           <button
             onClick={() => onDelete(node)}
-            className="text-sm text-red-600 hover:text-red-800"
+            className="text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-blue-200 rounded"
             type="button"
+            aria-label={`Delete ${node.title}`}
+            title="Delete"
           >
-            Delete
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
           </button>
         </div>
       </div>
 
       {/* Inline Add Subtask — sits below the row so it can expand without
           breaking the single-line layout in compact mode. */}
-      {!isSubtask && type === 'task' && showSubtask && (
+      {canAddSubtask && showSubtask && (
         <div className="mt-2 pl-7">
           <div className="flex items-center gap-2">
             <input
