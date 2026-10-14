@@ -12,7 +12,7 @@ class ExportTasksCSV(APIView):
     Exports tasks to a CSV that is *immediately re-importable* by ImportTasksCSVView.
 
     Output headers match the import endpoint:
-      row_id,title,begin_date,end_date,is_done,project,category,priority,description,carry_over,parent_row_id
+      row_id,title,begin_date,end_date,is_done,status,project,category,priority,description,carry_over,parent_row_id
     """
 
     def get(self, request):
@@ -44,6 +44,7 @@ class ExportTasksCSV(APIView):
                 "begin_date",
                 "end_date",
                 "is_done",
+                "status",
                 "project",
                 "category",
                 "priority",
@@ -65,6 +66,7 @@ class ExportTasksCSV(APIView):
                     begin_date,
                     end_date,
                     "true" if task.is_done else "false",   # import parser accepts true/false
+                    task.status,
                     project_name,
                     task.category or "",
                     task.priority or "",

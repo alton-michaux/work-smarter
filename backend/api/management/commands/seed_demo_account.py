@@ -203,7 +203,7 @@ class Command(BaseCommand):
         self._task(user, "Last-write-wins for scalar fields", parent=conflict, position=0,
                    is_done=True, project=p["mobile"])
         self._task(user, "Merge strategy for list fields", parent=conflict, position=1,
-                   project=p["mobile"])
+                   project=p["mobile"], status="in_progress")
         self._task(user, "Surface unresolved conflicts to the user", parent=conflict,
                    position=2, project=p["mobile"])
         queue = self._task(user, "Outbound mutation queue", parent=epic, position=1,
@@ -233,7 +233,7 @@ class Command(BaseCommand):
         self._task(user, "Submit expense report", priority="urgent",
                    deadline_date=t - timedelta(days=3), begin_date=t - timedelta(days=10))
         self._task(user, "Renew TLS certificates", priority="high", project=p["platform"],
-                   deadline_date=t)
+                   deadline_date=t, status="in_progress")
         self._task(user, "Prepare interview rubric", priority="medium", project=p["hiring"],
                    deadline_date=t + timedelta(days=4))
         self._task(user, "Plan offsite", priority="low", deadline_date=t + timedelta(days=45))

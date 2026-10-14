@@ -179,8 +179,8 @@ class PublicTaskViewSet(mixins.CreateModelMixin,
                         PublicAPIViewSet):
     """/api/v1/tasks/ — the caller's own tasks, readable and writable.
 
-    Filters (GET): category, priority, project, is_done, search, begin_date,
-    end_date. `begin_date`/`end_date` describe a window and select tasks
+    Filters (GET): category, priority, project, status, is_done, search,
+    begin_date, end_date. `begin_date`/`end_date` describe a window and select tasks
     *active* during it, matching how the app itself thinks about a date range: a
     task overlaps the window if it starts on or before the window ends and has
     not finished before the window begins.
@@ -196,15 +196,7 @@ class PublicTaskViewSet(mixins.CreateModelMixin,
         "category",
         "priority",
         "project",
-        "is_done",
-        "search",
-        "begin_date",
-        "end_date",
-    })
-    filter_params = frozenset({
-        "category",
-        "priority",
-        "project",
+        "status",
         "is_done",
         "search",
         "begin_date",
@@ -218,11 +210,9 @@ class PublicTaskViewSet(mixins.CreateModelMixin,
         )
 
         category = _parse_choice(params, "category", Task.CATEGORY_CHOICES)
-        category = _parse_choice(params, "category", Task.CATEGORY_CHOICES)
         if category:
             queryset = queryset.filter(category=category)
 
-        priority = _parse_choice(params, "priority", Task.PRIORITY_CHOICES)
         priority = _parse_choice(params, "priority", Task.PRIORITY_CHOICES)
         if priority:
             queryset = queryset.filter(priority=priority)
@@ -231,9 +221,13 @@ class PublicTaskViewSet(mixins.CreateModelMixin,
         if project_id is not None:
             queryset = queryset.filter(project_id=project_id)
 
+        status = _parse_choice(params, "status", Task.STATUS_CHOICES)
+        if status:
+            queryset = queryset.filter(status=status)
+
         is_done = _parse_bool(params, "is_done")
         if is_done is not None:
-            queryset = queryset.filter(is_done=is_done)
+            queryset = queryset.done() if is_done else queryset.open()
 
         search = params.get("search", "").strip()
         if search:
@@ -268,8 +262,8 @@ class PublicTaskViewSet(mixins.CreateModelMixin,
         # Task.save() maintains end_date; the child cascade is the app's rule
         # for completing a parent, and v1 must not leave subtasks stranded open.
         if not was_done and task.is_done:
-            Task.objects.filter(user=task.user, parent=task, is_done=False).update(
-                is_done=True,
+            Task.objects.open().filter(user=task.user, parent=task).update(
+                status=Task.STATUS_DONE,
                 end_date=task.end_date,
             )
 
@@ -308,7 +302,6 @@ class PublicProjectViewSet(mixins.RetrieveModelMixin,
     serializer_class = PublicProjectSerializer
     pagination_class = ProjectCursorPagination
     filter_params = frozenset({"status", "search"})
-    filter_params = frozenset({"status", "search"})
 
     def get_queryset(self):
         params = self.request.query_params
@@ -316,7 +309,6 @@ class PublicProjectViewSet(mixins.RetrieveModelMixin,
             task_count=Count("tasks")
         )
 
-        status_filter = _parse_choice(params, "status", Project.STATUS_CHOICES)
         status_filter = _parse_choice(params, "status", Project.STATUS_CHOICES)
         if status_filter:
             queryset = queryset.filter(status=status_filter)

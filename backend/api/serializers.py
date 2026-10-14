@@ -11,6 +11,27 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["email", "id", "username"]
         read_only_fields = ["id"]
 
+def fold_task_status(attrs, instance):
+    """Fold the legacy `is_done` write alias into `status`.
+
+    `status` wins when both are sent. Unchecking done always lands on `open`,
+    and `is_done: false` leaves an in-progress task alone, so a form that
+    round-trips the flag doesn't reset it.
+    """
+    is_done = attrs.pop("is_done", None)
+    if "status" not in attrs and is_done is not None:
+        current = getattr(instance, "status", Task.STATUS_OPEN)
+        if is_done:
+            attrs["status"] = Task.STATUS_DONE
+        elif current == Task.STATUS_DONE:
+            attrs["status"] = Task.STATUS_OPEN
+
+    category = attrs.get("category", getattr(instance, "category", DEFAULT_CATEGORY))
+    if attrs.get("status") == Task.STATUS_IN_PROGRESS and category != "task":
+        raise serializers.ValidationError({"status": "Only tasks can be in progress."})
+    return attrs
+
+
 class TaskSerializer(serializers.ModelSerializer):
     begin_date = serializers.DateField(required=False, allow_null=True, default=None)
     end_date = serializers.DateField(required=False, allow_null=True, default=None)
@@ -33,6 +54,7 @@ class TaskSerializer(serializers.ModelSerializer):
     )
 
     is_recurring = serializers.SerializerMethodField()
+    is_done = serializers.BooleanField(required=False)
     effective_is_done = serializers.SerializerMethodField()
 
     # Accepted on write only, used to encrypt/decrypt `description` — never
@@ -122,7 +144,7 @@ class TaskSerializer(serializers.ModelSerializer):
         if is_encrypted and category != "note":
             raise serializers.ValidationError({"is_encrypted": "Only notes can be encrypted."})
 
-        return attrs
+        return fold_task_status(attrs, self.instance)
 
     def create(self, validated_data):
         request = self.context.get("request")
@@ -131,7 +153,7 @@ class TaskSerializer(serializers.ModelSerializer):
         passphrase = validated_data.pop("passphrase", "")
 
         # If created as done, stamp end_date if missing
-        if validated_data.get("is_done") and not validated_data.get("end_date"):
+        if validated_data.get("status") == Task.STATUS_DONE and not validated_data.get("end_date"):
             validated_data["end_date"] = timezone.localdate()
 
         if validated_data.get("is_encrypted"):
@@ -150,7 +172,7 @@ class TaskSerializer(serializers.ModelSerializer):
         validated_data.pop("is_subtask", None)  # derived
         passphrase = validated_data.pop("passphrase", "")
 
-        next_done = validated_data.get("is_done", instance.is_done)
+        next_done = validated_data.get("status", instance.status) == Task.STATUS_DONE
 
         # Transition: not done → done
         if next_done and not instance.is_done:
@@ -212,6 +234,8 @@ class TaskSerializer(serializers.ModelSerializer):
             "title",
             "category",
             "position",
+            "status",
+            "started_at",
             "is_done",
             "effective_is_done",
             "priority",
@@ -232,6 +256,7 @@ class TaskSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "user": {"read_only": True},
             "is_subtask": {"read_only": True},
+            "started_at": {"read_only": True},
             "category": {"required": False, "allow_null": True},
             "recurring_task": {"required": False, "allow_null": True},
             "begin_date": {"required": False, "allow_null": True},
@@ -362,6 +387,8 @@ PUBLIC_TASK_FIELDS = [
     "description",
     "category",
     "priority",
+    "status",
+    "started_at",
     "is_done",
     "begin_date",
     "end_date",
@@ -387,6 +414,7 @@ PUBLIC_TASK_WRITABLE_FIELDS = [
     "description",
     "category",
     "priority",
+    "status",
     "is_done",
     "begin_date",
     "end_date",
@@ -407,6 +435,8 @@ class PublicTaskSerializer(serializers.ModelSerializer):
     """
 
     project_name = serializers.CharField(source="project.name", read_only=True, default=None)
+    # Kept alongside `status` for existing clients; see fold_task_status().
+    is_done = serializers.BooleanField(required=False)
     is_recurring = serializers.SerializerMethodField()
     recurring_frequency = serializers.CharField(
         source="recurring_task.frequency", read_only=True, default=None
@@ -491,7 +521,7 @@ class PublicTaskSerializer(serializers.ModelSerializer):
                     "begin_date": "Subtask begin_date must match its parent begin_date."
                 })
 
-        return attrs
+        return fold_task_status(attrs, self.instance)
 
     @staticmethod
     def _replacement_default(name):
@@ -512,6 +542,8 @@ class PublicTaskSerializer(serializers.ModelSerializer):
                 # Resetting to the model default would turn it into a task.
                 validated_data.setdefault("category", "note")
             for name in PUBLIC_TASK_WRITABLE_FIELDS:
+                if name == "is_done":
+                    continue  # an alias, already folded into `status`
                 validated_data.setdefault(name, self._replacement_default(name))
         return super().update(instance, validated_data)
 

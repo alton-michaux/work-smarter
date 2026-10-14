@@ -4,6 +4,7 @@ import secrets
 from django.db import models
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from datetime import date
 
 User = get_user_model()
@@ -272,6 +273,14 @@ class RecurringTaskException(models.Model):
     def __str__(self):
         return f"{self.user_id} {self.recurring_task_id} {self.date} {self.type}"
 
+class TaskQuerySet(models.QuerySet):
+    def open(self):
+        return self.filter(status__in=Task.OPEN_STATUSES)
+
+    def done(self):
+        return self.filter(status=Task.STATUS_DONE)
+
+
 class Task(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tasks", null=False, blank=False)
     PRIORITY_CHOICES = [
@@ -287,6 +296,16 @@ class Task(models.Model):
         ('note', 'Note'),
     ]
 
+    STATUS_OPEN = 'open'
+    STATUS_IN_PROGRESS = 'in_progress'
+    STATUS_DONE = 'done'
+    STATUS_CHOICES = [
+        (STATUS_OPEN, 'Open'),
+        (STATUS_IN_PROGRESS, 'In progress'),
+        (STATUS_DONE, 'Done'),
+    ]
+    OPEN_STATUSES = (STATUS_OPEN, STATUS_IN_PROGRESS)
+
     begin_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     deadline_date = models.DateField(null=True, blank=True)
@@ -295,7 +314,10 @@ class Task(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     title = models.TextField()
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='task')
-    is_done = models.BooleanField(default=False)
+    # `in_progress` only applies to category=task; save() folds it back to
+    # `open` for meetings and notes. `is_done` below is a compat shim over this.
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=STATUS_OPEN, db_index=True)
+    started_at = models.DateTimeField(null=True, blank=True)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     description = models.TextField(blank=True)
     created_at = models.DateField(auto_now_add=True)
@@ -331,6 +353,8 @@ class Task(models.Model):
         related_name="tasks",
     )
 
+    objects = TaskQuerySet.as_manager()
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -338,16 +362,30 @@ class Task(models.Model):
                 name="uniq_task_recurring_task_begin_date",
             )
         ]
-    
+
+    @property
+    def is_done(self):
+        return self.status == self.STATUS_DONE
+
+    @is_done.setter
+    def is_done(self, value):
+        if value:
+            self.status = self.STATUS_DONE
+        elif self.status == self.STATUS_DONE:
+            self.status = self.STATUS_OPEN
+
     def save(self, *args, **kwargs):
         self.is_subtask = self.parent_id is not None
+        if self.status == self.STATUS_IN_PROGRESS and self.category != 'task':
+            self.status = self.STATUS_OPEN
+
+        if self.status == self.STATUS_IN_PROGRESS and self.started_at is None:
+            self.started_at = timezone.now()
+        elif self.status == self.STATUS_OPEN:
+            self.started_at = None
+
         if self.is_done and self.end_date is None:
             self.end_date = date.today()
         elif not self.is_done and self.end_date:
             self.end_date = None
         super().save(*args, **kwargs)
-        
-    models.UniqueConstraint(
-        fields=["user", "title", "begin_date", "project", "parent"],
-        name="uniq_task_user_title_begin_project_parent",
-    )
