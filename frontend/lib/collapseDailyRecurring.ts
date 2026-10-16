@@ -105,7 +105,10 @@ export function collapseRecurringTasks<T extends Task>(
       continue;
     }
 
-    // Collapsed row: keep the seed but annotate
+    // Collapsed row: represent the series by its first open occurrence, so the
+    // row only reads as done once every occurrence this week is done.
+    const isDone = (t: T) => Boolean(t.effective_is_done ?? t.is_done);
+    const base = items.find((t) => !isDone(t)) ?? seed;
     const sortedDates = Array.from(new Set(beginDates)).sort();
     const rangeStart = sortedDates[0] ?? null;
     const rangeEnd = sortedDates[sortedDates.length - 1] ?? null;
@@ -113,7 +116,7 @@ export function collapseRecurringTasks<T extends Task>(
     const count = items.length;
     const labelFreq = desiredFreq === "daily" ? "Daily" : desiredFreq[0].toUpperCase() + desiredFreq.slice(1);
     out.push({
-      ...seed,
+      ...base,
       __collapsed: true,
       __occurrenceCount: count,
       __rangeStart: rangeStart,
