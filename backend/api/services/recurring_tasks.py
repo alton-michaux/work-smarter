@@ -67,6 +67,7 @@ def ensure_recurring_tasks_in_range(date_from, date_to, *, user, project=None):
                 begin_date=d,
                 defaults={
                     "title": rt.title,
+                    "description": rt.description,
                     "project": rt.project,
                     "category": normalize_category(rt.category),
                     "parent": None,

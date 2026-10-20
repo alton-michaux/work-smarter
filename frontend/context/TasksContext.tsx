@@ -16,6 +16,7 @@ type RecurringTaskPayload = {
   is_active: boolean;
   day_of_week?: number;
   skip_weekends?: boolean;
+  description?: string;
 };
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
@@ -223,6 +224,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         frequency: rt.frequency ?? prev.frequency,
         day_of_week: rt.day_of_week ?? prev.day_of_week,
         start_date: rt.start_date ?? initialTask?.begin_date ?? prev.start_date,
+        description: rt.description ?? prev.description,
       }));
     } catch (err) {
       setError(errorMessage(err, 'unknown error'));
@@ -281,6 +283,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
           frequency: task.recurrence.frequency,
           start_date: task.recurrence.start_date || task.begin_date,
           is_active: true,
+          ...(task.recurrence.description !== undefined ? { description: task.recurrence.description } : {}),
         };
 
         if (task.recurrence.frequency === 'weekly' || task.recurrence.frequency === 'biweekly') {
@@ -472,6 +475,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         frequency: taskAny.recurrence.frequency,
         start_date: taskAny.recurrence.start_date || taskAny.begin_date,
         is_active: true,
+        ...(taskAny.recurrence.description !== undefined ? { description: taskAny.recurrence.description } : {}),
       };
 
       if (taskAny.recurrence.frequency === "weekly" || taskAny.recurrence.frequency === "biweekly") {

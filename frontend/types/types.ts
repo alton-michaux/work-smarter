@@ -274,6 +274,9 @@ export type RecurrenceState = {
   day_of_week: number; // 0=Mon .. 6=Sun
   start_date: string;  // YYYY-MM-DD
   skip_weekends: boolean;
+  // Copied onto each new occurrence. Undefined until the series is fetched,
+  // so a failed fetch never PATCHes the template to "".
+  description?: string;
 };
 
 export type CollapsedMeta = {

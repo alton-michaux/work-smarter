@@ -505,6 +505,20 @@ export default function TaskForm({
                 className={inputClass}
               />
             </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Template description
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Pre-fills the description of each new occurrence. Existing ones aren&apos;t changed.
+              </p>
+              <MarkdownEditor
+                value={recurrence.description ?? ""}
+                onChange={(next) => setRecurrence((r) => ({ ...r, description: next }))}
+                placeholder={`- [ ] Step one\n- [ ] Step two`}
+              />
+            </div>
           </div>
         ) : (
           <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">

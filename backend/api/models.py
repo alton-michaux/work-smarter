@@ -232,6 +232,8 @@ class RecurringTask(models.Model):
         related_name="recurring_tasks",
     )
     title = models.CharField(max_length=255)
+    # Copied onto each generated occurrence, so a series can carry a checklist.
+    description = models.TextField(blank=True, default='')
     project = models.ForeignKey(Project, null=True, on_delete=models.CASCADE)
     category = models.CharField(max_length=50, null=True)
     frequency = models.CharField(
