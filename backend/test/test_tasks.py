@@ -1551,3 +1551,20 @@ def test_undone_task_with_stale_end_date_appears_in_daily_log(auth_client, get_u
     res = auth_client.get(f"/api/tasks/?begin_date={today}&end_date={today}&active_on={today}")
     assert res.status_code == 200
     assert any(t["title"] == "Stale end_date task" for t in res.data["results"])
+
+
+@pytest.mark.django_db
+def test_ensure_copies_description_onto_occurrences(get_user, create_recurring_task):
+    start = date(2026, 3, 2)  # Monday
+    rt = create_recurring_task(
+        user=get_user,
+        frequency="biweekly",
+        start_date=start,
+    )
+    rt.description = "- [ ] Cut release branch"
+    rt.save()
+
+    ensure_recurring_tasks_in_range(start, start, user=get_user)
+
+    task = Task.objects.get(user=get_user, recurring_task=rt, begin_date=start)
+    assert task.description == "- [ ] Cut release branch"
