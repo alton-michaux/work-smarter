@@ -139,6 +139,7 @@ export type TasksContextType = {
   ) => Promise<void>;
   toggleTaskDone: (taskId: number, isDone: boolean) => Promise<void>;
   setTaskStatus: (taskId: number, status: TaskStatus) => Promise<void>;
+  updateTaskDescription: (taskId: number, description: string, passphrase?: string) => Promise<boolean>;
   pushToCalendar: (taskId: number) => Promise<Task>;
   pushDeadlineToCalendar: (taskId: number) => Promise<Task>;
   blacklistEvent: (googleEventId: string, title: string, deleteTask?: boolean) => Promise<void>;
@@ -254,6 +255,7 @@ export type NoteProps = {
   variant?: 'default' | 'dashed'; // dashed looks “ongoing”
   collapsible?: boolean;   // truncate description with expand toggle
   plainText?: boolean;     // show description as plain text instead of rendered markdown
+  onDescriptionChange?: (id: number, description: string) => void; // makes checkboxes clickable
 };
 
 //------UTILITY---------//
@@ -448,6 +450,8 @@ export type MarkdownBodyProps = {
   value?: string | null;
   emptyText?: string;
   truncateLines?: number;
+  // When set, task-list checkboxes are clickable and report the updated markdown.
+  onChange?: (next: string) => void;
 };
 
 
