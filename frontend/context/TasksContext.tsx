@@ -264,6 +264,43 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Saves just the description (e.g. a ticked checkbox) without the full edit
+  // form. Encrypted notes need the passphrase and keep plaintext out of state.
+  const updateTaskDescription = async (taskId: number, description: string, passphrase?: string) => {
+    if (!loggedIn) return false;
+    setError(null);
+
+    const apply = (desc: string | undefined) => (list: Task[]) =>
+      list.map(t => (t.id === taskId ? { ...t, description: desc } : t));
+    const previous = tasks.find(t => t.id === taskId) ?? notes.find(t => t.id === taskId);
+    if (!passphrase) {
+      setTasks(apply(description));
+      setNotes(apply(description));
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/tasks/${taskId}/`, {
+        credentials: 'include',
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(passphrase ? { description, passphrase } : { description }),
+      });
+      if (res.ok) return true;
+      setError('Failed to update task');
+    } catch (err) {
+      setError(errorMessage(err, 'unknown error'));
+      console.error(err);
+    }
+    if (previous && !passphrase) {
+      setTasks(apply(previous.description));
+      setNotes(apply(previous.description));
+    }
+    return false;
+  };
+
   // Unchecking always reopens, even if the task was in progress before.
   const toggleTaskDone = (taskId: number, nextDone: boolean) =>
     setTaskStatus(taskId, nextDone ? 'done' : 'open');
@@ -755,6 +792,7 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         fetchRecurringTemplate,
         toggleTaskDone,
         setTaskStatus,
+        updateTaskDescription,
         pushToCalendar,
         pushDeadlineToCalendar,
         blacklistEvent,

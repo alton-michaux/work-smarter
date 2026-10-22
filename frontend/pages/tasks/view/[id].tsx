@@ -16,7 +16,7 @@ import { errorMessage } from 'lib/errors';
 const TaskShowPage = () => {
   const router = useRouter();
   const { id } = router.query;
-  const { tasks, deleteTask, pushToCalendar, pushDeadlineToCalendar, blacklistEvent, isLoading } = useTasks();
+  const { tasks, deleteTask, updateTaskDescription, pushToCalendar, pushDeadlineToCalendar, blacklistEvent, isLoading } = useTasks();
   const { getAuthHeaders } = useAPI();
   const { loggedIn } = useAuth();
 
@@ -29,6 +29,7 @@ const TaskShowPage = () => {
   const [fetched, setFetched] = useState<{ id: string; task: Task } | null>(null);
   const fetchedTask = fetched && fetched.id === String(id) ? fetched.task : null;
   const [unlockedDescription, setUnlockedDescription] = useState<string | null>(null);
+  const [unlockPassphrase, setUnlockPassphrase] = useState('');
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -47,6 +48,7 @@ const TaskShowPage = () => {
   if (id !== unlockedForId) {
     setUnlockedForId(id);
     setUnlockedDescription(null);
+    setUnlockPassphrase('');
   }
 
   // Fallback for a task that isn't in the shared list (deep link, reload).
@@ -94,6 +96,27 @@ const TaskShowPage = () => {
 
   const handleEdit = () => {
     router.push(`/tasks/edit/${id}?returnTo=${qReturn}`);
+  };
+
+  // A ticked checkbox saves straight away. Encrypted notes re-encrypt with the
+  // passphrase they were unlocked with; a task outside the shared list (deep
+  // link) is patched locally since the context update won't reach it.
+  const handleDescriptionChange = async (next: string) => {
+    if (task.is_encrypted) {
+      const previous = unlockedDescription;
+      setUnlockedDescription(next);
+      if (!(await updateTaskDescription(task.id, next, unlockPassphrase))) {
+        setUnlockedDescription(previous);
+        toast.error('Failed to save checkbox');
+      }
+      return;
+    }
+    const previous = task.description;
+    if (!taskInContext) setFetched({ id: String(id), task: { ...task, description: next } });
+    if (!(await updateTaskDescription(task.id, next))) {
+      if (!taskInContext) setFetched({ id: String(id), task: { ...task, description: previous } });
+      toast.error('Failed to save checkbox');
+    }
   };
 
   const handlePushToCalendar = async () => {
@@ -243,12 +266,16 @@ const TaskShowPage = () => {
           {task.is_encrypted && unlockedDescription === null ? (
             <EncryptedNoteUnlock
               taskId={task.id}
-              onUnlock={(plaintext) => setUnlockedDescription(plaintext)}
+              onUnlock={(plaintext, passphrase) => {
+                setUnlockedDescription(plaintext);
+                setUnlockPassphrase(passphrase);
+              }}
             />
           ) : (
             <MarkdownBody
               value={task.is_encrypted ? (unlockedDescription ?? '') : task.description}
               emptyText="No notes yet."
+              onChange={handleDescriptionChange}
             />
           )}
         </div>
