@@ -9,7 +9,7 @@ import withAuth from 'lib/withAuth';
 
 function NotesPage() {
   const router = useRouter();
-  const { notes, isLoadingNotes, fetchNotes, deleteTask } = useTasks();
+  const { notes, isLoadingNotes, fetchNotes, deleteTask, updateTaskDescription } = useTasks();
   const [search, setSearch] = useState('');
   const [showDone, setShowDone] = useState(false);
 
@@ -115,6 +115,7 @@ function NotesPage() {
                     onView={(id) => router.push(`/tasks/view/${id}`)}
                     onEdit={(id) => router.push(`/tasks/edit/${id}?returnTo=/notes`)}
                     onDelete={handleDelete}
+                    onDescriptionChange={updateTaskDescription}
                   />
                 ))
               )}
@@ -141,6 +142,7 @@ function NotesPage() {
                       onView={(id) => router.push(`/tasks/view/${id}`)}
                       onEdit={(id) => router.push(`/tasks/edit/${id}?returnTo=/notes`)}
                       onDelete={handleDelete}
+                      onDescriptionChange={updateTaskDescription}
                     />
                   ))}
                 </div>
