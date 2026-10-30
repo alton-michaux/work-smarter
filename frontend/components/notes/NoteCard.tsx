@@ -12,6 +12,7 @@ export default function NoteCard({
   variant = 'default',
   collapsible = false,
   plainText = false,
+  onDescriptionChange,
 }: NoteProps) {
   const [expanded, setExpanded] = useState(false);
   const id = Number(note.id);
@@ -28,9 +29,16 @@ export default function NoteCard({
   return (
     <div className={`w-full rounded-lg border bg-gray-50 dark:bg-gray-700 px-4 py-3 transition-colors duration-150 ${border} ${onView ? 'hover:bg-white dark:hover:bg-gray-600 cursor-pointer' : ''}`}>
       <div className="flex items-start justify-between gap-4">
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => onView?.(id)}
+          onKeyDown={(e) => {
+            if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              onView?.(id);
+            }
+          }}
           className="flex items-start gap-2 min-w-0 text-left w-full"
         >
           {note.is_done && (
@@ -71,6 +79,7 @@ export default function NoteCard({
                     value={note.description}
                     emptyText=""
                     truncateLines={(collapsible && !expanded) || variant === 'dashed' ? 3 : undefined}
+                    onChange={onDescriptionChange ? (next) => onDescriptionChange(id, next) : undefined}
                   />
                 )}
               </div>
@@ -92,7 +101,7 @@ export default function NoteCard({
               </button>
             )}
           </div>
-        </button>
+        </div>
 
         {(onEdit || onDelete) ? (
           <div className="flex-shrink-0 flex items-center gap-3">
