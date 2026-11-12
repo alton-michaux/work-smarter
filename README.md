@@ -189,6 +189,38 @@ docker-compose exec db psql -U postgres -d your_db_name
 
 ---
 
+### 💾 Database backups
+
+`.github/workflows/backup.yml` runs `bin/db-export` against production every day, encrypts
+the result with [age](https://github.com/FiloSottile/age) and keeps it as a workflow artifact
+for 30 days. Each backup holds `db.dump` (`pg_dump` custom format) and `counts.txt` (rows per
+table). The scripts run Postgres tools in `postgres:<major>-alpine` containers, so they only
+need Docker (plus `age` to decrypt).
+
+One-time setup:
+
+1. Repo secret `DATABASE_URL` = the production connection string (on Neon, the *direct*
+   one, without `-pooler` in the host).
+2. Repo variable `BACKUP_AGE_RECIPIENT` = an age public key (`age-keygen -o ~/.config/age/work-smarter.txt`
+   prints it). Keep the private key somewhere that outlives this machine: without it the
+   backups can't be opened.
+3. *Actions → Back up database → Run workflow* once to check it.
+
+Restore (or move the database to a new host):
+
+```bash
+gh run download <run id> -n work-smarter-<timestamp>
+TARGET_DATABASE_URL='<target direct URL>' bin/db-import work-smarter-<timestamp>.tar.age
+```
+
+`bin/db-import` replaces the backup's tables in the target in one transaction, then checks
+row counts against `counts.txt` and warns about unapplied migrations. To move hosts without
+waiting for the workflow, export straight from the old database:
+`SOURCE_DATABASE_URL='<old URL>' bin/db-export`, then import the `backups/work-smarter-*`
+directory it prints.
+
+---
+
 ### 🧪 Debugging / Python
 
 **Use `pdb` in code**
