@@ -1,0 +1,68 @@
+# Daily encrypted database backup, kept as a workflow artifact. The repo is public, so
+# artifacts are downloadable by any signed-in GitHub user: the dump is encrypted with age
+# to BACKUP_AGE_RECIPIENT (a public key, set as an Actions *variable*) before upload, and
+# only the matching private key, kept off GitHub, can open it.
+# Needs repo secret DATABASE_URL (on Neon: the *direct*, unpooled connection string).
+# Restore with bin/db-import; see "Database backups" in the README.
+name: Back up database
+
+on:
+  schedule:
+    - cron: "30 8 * * *" # daily, 3:30 ET; GitHub may run it a few minutes late
+  workflow_dispatch:
+
+concurrency: backup
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SOURCE_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check config
+        run: |
+          [ -n "$SOURCE_DATABASE_URL" ] || { echo "::error::set the DATABASE_URL repo secret"; exit 1; }
+          case "$BACKUP_AGE_RECIPIENT" in
+            age1*) ;;
+            *) echo "::error::set the BACKUP_AGE_RECIPIENT Actions variable to an age public key (age1...)"; exit 1 ;;
+          esac
+
+      # pinned release from GitHub rather than apt: an Ubuntu mirror outage once failed this step
+      - name: Install age
+        env:
+          AGE_VERSION: v1.3.2
+          AGE_SHA256: cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10
+        run: |
+          curl -fsSL --retry 3 -o age.tgz \
+            "https://github.com/FiloSottile/age/releases/download/$AGE_VERSION/age-$AGE_VERSION-linux-amd64.tar.gz"
+          echo "$AGE_SHA256  age.tgz" | sha256sum -c -
+          sudo tar -xzf age.tgz -C /usr/local/bin --strip-components=1 age/age
+          rm age.tgz
+          age --version
+
+      # logs here are public: the script prints the host, dump size and a table count, no data
+      - name: Export
+        run: bin/db-export backups
+
+      - name: Encrypt
+        id: encrypt
+        run: |
+          name=$(basename backups/work-smarter-*)
+          tar -C backups -c "$name" | age -r "$BACKUP_AGE_RECIPIENT" > "$name.tar.age"
+          rm -rf backups
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.encrypt.outputs.name }}
+          path: ${{ steps.encrypt.outputs.name }}.tar.age
+          retention-days: 30
+          compression-level: 0 # already encrypted, so it won't compress
+          if-no-files-found: error

@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# Restore a bin/db-export backup into another database, then check it: row counts must
+# match the backup's counts.txt and Django must see no unapplied migrations.
+# Also the tool for moving the database to a new host (e.g. Neon): export, import, repoint.
+#
+# Usage: TARGET_DATABASE_URL=postgres://... bin/db-import <backup dir | .tar.age file> [--yes]
+# An encrypted backup from the daily workflow is decrypted with $AGE_IDENTITY
+# (default ~/.config/age/work-smarter.txt).
+#
+# Replaces whatever the backup's tables collide with in the target (--clean), all in one
+# transaction: a failed restore leaves the target as it was.
+set -euo pipefail
+source "$(dirname "$0")/_db.sh"
+repo=$(cd "$(dirname "$0")/.." && pwd)
+
+: "${TARGET_DATABASE_URL:?set TARGET_DATABASE_URL to the database to restore into}"
+src=${1:?usage: bin/db-import <backup dir | .tar.age file> [--yes]}
+yes=${2:-}
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+if [ -f "$src" ]; then
+  identity=${AGE_IDENTITY:-$HOME/.config/age/work-smarter.txt}
+  age -d -i "$identity" "$src" | tar -x -C "$tmp"
+  src=$(echo "$tmp"/work-smarter-*)
+fi
+[ -f "$src/db.dump" ] && [ -f "$src/counts.txt" ] || { echo "no db.dump/counts.txt in $src" >&2; exit 1; }
+
+dumped_from=$(WORK=$src pg "$CLIENT_MAJOR" pg_restore --list db.dump \
+  | sed -n 's/^; *Dumped from database version: \([0-9]*\).*/\1/p')
+target_major=$(server_major "$TARGET_DATABASE_URL")
+if [ "$target_major" -lt "$dumped_from" ]; then
+  echo "backup is from Postgres $dumped_from but the target runs $target_major; use $dumped_from or newer" >&2
+  exit 1
+fi
+
+echo "restore $(basename "$src") (Postgres $dumped_from)"
+echo "   into $(db_host "$TARGET_DATABASE_URL") (Postgres $target_major)"
+echo "Tables in the backup are dropped and replaced in the target."
+if [ "$yes" != "--yes" ]; then
+  read -rp "Continue? [y/N] " answer
+  [ "$answer" = y ] || [ "$answer" = Y ] || exit 1
+fi
+
+WORK=$src PGURL=$TARGET_DATABASE_URL pg "$target_major" sh -c \
+  'pg_restore --no-owner --no-acl --clean --if-exists --single-transaction --dbname="$PGURL" db.dump'
+
+table_counts "$TARGET_DATABASE_URL" > "$tmp/counts.target"
+if ! diff -u --label backup --label target "$src/counts.txt" "$tmp/counts.target"; then
+  echo "row counts differ (diff above)" >&2
+  exit 1
+fi
+echo "row counts match ($(wc -l < "$src/counts.txt") tables)"
+
+# Not fatal: the data restored fine, and the backend runs migrate when it starts.
+# A backup older than this checkout's newest migration lands here. The entrypoint is
+# bypassed because it would run migrate against the target.
+cd "$repo"
+export DATABASE_URL=$TARGET_DATABASE_URL
+manage() { docker compose run --rm --no-deps -T --entrypoint python -e DATABASE_URL backend manage.py "$@"; }
+if manage migrate --check > /dev/null 2>&1; then
+  echo "migrations up to date"
+else
+  echo "warning: unapplied migrations in the target (the backup predates this checkout):"
+  manage showmigrations --plan 2>/dev/null | grep -F '[ ]' || true
+  echo "run: DATABASE_URL=<target> docker compose run --rm --no-deps --entrypoint python -e DATABASE_URL backend manage.py migrate"
+fi
