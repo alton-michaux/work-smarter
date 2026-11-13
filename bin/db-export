@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Dump a Postgres database (schema, data, sequences, migration history) to
+# <out_dir>/work-smarter-<utc timestamp>/ as db.dump (pg_dump custom format) plus
+# counts.txt (exact rows per table, which bin/db-import checks the restore against).
+#
+# Usage: SOURCE_DATABASE_URL=postgres://... bin/db-export [out_dir]   (default: backups)
+# On Neon use the direct connection string (no -pooler in the host): pg_dump needs a session.
+set -euo pipefail
+source "$(dirname "$0")/_db.sh"
+
+: "${SOURCE_DATABASE_URL:?set SOURCE_DATABASE_URL to the database URL}"
+out="${1:-backups}/work-smarter-$(date -u +%Y%m%d-%H%M%S)"
+mkdir -p "$out"
+
+major=$(server_major "$SOURCE_DATABASE_URL")
+echo "source: $(db_host "$SOURCE_DATABASE_URL") (Postgres $major)"
+
+# pg_dump is a consistent snapshot, but counting is a separate query, so a write landing
+# in between would make the manifest disagree with the dump. Count before and after,
+# and retry if anything changed.
+for attempt in 1 2 3; do
+  table_counts "$SOURCE_DATABASE_URL" > "$out/counts.before"
+  WORK=$out PGURL=$SOURCE_DATABASE_URL pg "$major" sh -c \
+    'pg_dump --format=custom --no-owner --no-acl --dbname="$PGURL" --file=db.dump'
+  table_counts "$SOURCE_DATABASE_URL" > "$out/counts.txt"
+  if cmp -s "$out/counts.before" "$out/counts.txt"; then
+    rm "$out/counts.before"
+    break
+  fi
+  if [ "$attempt" = 3 ]; then
+    echo "row counts kept changing during the dump; try again later" >&2
+    exit 1
+  fi
+  echo "rows changed during the dump, retrying"
+done
+
+# fails on a truncated or corrupt archive
+WORK=$out pg "$major" pg_restore --list db.dump > /dev/null
+
+echo "wrote $out: $(du -h "$out/db.dump" | cut -f1), $(wc -l < "$out/counts.txt") tables"
