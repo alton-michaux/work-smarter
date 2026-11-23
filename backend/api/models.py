@@ -247,6 +247,15 @@ class RecurringTask(models.Model):
     last_generated_at = models.DateField(null=True, blank=True)
     skip_weekends = models.BooleanField(default=False)
     google_recurring_event_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    # Generated occurrences are filed as subtasks of this task. Their
+    # begin_date follows the series, not the parent's (see TaskSerializer).
+    parent = models.ForeignKey(
+        'Task',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='recurring_children',
+    )
 
 class RecurringTaskException(models.Model):
     TYPE_SKIP = "skip"

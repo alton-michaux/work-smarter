@@ -32,6 +32,13 @@ def fold_task_status(attrs, instance):
     return attrs
 
 
+def _is_recurring_occurrence(attrs, instance):
+    """Whether the task being validated belongs to a recurring series."""
+    if "recurring_task" in attrs:
+        return attrs["recurring_task"] is not None
+    return getattr(instance, "recurring_task_id", None) is not None
+
+
 class TaskSerializer(serializers.ModelSerializer):
     begin_date = serializers.DateField(required=False, allow_null=True, default=None)
     end_date = serializers.DateField(required=False, allow_null=True, default=None)
@@ -121,8 +128,14 @@ class TaskSerializer(serializers.ModelSerializer):
                 attrs["begin_date"] = parent.begin_date
                 begin_date = parent.begin_date
 
-            # enforce same-date
-            if begin_date is not None and parent.begin_date is not None and begin_date != parent.begin_date:
+            # enforce same-date, except for recurring occurrences, which keep
+            # their series date under a long-running parent
+            if (
+                begin_date is not None
+                and parent.begin_date is not None
+                and begin_date != parent.begin_date
+                and not _is_recurring_occurrence(attrs, self.instance)
+            ):
                 raise serializers.ValidationError({
                     "begin_date": "Subtask begin_date must match its parent begin_date."
                 })
@@ -263,10 +276,30 @@ class TaskSerializer(serializers.ModelSerializer):
         }
         
 class RecurringTaskSerializer(serializers.ModelSerializer):
+    parent = serializers.PrimaryKeyRelatedField(
+        required=False,
+        allow_null=True,
+        queryset=Task.objects.none(),
+    )
+
     class Meta:
         model = RecurringTask
         fields = "__all__"
         read_only_fields = ("user",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = self.context.get("user") or getattr(self.context.get("request"), "user", None)
+        if user and user.is_authenticated:
+            self.fields["parent"].queryset = Task.objects.filter(user=user)
+
+    def validate_parent(self, parent):
+        # Occurrences land as new subtasks of `parent`, so hold it to the same
+        # shape rules as Task.parent.
+        error = Task().parent_error(parent)
+        if error:
+            raise serializers.ValidationError(error)
+        return parent
 
 class ProjectSerializer(serializers.ModelSerializer):
     tasks = TaskSerializer(many=True, read_only=True)
@@ -507,7 +540,7 @@ class PublicTaskSerializer(serializers.ModelSerializer):
                 # Same convenience the app offers: inherit the parent's date
                 # rather than rejecting a payload whose intent is unambiguous.
                 attrs["begin_date"] = parent.begin_date
-            elif begin_date != parent.begin_date:
+            elif begin_date != parent.begin_date and not _is_recurring_occurrence(attrs, self.instance):
                 raise serializers.ValidationError({
                     "begin_date": "Subtask begin_date must match its parent begin_date."
                 })
