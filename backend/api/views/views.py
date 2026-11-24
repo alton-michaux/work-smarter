@@ -20,7 +20,7 @@ from api.validators import validate_resume_file
 from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
 from loguru import logger
-from django.db.models import Count, Min, Max, OuterRef, Subquery
+from django.db.models import Count, Exists, Min, Max, OuterRef, Subquery
 
 
 class DeleteAccountView(APIView):
@@ -70,7 +70,9 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Task.objects.filter(user=user)
+        queryset = Task.objects.filter(user=user).annotate(
+            has_subtasks_annotated=Exists(Task.objects.filter(parent=OuterRef("pk")))
+        )
 
         category = self.request.query_params.get("category")
         if category:
@@ -266,12 +268,6 @@ class TaskViewSet(viewsets.ModelViewSet):
             if obj.end_date is None:
                 obj.end_date = timezone.localdate()
                 obj.save(update_fields=["end_date"])
-
-            # cascade: mark all children done on the same date
-            Task.objects.open().filter(user=obj.user, parent=obj).update(
-                status=Task.STATUS_DONE,
-                end_date=obj.end_date,
-            )
 
         # if un-done, clear the completion date
         if was_done and (not obj.is_done):

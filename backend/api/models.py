@@ -248,7 +248,7 @@ class RecurringTask(models.Model):
     skip_weekends = models.BooleanField(default=False)
     google_recurring_event_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
     # Generated occurrences are filed as subtasks of this task. Their
-    # begin_date follows the series, not the parent's (see TaskSerializer).
+    # begin_date follows the series; subtasks needn't share the parent's date.
     parent = models.ForeignKey(
         'Task',
         null=True,
@@ -453,4 +453,14 @@ class Task(models.Model):
             self.end_date = date.today()
         elif not self.is_done and self.end_date:
             self.end_date = None
+
+        # Parents always carry over, so their subtasks (which may be dated
+        # later) still nest under them in the daily log. Meetings are exempt.
+        if not self.carry_over and self.category != 'meeting' and self.pk and self.children.exists():
+            self.carry_over = True
         super().save(*args, **kwargs)
+
+        if self.parent_id is not None:
+            Task.objects.filter(pk=self.parent_id, carry_over=False).exclude(
+                category='meeting'
+            ).update(carry_over=True)

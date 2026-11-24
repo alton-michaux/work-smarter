@@ -308,7 +308,7 @@ def test_create_subtask_autocopies_begin_date_from_parent(auth_client, get_user,
 
 
 @pytest.mark.django_db
-def test_create_subtask_rejects_mismatched_begin_date(auth_client, get_user, create_project, tasks_list_url):
+def test_create_subtask_accepts_begin_date_before_parent(auth_client, get_user, create_project, tasks_list_url):
     auth_client.force_authenticate(user=get_user)
     project = create_project(name="Vamos", user=get_user)
 
@@ -322,7 +322,7 @@ def test_create_subtask_rejects_mismatched_begin_date(auth_client, get_user, cre
 
     payload = {
         "title": "Child",
-        "begin_date": "2026-02-04",  # mismatch
+        "begin_date": "2026-02-02",  # day before parent
         "project": project.id,
         "category": "meeting",
         "parent": parent.id,
@@ -330,8 +330,8 @@ def test_create_subtask_rejects_mismatched_begin_date(auth_client, get_user, cre
     }
 
     res = auth_client.post(tasks_list_url, payload, format="json")
-    assert res.status_code == 400
-    assert "begin_date" in res.data
+    assert res.status_code == 201, res.data
+    assert Task.objects.get(id=res.data["id"]).begin_date == date(2026, 2, 2)
 
 
 def _task_chain(user, depth, **extra):
@@ -1065,52 +1065,70 @@ def test_effective_is_done_today_no_time(auth_client, get_user):
     assert res.data["effective_is_done"] is False
 
 @pytest.mark.django_db
-def test_marking_parent_done_cascades_to_children(auth_client, get_user):
-    """Marking a parent task done should also mark all incomplete children done."""
-    parent = Task.objects.create(
-        user=get_user,
-        title="Parent Task",
-        category="task",
-        begin_date=date(2026, 4, 7),
-        is_done=False,
-    )
-    child1 = Task.objects.create(
-        user=get_user,
-        title="Child One",
-        category="task",
-        begin_date=date(2026, 4, 7),
-        parent=parent,
-        is_done=False,
-    )
-    child2 = Task.objects.create(
-        user=get_user,
-        title="Child Two",
-        category="task",
-        begin_date=date(2026, 4, 7),
-        parent=parent,
-        is_done=False,
-    )
-    already_done_child = Task.objects.create(
-        user=get_user,
-        title="Already Done Child",
-        category="task",
-        begin_date=date(2026, 4, 7),
-        parent=parent,
-        is_done=True,
-    )
+def test_cannot_mark_parent_done_with_open_children(auth_client, get_user):
+    """A parent finishes only once its last subtask does; nothing cascades."""
+    parent = Task.objects.create(user=get_user, title="Parent", category="task")
+    child = Task.objects.create(user=get_user, title="Child", category="task", parent=parent)
+    Task.objects.create(user=get_user, title="Done child", category="task", parent=parent, is_done=True)
 
     res = auth_client.patch(f"/api/tasks/{parent.id}/", {"is_done": True}, format="json")
-    assert res.status_code == 200
+    assert res.status_code == 400
+    assert "1 open subtask" in str(res.data["status"])
+
+    parent.refresh_from_db()
+    child.refresh_from_db()
+    assert parent.is_done is False
+    assert child.is_done is False
+
+
+@pytest.mark.django_db
+def test_can_mark_parent_done_once_children_are_done(auth_client, get_user):
+    parent = Task.objects.create(user=get_user, title="Parent", category="task")
+    Task.objects.create(user=get_user, title="Child", category="task", parent=parent, is_done=True)
+
+    res = auth_client.patch(f"/api/tasks/{parent.id}/", {"status": "done"}, format="json")
+    assert res.status_code == 200, res.data
     assert res.data["is_done"] is True
 
-    child1.refresh_from_db()
-    child2.refresh_from_db()
-    already_done_child.refresh_from_db()
 
-    assert child1.is_done is True
-    assert child2.is_done is True
-    # already-done child is untouched (end_date not overwritten)
-    assert already_done_child.is_done is True
+@pytest.mark.django_db
+def test_meeting_can_finish_with_open_agenda_items(auth_client, get_user):
+    meeting = Task.objects.create(user=get_user, title="Standup", category="meeting")
+    item = Task.objects.create(user=get_user, title="Agenda item", category="meeting", parent=meeting)
+
+    res = auth_client.patch(f"/api/tasks/{meeting.id}/", {"is_done": True}, format="json")
+    assert res.status_code == 200, res.data
+    item.refresh_from_db()
+    assert item.is_done is False
+
+
+@pytest.mark.django_db
+def test_adding_subtask_turns_on_parent_carry_over(get_user):
+    parent = Task.objects.create(user=get_user, title="Parent", category="task", carry_over=False)
+    Task.objects.create(user=get_user, title="Child", category="task", parent=parent)
+
+    parent.refresh_from_db()
+    assert parent.carry_over is True
+
+
+@pytest.mark.django_db
+def test_parent_cannot_turn_off_carry_over(auth_client, get_user):
+    parent = Task.objects.create(user=get_user, title="Parent", category="task")
+    Task.objects.create(user=get_user, title="Child", category="task", parent=parent)
+
+    res = auth_client.patch(f"/api/tasks/{parent.id}/", {"carry_over": False}, format="json")
+    assert res.status_code == 200, res.data
+    parent.refresh_from_db()
+    assert parent.carry_over is True
+
+
+@pytest.mark.django_db
+def test_meeting_parent_keeps_carry_over_off(get_user):
+    meeting = Task.objects.create(user=get_user, title="Standup", category="meeting", carry_over=False)
+    Task.objects.create(user=get_user, title="Agenda item", category="meeting", parent=meeting)
+
+    meeting.refresh_from_db()
+    assert meeting.carry_over is False
 
 
 # -----------------------
@@ -1602,3 +1620,15 @@ def test_recurring_series_still_one_occurrence_per_day(auth_client, get_user):
     res = auth_client.patch(f"/api/tasks/{other.id}/", {"begin_date": "2026-09-24"}, format="json")
     assert res.status_code == 400
     assert "begin_date" in res.data
+
+
+@pytest.mark.django_db
+def test_task_reports_has_subtasks(auth_client, get_user):
+    parent = Task.objects.create(user=get_user, title="Parent", category="task")
+    child = Task.objects.create(user=get_user, title="Child", category="task", parent=parent)
+
+    detail = auth_client.get(f"/api/tasks/{parent.id}/")
+    assert detail.data["has_subtasks"] is True
+
+    listed = {t["id"]: t["has_subtasks"] for t in auth_client.get("/api/tasks/").data["results"]}
+    assert listed == {parent.id: True, child.id: False}

@@ -254,19 +254,6 @@ class PublicTaskViewSet(mixins.CreateModelMixin,
         # is not a writable field, so this is the only way a task gets an owner.
         serializer.save(user=self.request.user)
 
-    def perform_update(self, serializer):
-        was_done = serializer.instance.is_done
-
-        task = serializer.save()
-
-        # Task.save() maintains end_date; the child cascade is the app's rule
-        # for completing a parent, and v1 must not leave subtasks stranded open.
-        if not was_done and task.is_done:
-            Task.objects.open().filter(user=task.user, parent=task).update(
-                status=Task.STATUS_DONE,
-                end_date=task.end_date,
-            )
-
     def perform_destroy(self, instance):
         user = instance.user
 

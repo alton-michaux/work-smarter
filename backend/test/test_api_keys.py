@@ -657,7 +657,7 @@ def test_create_subtask_inherits_parent_begin_date(
     assert response.data["is_subtask"] is True
 
 
-def test_subtask_begin_date_must_match_its_parent(
+def test_subtask_begin_date_may_follow_its_parent(
     write_client, v1_tasks_url, get_user, create_task
 ):
     parent = create_task(title="parent", begin_date="2026-09-01", user=get_user)
@@ -668,8 +668,35 @@ def test_subtask_begin_date_must_match_its_parent(
         format="json",
     )
 
+    assert response.status_code == 201, response.data
+    assert Task.objects.get(title="child").begin_date == date(2026, 9, 5)
+
+
+def test_subtask_begin_date_may_precede_its_parent(
+    write_client, v1_tasks_url, get_user, create_task
+):
+    parent = create_task(title="parent", begin_date="2026-09-01", user=get_user)
+
+    response = write_client.post(
+        v1_tasks_url,
+        {"title": "child", "parent": parent.id, "begin_date": "2026-08-28"},
+        format="json",
+    )
+
+    assert response.status_code == 201, response.data
+    assert Task.objects.get(title="child").begin_date == date(2026, 8, 28)
+
+
+def test_v1_cannot_mark_parent_done_with_open_children(write_client, get_user, create_task):
+    parent = create_task(title="parent", user=get_user)
+    create_task(title="child", parent=parent, user=get_user)
+
+    response = write_client.patch(
+        reverse("v1-task-detail", args=[parent.id]), {"is_done": True}, format="json"
+    )
+
     assert response.status_code == 400
-    assert "begin_date" in response.data
+    assert "status" in response.data
 
 
 def test_subtasks_nest_up_to_depth_limit(write_client, v1_tasks_url, get_user, create_task):
@@ -744,18 +771,6 @@ def test_reopening_a_task_clears_the_end_date(write_client, get_user, create_tas
     task.refresh_from_db()
     assert task.is_done is False
     assert task.end_date is None
-
-
-def test_completing_a_parent_completes_its_children(write_client, get_user, create_task):
-    """Same rule the app enforces — v1 must not leave subtasks stranded open."""
-    parent = create_task(title="parent", user=get_user)
-    child = create_task(title="child", user=get_user, parent=parent)
-
-    write_client.patch(task_detail(parent), {"is_done": True}, format="json")
-
-    child.refresh_from_db()
-    assert child.is_done is True
-    assert child.end_date == date.today()
 
 
 def test_put_replaces_rather_than_merges(write_client, get_user, create_task, create_project):
