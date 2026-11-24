@@ -32,6 +32,8 @@ export default function TaskForm({
   }));
 
   const isEditing = Boolean(initialTask?.id);
+  // Mirrors Task.save(): non-meeting parents always carry over.
+  const carryOverLocked = Boolean(initialTask?.has_subtasks) && task.category !== "meeting";
   const recurringTemplateId = recurringTemplateIdOf(initialTask);
 
   const [recurrence, setRecurrence] = useState<RecurrenceState>(() => ({
@@ -329,15 +331,22 @@ export default function TaskForm({
             Is Subtask
           </label> */}
 
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <label
+            className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+            title={carryOverLocked ? "Tasks with subtasks always carry over." : undefined}
+          >
             <input
               type="checkbox"
               name="carry_over"
-              checked={!!task.carry_over}
+              checked={carryOverLocked || !!task.carry_over}
               onChange={handleChange}
-              className="h-4 w-4"
+              disabled={carryOverLocked}
+              className="h-4 w-4 disabled:opacity-60"
             />
             Carry Over
+            {carryOverLocked ? (
+              <span className="text-xs text-gray-500 dark:text-gray-400">(has subtasks)</span>
+            ) : null}
           </label>
         </div>
       </div>

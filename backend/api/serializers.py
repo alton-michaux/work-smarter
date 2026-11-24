@@ -32,11 +32,25 @@ def fold_task_status(attrs, instance):
     return attrs
 
 
-def _is_recurring_occurrence(attrs, instance):
-    """Whether the task being validated belongs to a recurring series."""
-    if "recurring_task" in attrs:
-        return attrs["recurring_task"] is not None
-    return getattr(instance, "recurring_task_id", None) is not None
+def check_parent_completion(attrs, instance):
+    """Reject finishing a parent while any of its subtasks are still open.
+
+    Subtasks are the steps to complete their parent, so the parent is done
+    only once the last of them is. Meetings are exempt: their subtasks are
+    agenda items, and past meetings auto-complete on schedule.
+    """
+    if instance is None or instance.is_done:
+        return
+    if attrs.get("status") != Task.STATUS_DONE:
+        return
+    if attrs.get("category", instance.category) == "meeting":
+        return
+    open_count = Task.objects.open().filter(parent=instance).count()
+    if open_count:
+        noun = "subtask" if open_count == 1 else "subtasks"
+        raise serializers.ValidationError({
+            "status": f"Finish its {open_count} open {noun} before marking this task done."
+        })
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -63,6 +77,7 @@ class TaskSerializer(serializers.ModelSerializer):
     is_recurring = serializers.SerializerMethodField()
     is_done = serializers.BooleanField(required=False)
     effective_is_done = serializers.SerializerMethodField()
+    has_subtasks = serializers.SerializerMethodField()
 
     # Accepted on write only, used to encrypt/decrypt `description` — never
     # stored as-is and never returned. See create()/update() below.
@@ -76,6 +91,13 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def get_is_recurring(self, obj):
         return obj.recurring_task is not None
+
+    def get_has_subtasks(self, obj):
+        # TaskViewSet annotates this; fall back to a query elsewhere.
+        annotated = getattr(obj, "has_subtasks_annotated", None)
+        if annotated is not None:
+            return annotated
+        return obj.pk is not None and obj.children.exists()
 
     def get_effective_is_done(self, obj):
         tz_offset = self.context.get("tz_offset", 0)
@@ -139,18 +161,6 @@ class TaskSerializer(serializers.ModelSerializer):
                 attrs["begin_date"] = parent.begin_date
                 begin_date = parent.begin_date
 
-            # enforce same-date, except for recurring occurrences, which keep
-            # their series date under a long-running parent
-            if (
-                begin_date is not None
-                and parent.begin_date is not None
-                and begin_date != parent.begin_date
-                and not _is_recurring_occurrence(attrs, self.instance)
-            ):
-                raise serializers.ValidationError({
-                    "begin_date": "Subtask begin_date must match its parent begin_date."
-                })
-
             # if parent has begin_date, child must end up with one
             if parent.begin_date is not None and begin_date is None:
                 raise serializers.ValidationError({
@@ -162,7 +172,9 @@ class TaskSerializer(serializers.ModelSerializer):
         if is_encrypted and category != "note":
             raise serializers.ValidationError({"is_encrypted": "Only notes can be encrypted."})
 
-        return fold_task_status(attrs, self.instance)
+        attrs = fold_task_status(attrs, self.instance)
+        check_parent_completion(attrs, self.instance)
+        return attrs
 
     def create(self, validated_data):
         request = self.context.get("request")
@@ -265,6 +277,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "created_at",
             "parent",
             "is_subtask",
+            "has_subtasks",
             "carry_over",
             "recurring_task",
             "recurring_task_id",
@@ -548,17 +561,14 @@ class PublicTaskSerializer(serializers.ModelSerializer):
         parent = attrs.get("parent", getattr(self.instance, "parent", None))
         begin_date = attrs.get("begin_date", getattr(self.instance, "begin_date", None))
 
-        if parent is not None and parent.begin_date is not None:
-            if begin_date is None:
-                # Same convenience the app offers: inherit the parent's date
-                # rather than rejecting a payload whose intent is unambiguous.
-                attrs["begin_date"] = parent.begin_date
-            elif begin_date != parent.begin_date and not _is_recurring_occurrence(attrs, self.instance):
-                raise serializers.ValidationError({
-                    "begin_date": "Subtask begin_date must match its parent begin_date."
-                })
+        if parent is not None and parent.begin_date is not None and begin_date is None:
+            # Same convenience the app offers: inherit the parent's date
+            # rather than rejecting a payload whose intent is unambiguous.
+            attrs["begin_date"] = parent.begin_date
 
-        return fold_task_status(attrs, self.instance)
+        attrs = fold_task_status(attrs, self.instance)
+        check_parent_completion(attrs, self.instance)
+        return attrs
 
     @staticmethod
     def _replacement_default(name):

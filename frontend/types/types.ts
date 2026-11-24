@@ -41,6 +41,8 @@ export type Task = {
   category: string;
   carry_over?: boolean;
   is_subtask?: boolean;
+  /** Read-only. Parents always carry over (except meetings). */
+  has_subtasks?: boolean;
   is_encrypted?: boolean;
 
   /** Server-computed: past meetings count as done even if never checked off. */

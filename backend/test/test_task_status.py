@@ -160,14 +160,15 @@ def test_undoing_an_in_progress_then_done_task_lands_on_open(auth_client, get_us
 
 
 @pytest.mark.django_db
-def test_parent_done_cascades_to_in_progress_children(auth_client, get_user, create_task):
+def test_in_progress_child_blocks_parent_done(auth_client, get_user, create_task):
     parent = create_task(title="parent", user=get_user)
     child = Task.objects.create(user=get_user, title="child", parent=parent, status=Task.STATUS_IN_PROGRESS)
 
-    auth_client.patch(task_detail_url(parent.id), {"is_done": True}, format="json")
+    res = auth_client.patch(task_detail_url(parent.id), {"is_done": True}, format="json")
 
+    assert res.status_code == 400
     child.refresh_from_db()
-    assert child.status == Task.STATUS_DONE
+    assert child.status == Task.STATUS_IN_PROGRESS
 
 
 @pytest.mark.django_db

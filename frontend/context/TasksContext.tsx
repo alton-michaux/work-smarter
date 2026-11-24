@@ -255,7 +255,10 @@ export const TasksProvider = ({ children }: { children: ReactNode }) => {
         setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...updated } : t)));
       } else {
         if (previous) setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...previous } : t)));
-        setError('Failed to update task');
+        // e.g. a parent with open subtasks can't be marked done
+        const body = await res.json().catch(() => null);
+        const detail = body?.status;
+        setError((Array.isArray(detail) ? detail[0] : detail) || 'Failed to update task');
       }
     } catch (err) {
       if (previous) setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, ...previous } : t)));

@@ -136,14 +136,31 @@ def test_app_accepts_recurring_child_with_later_begin_date(auth_client, get_user
 
 
 @pytest.mark.django_db
-def test_app_still_rejects_non_recurring_child_with_other_begin_date(auth_client, get_user, create_task, parent):
+def test_app_accepts_non_recurring_child_with_later_begin_date(auth_client, get_user, create_task, parent):
     task = create_task(title="one-off", begin_date=MONDAY, user=get_user)
 
     res = auth_client.patch(
         reverse("task-detail", args=[task.id]), {"parent": parent.id}, format="json"
     )
-    assert res.status_code == 400
-    assert "begin_date" in res.data
+    assert res.status_code == 200, res.data
+    task.refresh_from_db()
+    assert task.parent_id == parent.id
+    assert task.begin_date == MONDAY
+
+
+@pytest.mark.django_db
+def test_app_accepts_child_dated_before_parent(auth_client, get_user, create_task, parent):
+    """Old tasks (e.g. past recurring occurrences) can be filed under a newer parent."""
+    earlier = PARENT_DATE - timedelta(days=30)
+    task = create_task(title="one-off", begin_date=earlier, user=get_user)
+
+    res = auth_client.patch(
+        reverse("task-detail", args=[task.id]), {"parent": parent.id}, format="json"
+    )
+    assert res.status_code == 200, res.data
+    task.refresh_from_db()
+    assert task.parent_id == parent.id
+    assert task.begin_date == earlier
 
 
 @pytest.mark.django_db
@@ -159,11 +176,28 @@ def test_v1_accepts_recurring_child_with_later_begin_date(write_client, get_user
 
 
 @pytest.mark.django_db
-def test_v1_still_rejects_non_recurring_child_with_other_begin_date(write_client, get_user, create_task, parent):
+def test_v1_accepts_non_recurring_child_with_later_begin_date(write_client, get_user, create_task, parent):
     task = create_task(title="one-off", begin_date=MONDAY, user=get_user)
 
     res = write_client.patch(
         reverse("v1-task-detail", args=[task.id]), {"parent": parent.id}, format="json"
     )
-    assert res.status_code == 400
-    assert "begin_date" in res.data
+    assert res.status_code == 200, res.data
+    task.refresh_from_db()
+    assert task.parent_id == parent.id
+    assert task.begin_date == MONDAY
+
+
+@pytest.mark.django_db
+def test_v1_accepts_child_dated_before_parent(write_client, get_user, create_task, parent):
+    """Old tasks (e.g. past recurring occurrences) can be filed under a newer parent."""
+    earlier = PARENT_DATE - timedelta(days=30)
+    task = create_task(title="one-off", begin_date=earlier, user=get_user)
+
+    res = write_client.patch(
+        reverse("v1-task-detail", args=[task.id]), {"parent": parent.id}, format="json"
+    )
+    assert res.status_code == 200, res.data
+    task.refresh_from_db()
+    assert task.parent_id == parent.id
+    assert task.begin_date == earlier
