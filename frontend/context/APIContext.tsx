@@ -37,7 +37,10 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const getImportCsvSpec = async () => {
+  // Stable for the same reason: the import page lists it as an effect dep, and
+  // the isLoading updates below re-render this provider. A new function per
+  // render re-ran that effect and refetched the spec in a loop.
+  const getImportCsvSpec = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch(`${API_URL}/import/csv/spec/`, {
@@ -52,7 +55,7 @@ export const APIProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const importTasksCsv = async (file: File, dryRun: boolean) => {
     const formData = new FormData();
