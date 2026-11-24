@@ -3,7 +3,7 @@ from datetime import date, timedelta, datetime, timezone as dt_timezone
 from unittest.mock import patch
 from django.urls import reverse
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range, _should_generate
-from api.models import Task, RecurringTask, RecurringTaskException
+from api.models import Project, Task, RecurringTask, RecurringTaskException
 
 def task_detail_url(task_id: int) -> str:
     return reverse("task-detail", args=[task_id])
@@ -1632,3 +1632,27 @@ def test_task_reports_has_subtasks(auth_client, get_user):
 
     listed = {t["id"]: t["has_subtasks"] for t in auth_client.get("/api/tasks/").data["results"]}
     assert listed == {parent.id: True, child.id: False}
+
+
+@pytest.mark.django_db
+def test_project_list_has_subtasks_does_not_query_per_task(auth_client, get_user):
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    project = Project.objects.create(user=get_user, name="P")
+    parent = Task.objects.create(user=get_user, title="Parent", category="task", project=project)
+    Task.objects.create(user=get_user, title="Child", category="task", project=project, parent=parent)
+
+    def project_list_queries():
+        with CaptureQueriesContext(connection) as ctx:
+            res = auth_client.get("/api/projects/")
+        assert res.status_code == 200
+        return len(ctx), res.data["results"][0]
+
+    baseline, data = project_list_queries()
+    assert {t["id"]: t["has_subtasks"] for t in data["tasks"]}[parent.id] is True
+    assert {t["id"]: t["has_subtasks"] for t in data["dashboard_tasks"]}[parent.id] is True
+
+    for i in range(10):
+        Task.objects.create(user=get_user, title=f"Extra {i}", category="task", project=project)
+    assert project_list_queries()[0] == baseline
