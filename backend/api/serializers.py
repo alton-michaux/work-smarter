@@ -1,3 +1,4 @@
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 from datetime import timedelta, timezone as dt_timezone
 from rest_framework import serializers
@@ -53,6 +54,13 @@ def check_parent_completion(attrs, instance):
         })
 
 
+def with_has_subtasks(queryset):
+    """Annotate tasks so TaskSerializer.has_subtasks doesn't query per row."""
+    return queryset.annotate(
+        has_subtasks_annotated=Exists(Task.objects.filter(parent=OuterRef("pk")))
+    )
+
+
 class TaskSerializer(serializers.ModelSerializer):
     begin_date = serializers.DateField(required=False, allow_null=True, default=None)
     end_date = serializers.DateField(required=False, allow_null=True, default=None)
@@ -93,7 +101,7 @@ class TaskSerializer(serializers.ModelSerializer):
         return obj.recurring_task is not None
 
     def get_has_subtasks(self, obj):
-        # TaskViewSet annotates this; fall back to a query elsewhere.
+        # Annotated via with_has_subtasks(); fall back to a query elsewhere.
         annotated = getattr(obj, "has_subtasks_annotated", None)
         if annotated is not None:
             return annotated
@@ -343,10 +351,11 @@ class ProjectSerializer(serializers.ModelSerializer):
 
         today = timezone.localdate()
 
-        non_recurring = obj.tasks.filter(user=user, recurring_task__isnull=True)
+        tasks = with_has_subtasks(obj.tasks.all())
+        non_recurring = tasks.filter(user=user, recurring_task__isnull=True)
 
         next_recurring = (
-            obj.tasks
+            tasks
             .filter(
                 user=user,
                 recurring_task__isnull=False,

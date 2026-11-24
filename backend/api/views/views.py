@@ -13,14 +13,14 @@ from django.db.models import Q
 from datetime import datetime, timedelta
 from django.utils import timezone
 from api.models import Resume, ResumeAnalysis, GeneratedResume, Project, Task, RecurringTask, RecurringTaskException
-from api.serializers import ResumeSerializer, ResumeAnalysisSerializer, GeneratedResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer
+from api.serializers import ResumeSerializer, ResumeAnalysisSerializer, GeneratedResumeSerializer, TaskSerializer, ProjectSerializer, UserSerializer, RecurringTaskSerializer, with_has_subtasks
 from api.services.recurring_tasks import ensure_recurring_tasks_in_range
 from api.services.meeting_completion import auto_complete_past_meetings
 from api.validators import validate_resume_file
 from django.utils.timezone import localdate
 from django.contrib.auth import get_user_model
 from loguru import logger
-from django.db.models import Count, Exists, Min, Max, OuterRef, Subquery
+from django.db.models import Count, Min, Max, OuterRef, Prefetch, Subquery
 
 
 class DeleteAccountView(APIView):
@@ -70,9 +70,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Task.objects.filter(user=user).annotate(
-            has_subtasks_annotated=Exists(Task.objects.filter(parent=OuterRef("pk")))
-        )
+        queryset = with_has_subtasks(Task.objects.filter(user=user))
 
         category = self.request.query_params.get("category")
         if category:
@@ -464,7 +462,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         try:
-            return Project.objects.filter(user=self.request.user)
+            return Project.objects.filter(user=self.request.user).prefetch_related(
+                Prefetch("tasks", queryset=with_has_subtasks(Task.objects.all()))
+            )
         except Exception as e:
             logger.warning(f"Error in ProjectViewSet.get_queryset: {e}")
             raise
