@@ -1568,3 +1568,37 @@ def test_ensure_copies_description_onto_occurrences(get_user, create_recurring_t
 
     task = Task.objects.get(user=get_user, recurring_task=rt, begin_date=start)
     assert task.description == "- [ ] Cut release branch"
+
+
+# --- (recurring_task, begin_date) uniqueness --------------------------------
+
+@pytest.mark.django_db
+def test_one_off_task_can_move_to_a_date_shared_with_other_tasks(auth_client, get_user):
+    """Regression: DRF's auto validator treated every one-off task on the
+    target date as a duplicate of (recurring_task=None, begin_date)."""
+    Task.objects.create(user=get_user, title="Other", begin_date=date(2026, 9, 24))
+    task = Task.objects.create(user=get_user, title="Mine", begin_date=date(2026, 9, 20))
+
+    res = auth_client.patch(f"/api/tasks/{task.id}/", {"begin_date": "2026-09-24"}, format="json")
+    assert res.status_code == 200, res.data
+
+
+@pytest.mark.django_db
+def test_create_one_off_task_on_a_busy_date(auth_client, get_user, tasks_list_url):
+    Task.objects.create(user=get_user, title="Other", begin_date=date(2026, 9, 24))
+
+    res = auth_client.post(tasks_list_url, {"title": "New", "begin_date": "2026-09-24"}, format="json")
+    assert res.status_code == 201, res.data
+
+
+@pytest.mark.django_db
+def test_recurring_series_still_one_occurrence_per_day(auth_client, get_user):
+    series = RecurringTask.objects.create(
+        user=get_user, title="Standup", frequency="daily", start_date=date(2026, 9, 1),
+    )
+    Task.objects.create(user=get_user, title="Standup", begin_date=date(2026, 9, 24), recurring_task=series)
+    other = Task.objects.create(user=get_user, title="Standup", begin_date=date(2026, 9, 25), recurring_task=series)
+
+    res = auth_client.patch(f"/api/tasks/{other.id}/", {"begin_date": "2026-09-24"}, format="json")
+    assert res.status_code == 400
+    assert "begin_date" in res.data

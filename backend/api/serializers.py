@@ -106,19 +106,30 @@ class TaskSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(error)
         return parent
 
-    def to_internal_value(self, data):
-        attrs = super().to_internal_value(data)
-        # DRF auto-adds a UniqueTogetherValidator for the model's
-        # (recurring_task, begin_date) constraint, and on create it rejects
-        # any payload that omits one of those fields — overriding our
-        # required=False. Treat an omitted recurring_task as "not recurring"
-        # on create only; a default=None on the field would instead null the
-        # FK on every full PUT that leaves it out.
-        if self.instance is None:
-            attrs.setdefault("recurring_task", None)
-        return attrs
+    def check_recurring_date(self, attrs):
+        """One occurrence per series per day (uniq_task_recurring_task_begin_date).
+
+        Checked by hand because DRF's auto-generated UniqueTogetherValidator
+        mishandles the nullable FK: on update it only compares changed
+        fields, so an unchanged recurring_task=None slips past its "skip if
+        any value is None" guard and every one-off task sharing the new date
+        counts as a duplicate. Postgres treats NULLs as distinct, so one-off
+        tasks never conflict.
+        """
+        recurring_task = attrs.get("recurring_task", getattr(self.instance, "recurring_task", None))
+        begin_date = attrs.get("begin_date", getattr(self.instance, "begin_date", None))
+        if recurring_task is None or begin_date is None:
+            return
+        clash = Task.objects.filter(recurring_task=recurring_task, begin_date=begin_date)
+        if self.instance is not None:
+            clash = clash.exclude(pk=self.instance.pk)
+        if clash.exists():
+            raise serializers.ValidationError({
+                "begin_date": "This recurring series already has an occurrence on that date."
+            })
 
     def validate(self, attrs):
+        self.check_recurring_date(attrs)
         parent = attrs.get("parent", getattr(self.instance, "parent", None))
         begin_date = attrs.get("begin_date", getattr(self.instance, "begin_date", None))
 
@@ -229,6 +240,8 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
+        # Drop DRF's auto unique validator; see check_recurring_date().
+        validators = []
         fields = [
             "id",
             "user",
